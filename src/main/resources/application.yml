@@ -1,12 +1,23 @@
 spring:
-  # OAuth ???
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create  # ?????? ?? ? ??? ??
+    show-sql: true  # ???? SQL ?? ?? ??
+  h2:
+    console:
+      enabled: true
   security:
     oauth2:
       client:
         registration:
           kakao:
-            client-id: a55636a5224c30f8eec17b6320261cf9
-            client-secret: Fl0mGkaFBBI0h8n9igeU6ndceYgjb91T
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
             scope:
               - account_email
               - profile_nickname
@@ -14,7 +25,6 @@ spring:
             redirect-uri: http://localhost:8080/login/oauth2/code/kakao
             client-name: Kakao
             client-authentication-method: POST
-
         provider:
           kakao:
             authorization-uri: https://kauth.kakao.com/oauth/authorize
