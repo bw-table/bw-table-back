@@ -1,11 +1,15 @@
 package com.zero.bwtableback.member.entity;
 
 import com.zero.bwtableback.common.BaseEntity;
+import com.zero.bwtableback.member.dto.SignupForm;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.envers.AuditOverride;
+
+import java.util.Locale;
 
 @Entity
 @Getter
@@ -13,9 +17,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "member") // 데이터베이스의 테이블 이름
+@AuditOverride(forClass = BaseEntity.class) // 엔티티가 상속받은 부모 클래스(BaseEntity)의 감사 설정
 public class Member extends BaseEntity {
 
     @Id
+    @Column(nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY) // 자동 증가 PK 설정
     private Long id;
 
@@ -54,4 +60,21 @@ public class Member extends BaseEntity {
 
     @Column(unique = true)
     private String socialId; // provider + "_" + providerId
+
+    public static Member from(SignupForm form) {
+        Member.MemberBuilder memberBuilder = Member.builder()
+                .email(form.getEmail().toLowerCase(Locale.ROOT))
+                .password(form.getPassword())
+                .name(form.getName())
+                .nickname(form.getNickname())
+                .role(form.getRole())
+                .contactNumber(form.getContactNumber());
+
+        // 역할이 사장님인 경우 사업자 등록번호 추가
+        if (Role.OWNER == form.getRole()) {
+            memberBuilder.businessRegistrationNumber(form.getBusinessNumber());
+        }
+
+        return memberBuilder.build();
+    }
 }
