@@ -10,6 +10,9 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import java.util.Collection;
 import java.util.Map;
 
+/**
+ * 일반 로그인과 OAuth 로그인 모두에 사용될 수 있는 사용자 정보 컨테이너
+ */
 @NoArgsConstructor
 @AllArgsConstructor
 public class PrincipalDetails implements UserDetails, OAuth2User {
