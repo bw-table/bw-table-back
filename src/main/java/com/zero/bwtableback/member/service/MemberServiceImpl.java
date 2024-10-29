@@ -3,7 +3,6 @@ package com.zero.bwtableback.member.service;
 import com.zero.bwtableback.member.dto.SignupForm;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +12,7 @@ public class MemberServiceImpl implements MemberService {
 
     private final MemberRepository memberRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-
+    
     public MemberServiceImpl(MemberRepository memberRepository, BCryptPasswordEncoder passwordEncoder) {
         this.memberRepository = memberRepository;
         this.passwordEncoder = passwordEncoder;
@@ -47,6 +46,7 @@ public class MemberServiceImpl implements MemberService {
     public boolean isEmailDuplicate(String email) {
         return memberRepository.existsByEmail(email);
     }
+
     // 닉네임 중복 체크 함수
     public boolean isNicknameDuplicate(String nickname) {
         return memberRepository.existsByNickname(nickname);
@@ -58,6 +58,7 @@ public class MemberServiceImpl implements MemberService {
             throw new IllegalArgumentException("유효하지 않은 이메일 형식입니다.");
         }
     }
+
     // 닉네임 유효성 검사
     private void validateNickname(String nickname) {
         if (nickname.length() < 3 || nickname.length() > 20 || !nickname.matches("^[a-zA-Z0-9]+$")) {
@@ -68,6 +69,7 @@ public class MemberServiceImpl implements MemberService {
             throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
         }
     }
+
     // 비밀번호 유효성 검사
     private void validatePassword(String password) {
         if (password.length() < 8 || !password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$")) {
