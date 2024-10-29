@@ -3,16 +3,14 @@ package com.zero.bwtableback.member.entity;
 import com.zero.bwtableback.common.BaseEntity;
 import com.zero.bwtableback.member.dto.SignupForm;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.envers.AuditOverride;
 
 import java.util.Locale;
 
 @Entity
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -64,6 +62,7 @@ public class Member extends BaseEntity {
     public static Member from(SignupForm form) {
         Member.MemberBuilder memberBuilder = Member.builder()
                 .email(form.getEmail().toLowerCase(Locale.ROOT))
+                .loginType(LoginType.EMAIL)
                 .password(form.getPassword())
                 .name(form.getName())
                 .nickname(form.getNickname())

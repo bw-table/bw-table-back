@@ -47,6 +47,4 @@ public class SecurityConfig {
 //    public SecurityConfig(PrincipalOauth2UserService principalOauth2UserService) {
 //        this.principalOauth2UserService = principalOauth2UserService;
 //    }
-
-
 }

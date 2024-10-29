@@ -5,29 +5,26 @@ import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.util.regex.Pattern;
 
 @Service
 public class MemberServiceImpl implements MemberService {
 
     private final MemberRepository memberRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-    
+
     public MemberServiceImpl(MemberRepository memberRepository, BCryptPasswordEncoder passwordEncoder) {
         this.memberRepository = memberRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
     @Override
-    @Transactional
-    public Member registerMember(SignupForm form) {
+    public Member signupMember(SignupForm form) {
         // 이메일 유효성 검사 및 중복 체크
         validateEmail(form.getEmail());
-        if (isEmailDuplicate(form.getEmail())) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
-        }
 
-        // 닉네임 유효성 검사
+        // 닉네임 유효성 검사 및 중복 체크
         validateNickname(form.getNickname());
 
         // 비밀번호 유효성 검사
@@ -39,6 +36,7 @@ public class MemberServiceImpl implements MemberService {
 
         // Member 객체 생성 및 저장
         Member member = Member.from(form);
+
         return memberRepository.save(member);
     }
 
@@ -54,14 +52,20 @@ public class MemberServiceImpl implements MemberService {
 
     // 이메일 유효성 검사
     private void validateEmail(String email) {
-        if (email.length() < 3 || email.length() > 50 || !email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+        // FIXME Regex 변경
+        String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+        if (email == null || email.length() < 3 || email.length() > 50 || !email.matches(emailRegex)) {
             throw new IllegalArgumentException("유효하지 않은 이메일 형식입니다.");
+        }
+
+        if (isEmailDuplicate(email)) {
+            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
     }
 
     // 닉네임 유효성 검사
     private void validateNickname(String nickname) {
-        if (nickname.length() < 3 || nickname.length() > 20 || !nickname.matches("^[a-zA-Z0-9]+$")) {
+        if (nickname.length() < 2 || nickname.length() > 15 || !nickname.matches("^[a-zA-Z0-9가-힣]+$")) {
             throw new IllegalArgumentException("유효하지 않은 닉네임입니다.");
         }
 
