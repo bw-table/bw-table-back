@@ -17,6 +17,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // CSRF 비활성화
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/signup", "/api/auth/login").permitAll() // 회원가입 및 로그인 허용
                         .requestMatchers("/h2-console/**").permitAll() // H2 콘솔 접근 허용
                         .anyRequest().authenticated() // 나머지 요청은 인증 필요
                 )

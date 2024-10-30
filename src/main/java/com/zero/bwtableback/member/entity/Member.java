@@ -14,13 +14,13 @@ import java.util.Locale;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "member") // 데이터베이스의 테이블 이름
+@Table(name = "member")
 @AuditOverride(forClass = BaseEntity.class) // 엔티티가 상속받은 부모 클래스(BaseEntity)의 감사 설정
 public class Member extends BaseEntity {
 
     @Id
     @Column(nullable = false)
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // 자동 증가 PK 설정
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Enumerated(EnumType.STRING)
@@ -37,14 +37,14 @@ public class Member extends BaseEntity {
     private String name;
 
     @Column(nullable = false)
-    private String nickname; // 추가: 닉네임
+    private String nickname;
 
     @Column(nullable = false)
-    private String contactNumber; // 추가: 연락처
+    private String contactNumber; // 연락처
 
-    @Enumerated(EnumType.STRING) // 역할을 문자열로 저장
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role; // 추가: 역할 (손님, 사장님)
+    private Role role; // 역할 (GUEST(손님), OWNER(사장님))
 
     @Column(name = "business_registration_number")
     private String businessRegistrationNumber; // 사업자 등록번호
