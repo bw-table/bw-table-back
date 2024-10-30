@@ -52,7 +52,7 @@ public class MemberServiceImpl implements MemberService {
 
     // 이메일 유효성 검사
     private void validateEmail(String email) {
-        // FIXME Regex 변경
+        // FIXME Regex 수정 필요
         String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
         if (email == null || email.length() < 3 || email.length() > 50 || !email.matches(emailRegex)) {
             throw new IllegalArgumentException("유효하지 않은 이메일 형식입니다.");

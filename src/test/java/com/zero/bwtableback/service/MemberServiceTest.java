@@ -76,6 +76,7 @@ class MemberServiceImplTest {
         assertEquals("test@example.com", result.getEmail());
         assertEquals("길동", result.getNickname());
         assertEquals("encodedPassword", result.getPassword());
+        // save 메서드가 한 번 호출되었는지 검증
         verify(memberRepository, times(1)).save(any(Member.class));
     }
 
