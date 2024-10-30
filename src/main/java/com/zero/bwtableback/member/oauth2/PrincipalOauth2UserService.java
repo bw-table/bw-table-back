@@ -1,4 +1,4 @@
-package com.zero.bwtableback.auth.oauth2;
+package com.zero.bwtableback.member.oauth2;
 
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.entity.Role;

@@ -1,4 +1,4 @@
-# User 요청 예시
+# User API 테스트
 
 ### Value
 @accessToken = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJwZXRtaWx5IiwiaWF0IjoxNzI1MjU3OTU4LCJleHAiOjE3MjUyNjE1NTgsInN1YiI6ImtpbWp1bjkxIn0.vv2XByxCoNm-DD65xw6NNxZq-2Xt8bD-y7Z7f558N08

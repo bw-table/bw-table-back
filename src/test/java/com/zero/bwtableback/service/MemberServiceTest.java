@@ -1,9 +1,9 @@
 package com.zero.bwtableback.service;
 
-import com.zero.bwtableback.member.dto.SignupFormDto;
+import com.zero.bwtableback.member.dto.SignUpDto;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
-import com.zero.bwtableback.member.service.MemberServiceImpl;
+import com.zero.bwtableback.member.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,13 +42,13 @@ class MemberServiceImplTest {
     private BCryptPasswordEncoder passwordEncoder;
 
     @InjectMocks
-    private MemberServiceImpl memberService;
+    private AuthService authService;
 
-    private SignupFormDto form;
+    private SignUpDto form;
 
     @BeforeEach
     void setUp() {
-        form = new SignupFormDto();
+        form = new SignUpDto();
         form.setEmail("test@example.com");
         form.setNickname("길동");
         form.setPassword("Test123@");
@@ -67,7 +67,7 @@ class MemberServiceImplTest {
 
         when(memberRepository.save(any(Member.class))).thenReturn(member);
 
-        Member result = memberService.signupMember(form);
+        Member result = authService.signUp(form);
 
         assertEquals("test@example.com", result.getEmail());
         assertEquals("길동", result.getNickname());
@@ -81,7 +81,7 @@ class MemberServiceImplTest {
         when(memberRepository.existsByEmail(form.getEmail())).thenReturn(true);
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            memberService.signupMember(form);
+            authService.signUp(form);
         });
 
         assertEquals("이미 사용 중인 이메일입니다.", exception.getMessage());
@@ -92,7 +92,7 @@ class MemberServiceImplTest {
         when(memberRepository.existsByNickname(form.getNickname())).thenReturn(true);
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            memberService.signupMember(form);
+            authService.signUp(form);
         });
 
         assertEquals("이미 사용 중인 닉네임입니다.", exception.getMessage());
@@ -103,7 +103,7 @@ class MemberServiceImplTest {
         form.setEmail("hel");
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            memberService.signupMember(form);
+            authService.signUp(form);
         });
 
         assertEquals("유효하지 않은 이메일 형식입니다.", exception.getMessage());
@@ -114,7 +114,7 @@ class MemberServiceImplTest {
         form.setNickname("!!invalid!!");
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            memberService.signupMember(form);
+            authService.signUp(form);
         });
 
         assertEquals("유효하지 않은 닉네임입니다.", exception.getMessage());
@@ -125,7 +125,7 @@ class MemberServiceImplTest {
         form.setPassword("weakpass");
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            memberService.signupMember(form);
+            authService.signUp(form);
         });
 
         assertEquals("비밀번호는 최소 8자 이상이며 대문자, 소문자, 숫자 및 특수문자를 포함해야 합니다.", exception.getMessage());

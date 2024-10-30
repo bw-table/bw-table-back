@@ -1,4 +1,4 @@
-package com.zero.bwtableback.auth.oauth2;
+package com.zero.bwtableback.member.oauth2;
 
 /**
  * OAuth2 사용자 정보 추상화 인터페이스

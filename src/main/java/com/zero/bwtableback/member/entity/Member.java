@@ -1,7 +1,7 @@
 package com.zero.bwtableback.member.entity;
 
 import com.zero.bwtableback.common.BaseEntity;
-import com.zero.bwtableback.member.dto.SignupFormDto;
+import com.zero.bwtableback.member.dto.SignUpDto;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.envers.AuditOverride;
@@ -61,7 +61,7 @@ public class Member extends BaseEntity {
 
     private String refreshToken; //FIXME 임시 사용 후 삭제 예정
 
-    public static Member from(SignupFormDto form) {
+    public static Member from(SignUpDto form) {
         Member.MemberBuilder memberBuilder = Member.builder()
                 .email(form.getEmail().toLowerCase(Locale.ROOT))
                 .loginType(LoginType.EMAIL)

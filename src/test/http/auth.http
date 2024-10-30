@@ -1,0 +1,6 @@
+# Auth API 테스트
+
+### 회원가입 요청 - 손님
+# @no-redirect
+POST http://localhost:8080/api/auth/signup
+Content-Type: application/json
