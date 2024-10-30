@@ -131,6 +131,8 @@ public class AuthServiceImpl implements AuthService {
      * 사용자 로그아웃 처리
      */
     public void logout(String email){
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
     }
 }

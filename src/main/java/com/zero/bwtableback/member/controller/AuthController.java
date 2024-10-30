@@ -6,6 +6,8 @@ import com.zero.bwtableback.member.dto.SignUpDto;
 import com.zero.bwtableback.member.dto.TokenDto;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.service.AuthService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -35,9 +37,20 @@ public class AuthController {
      * 로그인
      */
     @PostMapping("/login")
-    public ApiResponse<TokenDto> login(@RequestBody EmailLoginDto loginDto) {
+    public ApiResponse<TokenDto> login(@RequestBody EmailLoginDto loginDto,
+                                       HttpServletResponse response) {
         try {
             TokenDto tokenDto = authService.login(loginDto);
+
+            // HttpOnly 쿠키에 리프레시 토큰 저장
+            Cookie cookie = new Cookie("refreshToken", tokenDto.getRefreshToken());
+            cookie.setHttpOnly(true); // JavaScript 접근 불가
+            cookie.setSecure(true); // HTTPS에서만 전송
+            cookie.setPath("/"); // 쿠키의 유효 경로 설정
+            cookie.setMaxAge(86400); // 1일 (초 단위)
+
+            response.addCookie(cookie); // 쿠키를 응답에 추가
+
             return ApiResponse.success(tokenDto);
         } catch (Exception e) {
             return ApiResponse.error("INTERNAL_SERVER_ERROR", "로그인에 실패했습니다.", e.getMessage());
