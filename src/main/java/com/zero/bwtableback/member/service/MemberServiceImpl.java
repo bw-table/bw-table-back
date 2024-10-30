@@ -1,12 +1,10 @@
 package com.zero.bwtableback.member.service;
 
-import com.zero.bwtableback.member.dto.SignupForm;
+import com.zero.bwtableback.member.dto.SignupFormDto;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.regex.Pattern;
 
 @Service
 public class MemberServiceImpl implements MemberService {
@@ -20,7 +18,7 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public Member signupMember(SignupForm form) {
+    public Member signupMember(SignupFormDto form) {
         // 이메일 유효성 검사 및 중복 체크
         validateEmail(form.getEmail());
 

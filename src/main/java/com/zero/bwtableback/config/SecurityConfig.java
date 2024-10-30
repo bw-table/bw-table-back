@@ -1,4 +1,4 @@
-package com.zero.bwtableback.configuration;
+package com.zero.bwtableback.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

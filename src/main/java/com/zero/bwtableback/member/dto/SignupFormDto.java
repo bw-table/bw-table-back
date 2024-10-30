@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class SignupForm {
+public class SignupFormDto {
     private LoginType loginType;
     private String email;
     private String name;

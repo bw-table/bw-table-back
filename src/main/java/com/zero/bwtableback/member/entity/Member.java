@@ -1,7 +1,7 @@
 package com.zero.bwtableback.member.entity;
 
 import com.zero.bwtableback.common.BaseEntity;
-import com.zero.bwtableback.member.dto.SignupForm;
+import com.zero.bwtableback.member.dto.SignupFormDto;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.envers.AuditOverride;
@@ -59,7 +59,7 @@ public class Member extends BaseEntity {
     @Column(unique = true)
     private String socialId; // provider + "_" + providerId
 
-    public static Member from(SignupForm form) {
+    public static Member from(SignupFormDto form) {
         Member.MemberBuilder memberBuilder = Member.builder()
                 .email(form.getEmail().toLowerCase(Locale.ROOT))
                 .loginType(LoginType.EMAIL)

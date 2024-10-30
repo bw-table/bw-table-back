@@ -1,9 +1,7 @@
 package com.zero.bwtableback.service;
 
-import com.zero.bwtableback.member.dto.SignupForm;
-import com.zero.bwtableback.member.entity.LoginType;
+import com.zero.bwtableback.member.dto.SignupFormDto;
 import com.zero.bwtableback.member.entity.Member;
-import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.member.service.MemberServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,8 +10,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -48,11 +44,11 @@ class MemberServiceImplTest {
     @InjectMocks
     private MemberServiceImpl memberService;
 
-    private SignupForm form;
+    private SignupFormDto form;
 
     @BeforeEach
     void setUp() {
-        form = new SignupForm();
+        form = new SignupFormDto();
         form.setEmail("test@example.com");
         form.setNickname("길동");
         form.setPassword("Test123@");
