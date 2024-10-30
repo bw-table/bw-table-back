@@ -1,4 +1,4 @@
-package com.zero.bwtableback.config;
+package com.zero.bwtableback.security.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,21 +30,4 @@ public class SecurityConfig {
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-//    @Bean
-//    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-//        http
-//                .authorizeRequests()
-//                .anyRequest().authenticated()
-//                .and()
-//                .oauth2Login(oauth2 -> oauth2
-//                        .userInfoEndpoint(userInfo -> userInfo
-//                                .userService(principalOauth2UserService)
-//                        )
-//                );
-
-    //    private final PrincipalOauth2UserService principalOauth2UserService;
-//
-//    public SecurityConfig(PrincipalOauth2UserService principalOauth2UserService) {
-//        this.principalOauth2UserService = principalOauth2UserService;
-//    }
 }

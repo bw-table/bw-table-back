@@ -1,4 +1,4 @@
-package com.zero.bwtableback.config;
+package com.zero.bwtableback.common.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;

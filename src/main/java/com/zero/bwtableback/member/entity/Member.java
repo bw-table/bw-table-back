@@ -59,6 +59,8 @@ public class Member extends BaseEntity {
     @Column(unique = true)
     private String socialId; // provider + "_" + providerId
 
+    private String refreshToken; //FIXME 임시 사용 후 삭제 예정
+
     public static Member from(SignupFormDto form) {
         Member.MemberBuilder memberBuilder = Member.builder()
                 .email(form.getEmail().toLowerCase(Locale.ROOT))
