@@ -1,4 +1,4 @@
-package com.zero.bwtableback.common;
+package com.zero.bwtableback.common.response;
 
 import lombok.Getter;
 import lombok.Setter;

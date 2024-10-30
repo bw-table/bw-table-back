@@ -19,7 +19,7 @@ spring:
     console:
       enabled: true
   jwt:
-    secret: ${JWT_SECRET:your-256-bit-secret-key-default} # HS512 알고리즘을 사용할 경우, 비밀 키는 최소 256비트(32바이트) 이상
+    secret: ${JWT_SECRET:your-256-bit-secret-key-default} # HS512 알고리즘을 사용할 경우, 비밀 키는 최소 512비트(64바이트) 이상
     accessTokenValidityInMilliseconds: ${JWT_ACCESS_TOKEN_VALIDITY:3600000}
     refreshTokenValidityInMilliseconds: ${JWT_REFRESH_TOKEN_VALIDITY:86400000}
 
