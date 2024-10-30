@@ -3,7 +3,7 @@ package com.zero.bwtableback.service;
 import com.zero.bwtableback.member.dto.SignUpDto;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
-import com.zero.bwtableback.member.service.AuthService;
+import com.zero.bwtableback.member.service.AuthServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,7 +33,7 @@ import static org.mockito.Mockito.*;
  */
 
 @ExtendWith(MockitoExtension.class)
-class MemberServiceImplTest {
+class AuthServiceImplTest {
 
     @Mock
     private MemberRepository memberRepository;
@@ -42,7 +42,7 @@ class MemberServiceImplTest {
     private BCryptPasswordEncoder passwordEncoder;
 
     @InjectMocks
-    private AuthService authService;
+    private AuthServiceImpl authService;
 
     private SignUpDto form;
 
