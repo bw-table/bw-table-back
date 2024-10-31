@@ -35,19 +35,19 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public Member signUp(SignUpDto form) {
         // 이메일 유효성 검사 및 중복 체크
-        validateEmail(form.getEmail());
+//        validateEmail(form.getEmail());
 
         // 닉네임 유효성 검사 및 중복 체크
-        validateNickname(form.getNickname());
+//        validateNickname(form.getNickname());
 
         // 비밀번호 유효성 검사
-        validatePassword(form.getPassword());
+//        validatePassword(form.getPassword());
 
         // 사업자등록번호 유효성 검사 및 하이픈 제거(사장님 회원가입 시)
-        if (form.getRole() == Role.OWNER) {
-            validateBusinessNumber(form);
-            form.setBusinessNumber(cleanBusinessNumber(form.getBusinessNumber()));
-        }
+//        if (form.getRole() == Role.OWNER) {
+//            validateBusinessNumber(form);
+//            form.setBusinessNumber(cleanBusinessNumber(form.getBusinessNumber()));
+//        }
 
         // 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(form.getPassword());

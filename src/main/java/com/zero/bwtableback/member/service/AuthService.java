@@ -12,6 +12,18 @@ import com.zero.bwtableback.member.entity.Member;
  */
 public interface AuthService {
 
+    // 이메일 중복 확인
+    boolean isEmailDuplicate(String email);
+
+    // 닉네임 중복 확인
+    boolean isNicknameDuplicate(String nickname);
+
+    // 전화번호 중복 확인
+    boolean isPhoneDuplicate(String phone);
+
+    // 사업자 등록번호 중복 확인
+    boolean isBusinessNumberDuplicate(String businessNumber);
+
     // 새로운 사용자 회원가입
     Member signUp(SignUpDto form);
 

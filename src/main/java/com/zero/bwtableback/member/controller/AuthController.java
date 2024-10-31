@@ -23,6 +23,47 @@ public class AuthController {
     }
 
     /**
+     * 이메일 중복 체크
+     */
+    @PostMapping("/check/nickname")
+    public ApiResponse<Boolean> checkNicknameDuplicate(@RequestBody String nickname) {
+        try {
+            boolean isDuplicate = authService.isNicknameDuplicate(nickname);
+            return ApiResponse.success(isDuplicate);
+        } catch (Exception e) {
+            return ApiResponse.error("NICKNAME_CHECK_ERROR", "닉네임 중복 확인 중 오류가 발생했습니다: ", e.getMessage());
+        }
+    }
+
+    /**
+     * 전화번호 중복 체크
+     */
+    @PostMapping("/check/phone")
+    public ApiResponse<Boolean> checkPhoneDuplicate(@RequestBody String phone) {
+        try {
+            //TODO String cleanPhone = PhoneNumberUtil.removeHyphens(phone);
+            boolean isDuplicate = authService.isPhoneDuplicate(phone);
+            return ApiResponse.success(isDuplicate);
+        } catch (Exception e) {
+            return ApiResponse.error("PHONE_CHECK_ERROR", "전화번호 중복 확인 중 오류가 발생했습니다: ", e.getMessage());
+        }
+    }
+
+    /**
+     * 사업자 번호 중복 체크
+     */
+    @PostMapping("/check/business-number")
+    public ApiResponse<Boolean> checkBusinessNumberDuplicate(@RequestBody String businessNumber) {
+        try {
+            //TODO String cleanBusinessNumber = BusinessNumberUtil.removeHyphens(businessNumber);
+            boolean isDuplicate = authService.isBusinessNumberDuplicate(businessNumber);
+            return ApiResponse.success(isDuplicate);
+        } catch (Exception e) {
+            return ApiResponse.error("BUSINESS_NUMBER_CHECK_ERROR", "사업자 등록번호 중복 확인 중 오류가 발생했습니다: ", e.getMessage());
+        }
+    }
+
+    /**
      * 회원가입
      */
     @PostMapping("/signup")
