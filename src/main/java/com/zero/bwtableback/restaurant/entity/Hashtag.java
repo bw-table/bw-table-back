@@ -27,4 +27,9 @@ public class Hashtag {
 
     @ManyToMany(mappedBy = "hashtags")
     private List<Restaurant> restaurants;
+
+    public Hashtag(Long id, String name) {
+        this.id = id;
+        this.name = name;
+    }
 }

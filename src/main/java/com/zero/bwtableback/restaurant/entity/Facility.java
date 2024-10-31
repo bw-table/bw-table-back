@@ -8,11 +8,11 @@ import lombok.Setter;
 
 import java.util.List;
 
-@Entity
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Entity
 @Table(name = "facility")
 public class Facility {
 
@@ -25,4 +25,9 @@ public class Facility {
 
     @ManyToMany(mappedBy = "facilities")
     private List<Restaurant> restaurants;
+
+    public Facility(Long id, FacilityType type) {
+        this.id = id;
+        this.facilityType = type;
+    }
 }

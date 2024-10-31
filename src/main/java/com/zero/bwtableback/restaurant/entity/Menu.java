@@ -1,14 +1,12 @@
 package com.zero.bwtableback.restaurant.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 
 @Getter
 @Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -25,7 +23,6 @@ public class Menu {
     @Column(nullable = false)
     private int price;
 
-    @Column(nullable = false)
     private String description;
 
     private String imageUrl;
