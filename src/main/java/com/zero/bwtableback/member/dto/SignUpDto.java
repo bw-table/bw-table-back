@@ -13,7 +13,7 @@ public class SignUpDto {
     private String name;
     private String password;
     private String nickname;
-    private String contactNumber;
+    private String phone;
     private Role role;
     private String businessNumber;
 }

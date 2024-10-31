@@ -11,23 +11,16 @@ import com.zero.bwtableback.member.entity.Member;
  * 로그인, 회원가입, 토큰 갱신 등 인증 관련 비즈니스 로직을 정의
  */
 public interface AuthService {
-    /**
-     * 새로운 사용자 회원가입
-     */
+
+    // 새로운 사용자 회원가입
     Member signUp(SignUpDto form);
 
-    /**
-     * 사용자 로그인을 처리하고 인증 토큰을 반환
-     */
+    // 사용자 로그인을 처리하고 인증 토큰을 반환
     TokenDto login(EmailLoginDto loginDto);
 
-    /**
-     * 리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급
-     */
+    // 리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급
     TokenDto refreshToken(String refreshToken);
 
-    /**
-     * 사용자 로그아웃 처리
-     */
+    // 사용자 로그아웃 처리
     void logout(String email);
 }

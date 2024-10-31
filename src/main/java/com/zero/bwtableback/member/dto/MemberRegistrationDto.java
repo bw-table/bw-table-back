@@ -9,5 +9,5 @@ public class MemberRegistrationDto {
     private String nickname;
     private String contactNumber;
     private Role role;
-    private String businessRegistrationNumber; // OWNER 역할일 때만 사용
+    private String businessNumber; // OWNER 역할일 때만 사용
 }

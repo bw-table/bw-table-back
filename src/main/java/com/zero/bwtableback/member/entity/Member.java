@@ -38,14 +38,14 @@ public class Member extends BaseEntity {
     private String nickname;
 
     @Column(nullable = false)
-    private String contactNumber; // 연락처
+    private String phone; // 연락처
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role; // 역할 (GUEST(손님), OWNER(사장님))
 
-    @Column(name = "business_registration_number")
-    private String businessRegistrationNumber; // 사업자등록번호 (예시:"123-01-11111")
+    @Column(name = "business_number")
+    private String businessNumber; // 사업자등록번호 (예시:"123-01-11111")
 
     @Column(name = "profile_image_url") // 프로필 이미지 URL
     private String profileImage; // 추가: 프로필 이미지
@@ -67,11 +67,11 @@ public class Member extends BaseEntity {
                 .name(form.getName())
                 .nickname(form.getNickname())
                 .role(form.getRole())
-                .contactNumber(form.getContactNumber());
+                .phone(form.getPhone());
 
         // 역할이 사장님인 경우 사업자 등록번호 추가
         if (Role.OWNER == form.getRole()) {
-            memberBuilder.businessRegistrationNumber(form.getBusinessNumber());
+            memberBuilder.businessNumber(form.getBusinessNumber());
         }
 
         return memberBuilder.build();
