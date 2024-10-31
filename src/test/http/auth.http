@@ -39,7 +39,7 @@ Content-Type: application/json
   "nickname": "샤쟝",
   "contactNumber": "010-1234-2222",
   "role": "OWNER",
-  "businessNumber": "01-123-22222"
+  "businessNumber": "123-01-22222"
 }
 
 ### 로그인 요청 - 사장님

@@ -4,6 +4,7 @@ import com.zero.bwtableback.member.dto.EmailLoginDto;
 import com.zero.bwtableback.member.dto.SignUpDto;
 import com.zero.bwtableback.member.dto.TokenDto;
 import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.security.jwt.TokenProvider;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -42,24 +43,19 @@ public class AuthServiceImpl implements AuthService {
         // 비밀번호 유효성 검사
         validatePassword(form.getPassword());
 
+        // 사업자등록번호 유효성 검사 및 하이픈 제거(사장님 회원가입 시)
+        if (form.getRole() == Role.OWNER) {
+            validateBusinessNumber(form);
+            form.setBusinessNumber(cleanBusinessNumber(form.getBusinessNumber()));
+        }
+
         // 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(form.getPassword());
         form.setPassword(encodedPassword);
 
-        // Member 객체 생성 및 저장
         Member member = Member.from(form);
 
         return memberRepository.save(member);
-    }
-
-    // 이메일 중복 체크 함수
-    public boolean isEmailDuplicate(String email) {
-        return memberRepository.existsByEmail(email);
-    }
-
-    // 닉네임 중복 체크 함수
-    public boolean isNicknameDuplicate(String nickname) {
-        return memberRepository.existsByNickname(nickname);
     }
 
     // 이메일 유효성 검사
@@ -93,6 +89,32 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    // 이메일 중복 체크 함수
+    private boolean isEmailDuplicate(String email) {
+        return memberRepository.existsByEmail(email);
+    }
+
+    // 닉네임 중복 체크 함수
+    private boolean isNicknameDuplicate(String nickname) {
+        return memberRepository.existsByNickname(nickname);
+    }
+
+    // 사장님 회원가입 시 사업자등록번호 체크 함수
+    private void validateBusinessNumber(SignUpDto form) {
+        if (form.getBusinessNumber() == null || form.getBusinessNumber().trim().isEmpty()) {
+            throw new IllegalArgumentException("사업자등록번호는 사장님 역할에 필수입니다.");
+        }
+
+        // 사업자등록번호 형식 예시: 123-01-11111
+        if (form.getBusinessNumber().trim().length() != 12) {
+            throw new IllegalArgumentException("유효하지 않은 사업자 등록번호 형식입니다.");
+        }
+    }
+
+    private String cleanBusinessNumber(String businessNumber) {
+        return businessNumber.trim().replaceAll("-", "");
+    }
+
     /**
      * 사용자 로그인을 처리하고 인증 토큰을 반환
      */
@@ -122,7 +144,7 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급
      */
-    public TokenDto refreshToken(String refreshToken){
+    public TokenDto refreshToken(String refreshToken) {
 
         return null;
     }
@@ -130,7 +152,7 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 사용자 로그아웃 처리
      */
-    public void logout(String email){
+    public void logout(String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 

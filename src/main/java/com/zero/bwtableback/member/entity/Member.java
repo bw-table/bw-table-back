@@ -4,7 +4,6 @@ import com.zero.bwtableback.common.BaseEntity;
 import com.zero.bwtableback.member.dto.SignUpDto;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.envers.AuditOverride;
 
 import java.util.Locale;
 
@@ -15,7 +14,6 @@ import java.util.Locale;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "member")
-@AuditOverride(forClass = BaseEntity.class) // 엔티티가 상속받은 부모 클래스(BaseEntity)의 감사 설정
 public class Member extends BaseEntity {
 
     @Id
@@ -47,7 +45,7 @@ public class Member extends BaseEntity {
     private Role role; // 역할 (GUEST(손님), OWNER(사장님))
 
     @Column(name = "business_registration_number")
-    private String businessRegistrationNumber; // 사업자 등록번호
+    private String businessRegistrationNumber; // 사업자등록번호 (예시:"123-01-11111")
 
     @Column(name = "profile_image_url") // 프로필 이미지 URL
     private String profileImage; // 추가: 프로필 이미지
