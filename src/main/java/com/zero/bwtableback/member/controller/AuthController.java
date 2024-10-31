@@ -8,7 +8,9 @@ import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.service.AuthService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,7 +25,20 @@ public class AuthController {
     }
 
     /**
-     * 이메일 중복 체크
+     * 이메일 중복 검사
+     */
+    @PostMapping("/check/email")
+    public ApiResponse<Boolean> checkEmailDuplicate(@RequestBody String email) {
+        try {
+            boolean isDuplicate = authService.isEmailDuplicate(email);
+            return ApiResponse.success(isDuplicate);
+        } catch (Exception e) {
+            return ApiResponse.error("EMAIL_CHECK_ERROR", "이메일 중복 확인 중 오류가 발생했습니다.", e.getMessage());
+        }
+    }
+
+    /**
+     * 닉네임 중복 검사
      */
     @PostMapping("/check/nickname")
     public ApiResponse<Boolean> checkNicknameDuplicate(@RequestBody String nickname) {
@@ -31,12 +46,12 @@ public class AuthController {
             boolean isDuplicate = authService.isNicknameDuplicate(nickname);
             return ApiResponse.success(isDuplicate);
         } catch (Exception e) {
-            return ApiResponse.error("NICKNAME_CHECK_ERROR", "닉네임 중복 확인 중 오류가 발생했습니다: ", e.getMessage());
+            return ApiResponse.error("NICKNAME_CHECK_ERROR", "닉네임 중복 확인 중 오류가 발생했습니다.", e.getMessage());
         }
     }
 
     /**
-     * 전화번호 중복 체크
+     * 전화번호 중복 검사
      */
     @PostMapping("/check/phone")
     public ApiResponse<Boolean> checkPhoneDuplicate(@RequestBody String phone) {
@@ -45,12 +60,12 @@ public class AuthController {
             boolean isDuplicate = authService.isPhoneDuplicate(phone);
             return ApiResponse.success(isDuplicate);
         } catch (Exception e) {
-            return ApiResponse.error("PHONE_CHECK_ERROR", "전화번호 중복 확인 중 오류가 발생했습니다: ", e.getMessage());
+            return ApiResponse.error("PHONE_CHECK_ERROR", "전화번호 중복 확인 중 오류가 발생했습니다.", e.getMessage());
         }
     }
 
     /**
-     * 사업자 번호 중복 체크
+     * 사업자등록번호 중복 검사
      */
     @PostMapping("/check/business-number")
     public ApiResponse<Boolean> checkBusinessNumberDuplicate(@RequestBody String businessNumber) {
@@ -59,7 +74,7 @@ public class AuthController {
             boolean isDuplicate = authService.isBusinessNumberDuplicate(businessNumber);
             return ApiResponse.success(isDuplicate);
         } catch (Exception e) {
-            return ApiResponse.error("BUSINESS_NUMBER_CHECK_ERROR", "사업자 등록번호 중복 확인 중 오류가 발생했습니다: ", e.getMessage());
+            return ApiResponse.error("BUSINESS_NUMBER_CHECK_ERROR", "사업자 등록번호 중복 확인 중 오류가 발생했습니다.", e.getMessage());
         }
     }
 
@@ -67,12 +82,22 @@ public class AuthController {
      * 회원가입
      */
     @PostMapping("/signup")
-    public ApiResponse<Member> signUp(@RequestBody SignUpDto signUpDto) {
+    public ApiResponse<Member> signUp(@Valid @RequestBody SignUpDto signUpDto, BindingResult bindingResult) {
+        // 유효성 검사 결과 확인
+        if (bindingResult.hasErrors()) {
+            // 에러 메시지를 수집하여 ApiResponse에 담아 반환
+            StringBuilder errorMessage = new StringBuilder();
+            bindingResult.getFieldErrors().forEach(error ->
+                    errorMessage.append(error.getDefaultMessage()).append(" ")
+            );
+            return ApiResponse.error("VALIDATION_ERROR", "회원가입에 실패했습니다. ", errorMessage.toString().trim());
+        }
+
         try {
             Member member = authService.signUp(signUpDto);
             return ApiResponse.success(member);
         } catch (Exception e) {
-            return ApiResponse.error("INTERNAL_SERVER_ERROR", "회원가입에 실패했습니다: ", e.getMessage());
+            return ApiResponse.error("INTERNAL_SERVER_ERROR", "회원가입에 실패했습니다. ", e.getMessage());
         }
     }
 
@@ -109,7 +134,7 @@ public class AuthController {
             TokenDto tokenDto = authService.refreshToken(refreshToken);
             return ApiResponse.success(tokenDto);
         } catch (Exception e) {
-            return ApiResponse.error("INTERNAL_SERVER_ERROR", "토큰 갱신에 실패했습니다: ", e.getMessage());
+            return ApiResponse.error("INTERNAL_SERVER_ERROR", "토큰 갱신에 실패했습니다. ", e.getMessage());
         }
     }
 
@@ -122,7 +147,7 @@ public class AuthController {
             authService.logout(email);
             return ApiResponse.success();
         } catch (Exception e) {
-            return ApiResponse.error("INTERNAL_SERVER_ERROR", "로그아웃에 실패했습니다: ", e.getMessage());
+            return ApiResponse.error("INTERNAL_SERVER_ERROR", "로그아웃에 실패했습니다. ", e.getMessage());
         }
     }
 }

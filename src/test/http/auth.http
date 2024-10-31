@@ -7,11 +7,11 @@ Content-Type: application/json
 
 {
   "loginType": "EMAIL",
-  "email": "guest@example.com",
+  "email": "guestexample.com",
   "name": "홍길동",
   "password": "Guest123!@#",
   "nickname": "길동",
-  "phone": "010-1234-5678",
+  "phone": "01012345678",
   "role": "GUEST",
   "businessNumber": null
 }
@@ -37,9 +37,9 @@ Content-Type: application/json
   "name": "사장님",
   "password": "Owner123!@#",
   "nickname": "샤쟝",
-  "phone": "010-1234-2222",
+  "phone": "01012342222",
   "role": "OWNER",
-  "businessNumber": "123-01-22222"
+  "businessNumber": "1230122222"
 }
 
 ### 로그인 요청 - 사장님

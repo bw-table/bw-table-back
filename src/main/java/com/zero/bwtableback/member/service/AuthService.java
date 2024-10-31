@@ -21,7 +21,7 @@ public interface AuthService {
     // 전화번호 중복 확인
     boolean isPhoneDuplicate(String phone);
 
-    // 사업자 등록번호 중복 확인
+    // 사업자등록번호 중복 확인
     boolean isBusinessNumberDuplicate(String businessNumber);
 
     // 새로운 사용자 회원가입

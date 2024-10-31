@@ -100,7 +100,7 @@ class AuthServiceImplTest {
 
     @Test
     void signup_invalidEmail() {
-        form.setEmail("hel");
+        form.setEmail("noemail");
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             authService.signUp(form);
