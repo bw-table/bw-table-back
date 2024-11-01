@@ -1,6 +1,7 @@
 package com.zero.bwtableback.restaurant.service;
 
-import com.zero.bwtableback.restaurant.dto.RestaurantReqDto;
+import com.zero.bwtableback.restaurant.dto.RestaurantListDto;
+import com.zero.bwtableback.restaurant.dto.RegisterReqDto;
 import com.zero.bwtableback.restaurant.entity.*;
 import com.zero.bwtableback.restaurant.repository.CategoryRepository;
 import com.zero.bwtableback.restaurant.repository.FacilityRepository;
@@ -35,11 +36,11 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     /**
-     * 가게 등록
+     * 식당 등록
      */
     @Override
     @Transactional
-    public Restaurant registerRestaurant(RestaurantReqDto reqDto) {
+    public Restaurant registerRestaurant(RegisterReqDto reqDto) {
 
         System.out.println("가게등록 서비스 코드 start");
         Restaurant restaurant = Restaurant.builder()
@@ -51,8 +52,8 @@ public class RestaurantServiceImpl implements RestaurantService {
                 .build();
 
         // 카테고리 설정
-        if (reqDto.getCategoryId() != null) {
-            Category category = categoryRepository.findById(reqDto.getCategoryId())
+        if (reqDto.getCategory() != null) {
+            Category category = categoryRepository.findByCategoryType(CategoryType.valueOf(reqDto.getCategory()))
                     .orElseThrow(() -> new EntityNotFoundException("Category not found"));
             restaurant.setCategory(category);
         }
@@ -92,14 +93,17 @@ public class RestaurantServiceImpl implements RestaurantService {
 
         // 편의시설 추가
         List<Facility> facilities = reqDto.getFacilities().stream()
-                .map(facilityId -> facilityRepository.findById(facilityId)
-                        .orElseThrow(() -> new EntityNotFoundException("Facility not found")))
+                .map(facilityType -> {
+                    FacilityType type = FacilityType.valueOf(facilityType);
+                    return facilityRepository.findByFacilityType(type)
+                            .orElseThrow(() -> new EntityNotFoundException("Facility not found"));
+                })
                 .collect(Collectors.toList());
         restaurant.setFacilities(facilities);
 
         // 해시태그 추가
         List<Hashtag> hashtags = reqDto.getHashtags().stream()
-                .map(hashtagId -> hashtagRepository.findById(hashtagId)
+                .map(hashtag -> hashtagRepository.findByName(hashtag)
                         .orElseThrow(() -> new EntityNotFoundException("Hashtag not found")))
                 .collect(Collectors.toList());
         restaurant.setHashtags(hashtags);
@@ -111,5 +115,15 @@ public class RestaurantServiceImpl implements RestaurantService {
     /**
      * 모든 식당 조회
      */
-
+    @Override
+    public List<RestaurantListDto> getRestaurants() {
+        List<Restaurant> restaurants = restaurantRepository.findAll();
+        return restaurants.stream()
+                .map(restaurant -> new RestaurantListDto(
+                        restaurant.getId(),
+                        restaurant.getName(),
+                        restaurant.getAddress(),
+                        restaurant.getCategory() != null ? restaurant.getCategory().getId() : null
+                )).collect(Collectors.toList());
+    }
 }

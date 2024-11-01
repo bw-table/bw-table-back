@@ -3,7 +3,7 @@ package com.zero.bwtableback.restaurant.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zero.bwtableback.restaurant.dto.MenuDto;
 import com.zero.bwtableback.restaurant.dto.OperatingHoursDto;
-import com.zero.bwtableback.restaurant.dto.RestaurantReqDto;
+import com.zero.bwtableback.restaurant.dto.RegisterReqDto;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +13,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -27,7 +26,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -53,7 +51,7 @@ public class RestaurantControllerTest {
     @Test
     public void registerRestaurant() throws Exception {
         // 테스트 데이터 생성
-        RestaurantReqDto reqDto = new RestaurantReqDto();
+        RegisterReqDto reqDto = new RegisterReqDto();
         reqDto.setName("맛있는 식당");
         reqDto.setAddress("서울시 강남구");
         reqDto.setContact("010-1234-5678");
