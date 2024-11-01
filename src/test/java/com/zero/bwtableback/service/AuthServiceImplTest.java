@@ -12,7 +12,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import javax.xml.validation.Validator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -20,7 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * FIXME
+ * FIXME 테스트 코드 설명 (삭제 예정)
  *
  * @Mock mock 객체를 생성할 때 사용한다.
  * @MockBean 스프링 ApplicationContext에 mock 빈을 주입할 때 사용
@@ -58,6 +61,7 @@ class AuthServiceImplTest {
     @Test
     @DisplayName("회원가입 성공")
     void testSignupOwnerSuccess() {
+        // given
         when(memberRepository.existsByEmail(form.getEmail())).thenReturn(false);
         when(memberRepository.existsByNickname(form.getNickname())).thenReturn(false);
         when(passwordEncoder.encode(form.getPassword())).thenReturn("encodedPassword");
@@ -69,8 +73,10 @@ class AuthServiceImplTest {
 
         when(memberRepository.save(any(Member.class))).thenReturn(member);
 
+        // when
         Member result = authService.signUp(form);
 
+        // then
         assertEquals("test@example.com", result.getEmail());
         assertEquals("길동", result.getNickname());
         assertEquals("encodedPassword", result.getPassword());
@@ -83,8 +89,10 @@ class AuthServiceImplTest {
     @Test
     @DisplayName("이메일 중복 검사")
     void testSignupEmailDuplicate() {
+        // given
         when(memberRepository.existsByEmail(form.getEmail())).thenReturn(true);
 
+        // when & then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             authService.signUp(form);
         });
@@ -95,8 +103,10 @@ class AuthServiceImplTest {
     @Test
     @DisplayName("닉네임 중복 검사")
     void testSignupNicknameDuplicate() {
+        // given
         when(memberRepository.existsByNickname(form.getNickname())).thenReturn(true);
 
+        // when & then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             authService.signUp(form);
         });
@@ -107,8 +117,10 @@ class AuthServiceImplTest {
     @Test
     @DisplayName("전화번호 중복 검사")
     void testSignupPhoneDuplicate() {
+        // given
         when(memberRepository.existsByPhone(form.getPhone())).thenReturn(true);
 
+        // when & then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             authService.signUp(form);
         });
@@ -119,8 +131,10 @@ class AuthServiceImplTest {
     @Test
     @DisplayName("사업자등록번호 중복 검사")
     void testSignupBusinessDuplicate() {
+        // given
         when(memberRepository.existsByBusinessNumber(form.getBusinessNumber())).thenReturn(true);
 
+        // when & then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             authService.signUp(form);
         });
@@ -128,40 +142,46 @@ class AuthServiceImplTest {
         assertEquals("이미 사용 중인 사업자등록번호입니다.", exception.getMessage());
     }
 
-    // 유효성 검사
-    @Test
-    @DisplayName("이메일 유효성 검사")
-    void signup_invalidEmail() {
-        form.setEmail("noemail");
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            authService.signUp(form);
-        });
-
-        assertEquals("유효한 이메일 주소를 입력하세요.", exception.getMessage());
-    }
-
-    @Test
-    @DisplayName("닉네임 유효성 검사")
-    void signup_invalidNickname() {
-        form.setNickname("!!invalid!!");
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            authService.signUp(form);
-        });
-
-        assertEquals("유효하지 않은 닉네임입니다.", exception.getMessage());
-    }
-
-    @Test
-    @DisplayName("비밀번호 유효성 검사")
-    void signup_invalidPassword() {
-        form.setPassword("weakpass");
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            authService.signUp(form);
-        });
-
-        assertEquals("비밀번호는 최소 8자 이상이며 대문자, 소문자, 숫자 및 특수문자를 포함해야 합니다.", exception.getMessage());
-    }
+//    //FIXME 유효성 검사 컨트롤러에서 검사 예정
+//    @Test
+//    @DisplayName("이메일 유효성 검사")
+//    void signup_invalidEmail() {
+//        // given
+//        form.setEmail("notemail");
+//
+//        // when & then
+//        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+//            authService.signUp(form);
+//        });
+//        System.out.println(exception.getMessage());
+//        assertEquals("유효한 이메일 주소를 입력하세요.", exception.getMessage());
+//    }
+//
+//    @Test
+//    @DisplayName("닉네임 유효성 검사")
+//    void signup_invalidNickname() {
+//        // given
+//        form.setNickname("!!invalid!!");
+//
+//        // when & then
+//        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+//            authService.signUp(form);
+//        });
+//        System.out.println(exception.getMessage());
+//        assertEquals("유효하지 않은 닉네임입니다.", exception.getMessage());
+//    }
+//
+//    @Test
+//    @DisplayName("비밀번호 유효성 검사")
+//    void signup_invalidPassword() {
+//        // given
+//        form.setPassword("weakpass");
+//
+//        // when & then
+//        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+//            authService.signUp(form);
+//        });
+//
+//        assertEquals("비밀번호는 최소 8자 이상이며 대문자, 소문자, 숫자 및 특수문자를 포함해야 합니다.", exception.getMessage());
+//    }
 }

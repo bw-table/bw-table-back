@@ -105,6 +105,7 @@ public class AuthServiceImpl implements AuthService {
     private String cleanPhoneNumber(String phone) {
         return phone.replaceAll("-", "").trim();
     }
+
     // 사업자등록번호 하이픈 제거
     private String cleanBusinessNumber(String businessNumber) {
         return businessNumber.replaceAll("-", "").trim();
