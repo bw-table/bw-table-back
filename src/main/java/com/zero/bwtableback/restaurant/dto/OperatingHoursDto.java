@@ -13,10 +13,7 @@ import java.time.LocalTime;
 @NoArgsConstructor
 public class OperatingHoursDto {
 
-//    private Long id;
     private String dayOfWeek;
     private LocalTime openingTime;
     private LocalTime closingTime;
-
-
 }

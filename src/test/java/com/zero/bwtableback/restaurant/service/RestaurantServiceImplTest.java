@@ -8,19 +8,19 @@ import com.zero.bwtableback.restaurant.repository.CategoryRepository;
 import com.zero.bwtableback.restaurant.repository.FacilityRepository;
 import com.zero.bwtableback.restaurant.repository.HashtagRepository;
 import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
-import com.zero.bwtableback.restaurant.service.RestaurantServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -90,4 +90,5 @@ public class RestaurantServiceImplTest {
     }
 
 
+    // 유효하지 않은 연락처 형식, 카테고리 Id가 null인 경우, 이미지 url 형식 유효성, 운영시간 유효성 검사, 메뉴 항목 유효성 검사 등
 }

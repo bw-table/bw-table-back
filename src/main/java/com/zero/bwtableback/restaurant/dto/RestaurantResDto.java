@@ -15,15 +15,5 @@ public class RestaurantResDto {
 
     private Long id;
     private String name;
-    private String description;
-    private String address;
-    private String contact;
-    private String closedDay;
-    private Long categoryId;
-    private String categoryType;
-    private List<MenuDto> menus;
-    private List<OperatingHoursDto> operatingHours;
-    private List<String> images;
-    private List<Long> facilities;
-    private List<Long> hashtags;
+    private String message;
 }

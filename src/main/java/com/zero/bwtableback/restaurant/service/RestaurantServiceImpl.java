@@ -41,6 +41,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Transactional
     public Restaurant registerRestaurant(RestaurantReqDto reqDto) {
 
+        System.out.println("가게등록 서비스 코드 start");
         Restaurant restaurant = Restaurant.builder()
                 .name(reqDto.getName())
                 .description(reqDto.getDescription())
@@ -103,6 +104,12 @@ public class RestaurantServiceImpl implements RestaurantService {
                 .collect(Collectors.toList());
         restaurant.setHashtags(hashtags);
 
+        System.out.println("레스토랑 등록 서비스 코드");
         return restaurantRepository.save(restaurant);
     }
+
+    /**
+     * 모든 식당 조회
+     */
+
 }
