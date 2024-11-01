@@ -33,7 +33,7 @@ Content-Type: application/json
 
 {
   "loginType": "EMAIL",
-  "email": "owner@example.com",
+  "email": "ownerexample.com",
   "name": "사장님",
   "password": "Owner123!@#",
   "nickname": "샤쟝",

@@ -28,6 +28,8 @@ public class SignUpDto {
     private String password;
 
     @NotBlank(message = "닉네임을 입력하세요.")
+    @Size(min = 2, max = 15, message = "닉네임은 최소 2자 이상, 최대 15자 이하이어야 합니다.")
+    @Pattern(regexp = "^[가-힣a-zA-Z0-9]+$", message = "닉네임은 한글, 영문자, 숫자만 허용됩니다.")
     private String nickname;
 
     @Pattern(regexp = "^\\d{10,15}$", message = "전화번호는 10~15자리 숫자로 입력하세요.")

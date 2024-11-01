@@ -2,9 +2,11 @@ package com.zero.bwtableback.service;
 
 import com.zero.bwtableback.member.dto.SignUpDto;
 import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.member.service.AuthServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,21 +14,17 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
  * FIXME
- * @Mock
- * mock 객체를 생성할 때 사용한다.
  *
- * @MockBean
- * 스프링 ApplicationContext에 mock 빈을 주입할 때 사용
- *
- * @InjectMocks
- * mock 객체를 주입받을 대상에 사용하며, 주입받을 필드에 mock 객체가 자동으로 주입
- *
+ * @Mock mock 객체를 생성할 때 사용한다.
+ * @MockBean 스프링 ApplicationContext에 mock 빈을 주입할 때 사용
+ * @InjectMocks mock 객체를 주입받을 대상에 사용하며, 주입받을 필드에 mock 객체가 자동으로 주입
  * @assertThrows 메서드는 두 개의 인자를 받음
  * 예외 클래스: 발생할 것으로 예상되는 예외의 클래스
  * Executable: 예외가 발생해야 하는 코드 블록입니다. 일반적으로 람다 표현식으로 작성
@@ -49,13 +47,17 @@ class AuthServiceImplTest {
     @BeforeEach
     void setUp() {
         form = new SignUpDto();
+        form.setRole(Role.OWNER); // 사업자등록번호는 조건이 필요하므로 사장님으로 등록
         form.setEmail("test@example.com");
         form.setNickname("길동");
         form.setPassword("Test123@");
+        form.setPhone("01012341234");
+        form.setBusinessNumber("0122233333");
     }
 
     @Test
-    void testSignupMemberSuccess() {
+    @DisplayName("회원가입 성공")
+    void testSignupOwnerSuccess() {
         when(memberRepository.existsByEmail(form.getEmail())).thenReturn(false);
         when(memberRepository.existsByNickname(form.getNickname())).thenReturn(false);
         when(passwordEncoder.encode(form.getPassword())).thenReturn("encodedPassword");
@@ -72,12 +74,15 @@ class AuthServiceImplTest {
         assertEquals("test@example.com", result.getEmail());
         assertEquals("길동", result.getNickname());
         assertEquals("encodedPassword", result.getPassword());
+
         // save 메서드가 한 번 호출되었는지 검증
         verify(memberRepository, times(1)).save(any(Member.class));
     }
 
+    // 중복 검사
     @Test
-    void testSignupMemberEmailDuplicate() {
+    @DisplayName("이메일 중복 검사")
+    void testSignupEmailDuplicate() {
         when(memberRepository.existsByEmail(form.getEmail())).thenReturn(true);
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
@@ -88,7 +93,8 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void testSignupMemberNicknameDuplicate() {
+    @DisplayName("닉네임 중복 검사")
+    void testSignupNicknameDuplicate() {
         when(memberRepository.existsByNickname(form.getNickname())).thenReturn(true);
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
@@ -99,6 +105,32 @@ class AuthServiceImplTest {
     }
 
     @Test
+    @DisplayName("전화번호 중복 검사")
+    void testSignupPhoneDuplicate() {
+        when(memberRepository.existsByPhone(form.getPhone())).thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            authService.signUp(form);
+        });
+
+        assertEquals("이미 사용 중인 전화번호입니다.", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("사업자등록번호 중복 검사")
+    void testSignupBusinessDuplicate() {
+        when(memberRepository.existsByBusinessNumber(form.getBusinessNumber())).thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            authService.signUp(form);
+        });
+
+        assertEquals("이미 사용 중인 사업자등록번호입니다.", exception.getMessage());
+    }
+
+    // 유효성 검사
+    @Test
+    @DisplayName("이메일 유효성 검사")
     void signup_invalidEmail() {
         form.setEmail("noemail");
 
@@ -106,10 +138,11 @@ class AuthServiceImplTest {
             authService.signUp(form);
         });
 
-        assertEquals("유효하지 않은 이메일 형식입니다.", exception.getMessage());
+        assertEquals("유효한 이메일 주소를 입력하세요.", exception.getMessage());
     }
 
     @Test
+    @DisplayName("닉네임 유효성 검사")
     void signup_invalidNickname() {
         form.setNickname("!!invalid!!");
 
@@ -121,6 +154,7 @@ class AuthServiceImplTest {
     }
 
     @Test
+    @DisplayName("비밀번호 유효성 검사")
     void signup_invalidPassword() {
         form.setPassword("weakpass");
 

@@ -87,7 +87,7 @@ public class AuthServiceImpl implements AuthService {
 
             // 사업자등록번호 중복 체크
             if (isBusinessNumberDuplicate(form.getBusinessNumber())) {
-                throw new IllegalArgumentException("이미 사용 중인 사업자 등록번호입니다.");
+                throw new IllegalArgumentException("이미 사용 중인 사업자등록번호입니다.");
             }
         }
 
