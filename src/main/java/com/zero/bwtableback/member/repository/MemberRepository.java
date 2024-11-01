@@ -14,4 +14,8 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     // 소셜 ID로 회원 찾기
     Optional<Member> findBySocialId(String socialId);
+
+    // 회원가입 시 유효성 검사
+    boolean existsByEmail(String email);
+    boolean existsByNickname(String nickname);
 }
