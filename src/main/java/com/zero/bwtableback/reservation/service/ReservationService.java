@@ -26,32 +26,27 @@ public class ReservationService {
 
     private final ReservationRepository reservationRepository;
 
-    // 조건부 필터로 예약 조회
     @Transactional(readOnly = true)
     public Page<ReservationResponseDto> findReservationsWithFilters(Long restaurantId, Long memberId,
                                                                     ReservationStatus reservationStatus, LocalDate reservationDate,
                                                                     LocalTime reservationTime, Pageable pageable) {
 
-        // 필터 조건 생성
         Specification<Reservation> spec = Specification.where(ReservationSpecifications.hasRestaurantId(restaurantId))
                 .and(ReservationSpecifications.hasMemberId(memberId))
                 .and(ReservationSpecifications.hasReservationStatus(reservationStatus))
                 .and(ReservationSpecifications.hasReservationDate(reservationDate))
                 .and(ReservationSpecifications.hasReservationTime(reservationTime));
 
-        // 필터 조건과 페이지네이션 적용해서 조회
         Page<Reservation> reservationPage = reservationRepository.findAll(spec, pageable);
 
-        // 엔티티 리스트를 DTO 리스트로 변환
         List<ReservationResponseDto> responseDtos = reservationPage.getContent().stream()
                 .map(ReservationResponseDto::fromEntity)
                 .collect(Collectors.toList());
 
-        // DTO 리스트를 페이지 형태로 반환
         return new PageImpl<>(responseDtos, pageable, reservationPage.getTotalElements());
     }
 
-    // 특정 예약 상세 조회
+    // TODO: 커스텀 예외 추가 필요
     @Transactional(readOnly = true)
     public ReservationResponseDto getReservationById(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
@@ -60,7 +55,6 @@ public class ReservationService {
         return ReservationResponseDto.fromEntity(reservation);
     }
 
-    // 새로운 예약 생성
     @Transactional
     public ReservationResponseDto createReservation(ReservationRequestDto reservationRequestDto,
                                                     Restaurant restaurant,
@@ -70,7 +64,7 @@ public class ReservationService {
         return ReservationResponseDto.fromEntity(savedReservation);
     }
 
-    // 예약 확정
+    // TODO: 커스텀 예외 추가 필요
     @Transactional
     public ReservationResponseDto confirmReservation(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
@@ -79,7 +73,7 @@ public class ReservationService {
         return ReservationResponseDto.fromEntity(reservation);
     }
 
-    // 고객 취소
+    // TODO: 커스텀 예외 추가 필요
     @Transactional
     public ReservationResponseDto cancelReservationByCustomer(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
@@ -88,7 +82,7 @@ public class ReservationService {
         return ReservationResponseDto.fromEntity(reservation);
     }
 
-    // 가게 취소
+    // TODO: 커스텀 예외 추가 필요
     @Transactional
     public ReservationResponseDto cancelReservationByOwner(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
@@ -97,7 +91,7 @@ public class ReservationService {
         return ReservationResponseDto.fromEntity(reservation);
     }
 
-    // 노쇼 처리
+    // TODO: 커스텀 예외 추가 필요
     @Transactional
     public ReservationResponseDto markReservationAsNoShow(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
@@ -106,7 +100,7 @@ public class ReservationService {
         return ReservationResponseDto.fromEntity(reservation);
     }
 
-    // 방문 완료 처리
+    // TODO: 커스텀 예외 추가 필요
     @Transactional
     public ReservationResponseDto markReservationAsVisited(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
