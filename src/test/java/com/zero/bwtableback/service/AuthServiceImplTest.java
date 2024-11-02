@@ -3,7 +3,7 @@ package com.zero.bwtableback.service;
 import com.zero.bwtableback.member.dto.SignUpDto;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
-import com.zero.bwtableback.member.service.AuthServiceImpl;
+import com.zero.bwtableback.member.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +42,7 @@ class AuthServiceImplTest {
     private BCryptPasswordEncoder passwordEncoder;
 
     @InjectMocks
-    private AuthServiceImpl authService;
+    private AuthService authService;
 
     private SignUpDto form;
 
