@@ -53,7 +53,7 @@ public class AuthService {
         return memberRepository.save(member);
     }
 
-    // 이메일 유효성 검사
+    // FIXME 아래 모든 유효성 검사 @Valid로 처리 예정 (코드리뷰X)
     private void validateEmail(String email) {
         // FIXME Regex 수정 필요
         String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";

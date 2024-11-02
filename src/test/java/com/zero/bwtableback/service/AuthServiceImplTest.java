@@ -32,6 +32,7 @@ import static org.mockito.Mockito.*;
  * Executable: 예외가 발생해야 하는 코드 블록입니다. 일반적으로 람다 표현식으로 작성
  */
 
+// FIXME 이슈번호-#19번에서 테스트 코드 변경 (코드리뷰X)
 @ExtendWith(MockitoExtension.class)
 class AuthServiceImplTest {
 
