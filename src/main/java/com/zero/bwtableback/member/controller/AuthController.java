@@ -8,6 +8,7 @@ import com.zero.bwtableback.member.service.AuthService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,7 +25,7 @@ public class AuthController {
     @PostMapping("/signup")
     public ResponseEntity<Member> signUp(@RequestBody SignUpDto signUpDto) {
         Member member = authService.signUp(signUpDto);
-        return ResponseEntity.ok(member);
+        return ResponseEntity.status(HttpStatus.CREATED).body(member);
     }
 
     /**
@@ -62,6 +63,6 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestParam String email) {
         authService.logout(email);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 }
