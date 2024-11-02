@@ -1,5 +1,7 @@
 package com.zero.bwtableback.member.service;
 
+import com.zero.bwtableback.common.exception.CustomException;
+import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.dto.EmailLoginDto;
 import com.zero.bwtableback.member.dto.SignUpDto;
 import com.zero.bwtableback.member.dto.TokenDto;
@@ -8,7 +10,6 @@ import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.security.jwt.TokenProvider;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -58,29 +59,29 @@ public class AuthService {
         // FIXME Regex 수정 필요
         String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
         if (email == null || email.length() < 3 || email.length() > 50 || !email.matches(emailRegex)) {
-            throw new IllegalArgumentException("유효하지 않은 이메일 형식입니다.");
+            throw new CustomException(ErrorCode.INVALID_EMAIL_FORMAT);
         }
 
         if (isEmailDuplicate(email)) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+            throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
     }
 
     // 닉네임 유효성 검사
     private void validateNickname(String nickname) {
         if (nickname.length() < 2 || nickname.length() > 15 || !nickname.matches("^[a-zA-Z0-9가-힣]+$")) {
-            throw new IllegalArgumentException("유효하지 않은 닉네임입니다.");
+            throw new CustomException(ErrorCode.INVALID_NICKNAME_FORMAT);
         }
 
         if (isNicknameDuplicate(nickname)) {
-            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+            throw new CustomException(ErrorCode.NICKNAME_ALREADY_EXISTS);
         }
     }
 
     // 비밀번호 유효성 검사
     private void validatePassword(String password) {
         if (password.length() < 8 || !password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#])[A-Za-z\\d@$!%*?&#]{8,}$")) {
-            throw new IllegalArgumentException("비밀번호는 최소 8자 이상이며 대문자, 소문자, 숫자 및 특수문자를 포함해야 합니다.");
+            throw new CustomException(ErrorCode.INVALID_PASSWORD_FORMAT);
         }
     }
 
@@ -97,12 +98,12 @@ public class AuthService {
     // 사장님 회원가입 시 사업자등록번호 체크 함수
     private void validateBusinessNumber(SignUpDto form) {
         if (form.getBusinessNumber() == null || form.getBusinessNumber().trim().isEmpty()) {
-            throw new IllegalArgumentException("사업자등록번호는 사장님 역할에 필수입니다.");
+            throw new CustomException(ErrorCode.MISSING_BUSINESS_NUMBER);
         }
 
         // 사업자등록번호 형식 예시: 123-01-11111
         if (form.getBusinessNumber().trim().length() != 12) {
-            throw new IllegalArgumentException("유효하지 않은 사업자 등록번호 형식입니다.");
+            throw new CustomException(ErrorCode.INVALID_BUSINESS_NUMBER_FORMAT);
         }
     }
 
@@ -115,11 +116,11 @@ public class AuthService {
      */
     public TokenDto login(EmailLoginDto loginDto) {
         Member member = memberRepository.findByEmail(loginDto.getEmail())
-                .orElseThrow(() -> new BadCredentialsException("이메일 또는 비밀번호가 유효하지 않습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_CREDENTIALS));
 
         // 비밀번호 확인
         if (!passwordEncoder.matches(loginDto.getPassword(), member.getPassword())) {
-            throw new BadCredentialsException("이메일 또는 비밀번호가 유효하지 않습니다.");
+            throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
         }
 
         // 토큰 생성
@@ -149,7 +150,7 @@ public class AuthService {
      */
     public void logout(String email) {
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
     }
 }
