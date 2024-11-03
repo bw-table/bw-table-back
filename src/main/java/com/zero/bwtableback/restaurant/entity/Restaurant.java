@@ -1,14 +1,15 @@
 package com.zero.bwtableback.restaurant.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
 import java.util.Set;
 
-
 @Getter
 @Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -22,7 +23,6 @@ public class Restaurant {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
     private String description;
 
     @Column(nullable = false)
@@ -31,10 +31,15 @@ public class Restaurant {
     @Column(nullable = false)
     private String contact;
 
-    private String closedDay; // 휴무일
+    private String closedDay; // 정기휴무일(요일)
 
-    @OneToMany(mappedBy = "restaurant")
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
+    @Column(nullable = false)
     private List<OperatingHours> operatingHours;
+
+    private String notice; // 안내 및 유의사항
+
+    private String link; // 홈페이지 링크
 
     @OneToMany(
             mappedBy = "restaurant", // 양방향 관계 설정
@@ -47,7 +52,8 @@ public class Restaurant {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @OneToMany(mappedBy = "restaurant")
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
+    @Column(nullable = false)
     private List<Menu> menus;
 
     @ManyToMany
@@ -65,8 +71,4 @@ public class Restaurant {
             inverseJoinColumns = @JoinColumn(name = "hashtag_id")
     )
     private List<Hashtag> hashtags;
-
-//    private String category;
-//    private String closed_days;
-//    private String hashtag;
 }
