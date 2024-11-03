@@ -37,7 +37,7 @@ import static org.mockito.Mockito.*;
 
 // FIXME 이슈번호-#19번에서 테스트 코드 변경 (코드리뷰X)
 @ExtendWith(MockitoExtension.class)
-class AuthServiceImplTest {
+class AuthServiceTest {
 
     @Mock
     private MemberRepository memberRepository;
@@ -52,14 +52,14 @@ class AuthServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        form = new SignUpReqDto();
-        form.setEmail("test@example.com");
-        form.setName("홍길동");
-        form.setNickname("길동");
-        form.setPassword("Test123@");
-        form.setPhone("01012345678");
-        form.setLoginType(LoginType.EMAIL);
-        form.setRole(Role.GUEST
+        form = new SignUpReqDto(
+                LoginType.EMAIL,
+                Role.GUEST,
+                "test@example.com",
+                "홍길동",
+                "Test123@",
+                "길동",
+                "01012345678"
         );
     }
 

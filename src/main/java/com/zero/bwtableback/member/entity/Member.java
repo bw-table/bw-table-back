@@ -5,11 +5,12 @@ import com.zero.bwtableback.member.dto.SignUpReqDto;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.Locale;
 
 @Entity
 @Getter
-@Setter
+@Setter //FIXME redis 구성 시 삭제
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
