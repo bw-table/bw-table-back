@@ -28,7 +28,6 @@ public class AuthController {
     public ResponseEntity<Boolean> checkEmailDuplicate(@RequestBody String email) {
             boolean isDuplicate = authService.isEmailDuplicate(email);
             return ResponseEntity.ok(isDuplicate);
-
     }
 
     /**
@@ -38,7 +37,6 @@ public class AuthController {
     public ResponseEntity<Boolean> checkNicknameDuplicate(@RequestBody String nickname) {
             boolean isDuplicate = authService.isNicknameDuplicate(nickname);
             return ResponseEntity.ok(isDuplicate);
-
     }
 
     /**
@@ -49,7 +47,6 @@ public class AuthController {
             //TODO String cleanPhone = PhoneNumberUtil.removeHyphens(phone);
             boolean isDuplicate = authService.isPhoneDuplicate(phone);
             return ResponseEntity.ok(isDuplicate);
-
     }
 
     /**

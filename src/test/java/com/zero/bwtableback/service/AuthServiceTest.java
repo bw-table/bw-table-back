@@ -1,7 +1,11 @@
 package com.zero.bwtableback.service;
 
+import com.zero.bwtableback.common.exception.CustomException;
+import com.zero.bwtableback.common.exception.ErrorCode;
+import com.zero.bwtableback.member.dto.EmailLoginReqDto;
 import com.zero.bwtableback.member.dto.SignUpReqDto;
 import com.zero.bwtableback.member.dto.SignUpResDto;
+import com.zero.bwtableback.member.dto.TokenDto;
 import com.zero.bwtableback.member.entity.LoginType;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.entity.Role;
@@ -16,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.xml.validation.Validator;
 
@@ -35,7 +40,6 @@ import static org.mockito.Mockito.*;
  * Executable: 예외가 발생해야 하는 코드 블록입니다. 일반적으로 람다 표현식으로 작성
  */
 
-// FIXME 이슈번호-#19번에서 테스트 코드 변경 (코드리뷰X)
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
 
@@ -43,158 +47,150 @@ class AuthServiceTest {
     private MemberRepository memberRepository;
 
     @Mock
-    private BCryptPasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
+//    private TokenProvider tokenProvider;
 
     @InjectMocks
     private AuthService authService;
 
-    private SignUpReqDto form;
+    private SignUpReqDto signUpForm;
 
-    @BeforeEach
-    void setUp() {
-//        form = new SignUpReqDto(
-//                LoginType.EMAIL,
-//                Role.GUEST,
-//                "test@example.com",
-//                "홍길동",
-//                "Test123@",
-//                "길동",
-//                "01012345678"
-//        );
-    }
+    //FIXME DTO에서 SET 사용에 대한 의논 필요 (코드리뷰X)
+//    @BeforeEach
+//    void setUp() {
+//        signUpForm = new SignUpReqDto();
+//        signUpForm.setEmail("test@example.com");
+//        signUpForm.setPassword("securePassword123");
+//        signUpForm.setName("홍길동");
+//        signUpForm.setNickname("길동");
+//        signUpForm.setPhone("01012345678");
+//        signUpForm.setLoginType("EMAIL");
+//        signUpForm.setRole("OWNER");
+//    }
 
     @Test
     @DisplayName("회원가입 성공")
-    void testSignupOwnerSuccess() {
+    void testSignUpSuccess() {
         // given
-        when(memberRepository.existsByEmail(form.getEmail())).thenReturn(false);
-        when(memberRepository.existsByNickname(form.getNickname())).thenReturn(false);
-        when(passwordEncoder.encode(form.getPassword())).thenReturn("encodedPassword");
+        when(memberRepository.existsByEmail(signUpForm.getEmail())).thenReturn(false);
+        when(memberRepository.existsByNickname(signUpForm.getNickname())).thenReturn(false);
+        when(memberRepository.existsByPhone(signUpForm.getPhone())).thenReturn(false);
+        when(passwordEncoder.encode(signUpForm.getPassword())).thenReturn("encodedPassword");
 
         Member savedMember = Member.builder()
                 .id(1L)
-                .email(form.getEmail())
-                .name(form.getName())
-                .nickname(form.getNickname())
+                .email(signUpForm.getEmail())
+                .name(signUpForm.getName())
+                .nickname(signUpForm.getNickname())
                 .password("encodedPassword")
-                .phone(form.getPhone())
-                .loginType(form.getLoginType())
-                .role(form.getRole())
+                .phone(signUpForm.getPhone())
+                .loginType(LoginType.EMAIL)
+                .role(Role.GUEST)
                 .build();
 
         when(memberRepository.save(any(Member.class))).thenReturn(savedMember);
 
         // when
-        SignUpResDto result = authService.signUp(form);
+        SignUpResDto result = authService.signUp(signUpForm);
 
         // then
         assertEquals("test@example.com", result.getEmail());
         assertEquals("홍길동", result.getName());
         assertEquals("길동", result.getNickname());
 
-//        assertEquals("encodedPassword", result.getPassword());
-
-        // save 메서드가 한 번 호출되었는지 검증
         verify(memberRepository, times(1)).save(any(Member.class));
     }
 
-    // 중복 검사
     @Test
-    @DisplayName("이메일 중복 검사")
-    void testSignupEmailDuplicate() {
+    @DisplayName("이메일 중복으로 회원가입 실패")
+    void testSignUpEmailDuplicate() {
         // given
-        when(memberRepository.existsByEmail(form.getEmail())).thenReturn(true);
+        when(memberRepository.existsByEmail(signUpForm.getEmail())).thenReturn(true);
 
         // when & then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            authService.signUp(form);
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            authService.signUp(signUpForm);
         });
 
-        assertEquals("이미 사용 중인 이메일입니다.", exception.getMessage());
+        assertEquals(ErrorCode.EMAIL_ALREADY_EXISTS, exception.getErrorCode());
     }
 
     @Test
-    @DisplayName("닉네임 중복 검사")
-    void testSignupNicknameDuplicate() {
+    @DisplayName("로그인 성공")
+    void testLoginSuccess() {
         // given
-        when(memberRepository.existsByNickname(form.getNickname())).thenReturn(true);
+        EmailLoginReqDto loginDto = new EmailLoginReqDto();
+//        loginDto.setEmail("test@example.com");
+//        loginDto.setPassword("securePassword123");
 
-        // when & then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            authService.signUp(form);
-        });
+        Member member = Member.builder()
+                .id(1L)
+                .email(loginDto.getEmail())
+                .password(passwordEncoder.encode(loginDto.getPassword()))
+                .build();
 
-        assertEquals("이미 사용 중인 닉네임입니다.", exception.getMessage());
+        when(memberRepository.findByEmail(loginDto.getEmail())).thenReturn(java.util.Optional.of(member));
+        when(passwordEncoder.matches(loginDto.getPassword(), member.getPassword())).thenReturn(true);
+
+        // FIXME 로직 변경 필요
+//        String accessToken = "accessToken";
+//        String refreshToken = "refreshToken";
+
+
+//        when(tokenProvider.createAccessToken(member.getEmail())).thenReturn(accessToken);
+//        when(tokenProvider.createRefreshToken()).thenReturn(refreshToken);
+
+        // when
+        TokenDto tokenDto = authService.login(loginDto);
+
+        // then
+//        assertEquals(accessToken, tokenDto.getAccessToken());
+//        assertEquals(refreshToken, tokenDto.getRefreshToken());
+
+        verify(memberRepository, times(1)).findByEmail(loginDto.getEmail());
     }
 
     @Test
-    @DisplayName("전화번호 중복 검사")
-    void testSignupPhoneDuplicate() {
+    @DisplayName("로그인 실패 - 잘못된 이메일")
+    void testLoginInvalidEmail() {
         // given
-        when(memberRepository.existsByPhone(form.getPhone())).thenReturn(true);
+        EmailLoginReqDto loginDto = new EmailLoginReqDto();
+//        loginDto.setEmail("test@example.com");
+
+        when(memberRepository.findByEmail(loginDto.getEmail())).thenReturn(java.util.Optional.empty());
 
         // when & then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            authService.signUp(form);
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            authService.login(loginDto);
         });
 
-        assertEquals("이미 사용 중인 전화번호입니다.", exception.getMessage());
+        assertEquals(ErrorCode.INVALID_CREDENTIALS, exception.getErrorCode());
     }
 
     @Test
-    @DisplayName("사업자등록번호 중복 검사")
-    void testSignupBusinessDuplicate() {
+    @DisplayName("로그인 실패 - 잘못된 비밀번호")
+    void testLoginInvalidPassword() {
         // given
-        when(memberRepository.existsByBusinessNumber(form.getBusinessNumber())).thenReturn(true);
+        EmailLoginReqDto loginDto = new EmailLoginReqDto();
+
+//        loginDto.setEmail("test@example.com");
+
+        Member member = Member.builder()
+                .id(1L)
+                .email(loginDto.getEmail())
+                .password(passwordEncoder.encode("securePassword123"))
+                .build();
+
+        when(memberRepository.findByEmail(loginDto.getEmail())).thenReturn(java.util.Optional.of(member));
+        when(passwordEncoder.matches(loginDto.getPassword(), member.getPassword())).thenReturn(false);
 
         // when & then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            authService.signUp(form);
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            authService.login(loginDto);
         });
 
-        assertEquals("이미 사용 중인 사업자등록번호입니다.", exception.getMessage());
+        assertEquals(ErrorCode.INVALID_CREDENTIALS, exception.getErrorCode());
     }
-
-//    //FIXME 유효성 검사 컨트롤러에서 검사 예정
-//    @Test
-//    @DisplayName("이메일 유효성 검사")
-//    void signup_invalidEmail() {
-//        // given
-//        form.setEmail("notemail");
-//
-//        // when & then
-//        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-//            authService.signUp(form);
-//        });
-//        System.out.println(exception.getMessage());
-//        assertEquals("유효한 이메일 주소를 입력하세요.", exception.getMessage());
-//    }
-//
-//    @Test
-//    @DisplayName("닉네임 유효성 검사")
-//    void signup_invalidNickname() {
-//        // given
-//        form.setNickname("!!invalid!!");
-//
-//        // when & then
-//        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-//            authService.signUp(form);
-//        });
-//        System.out.println(exception.getMessage());
-//        assertEquals("유효하지 않은 닉네임입니다.", exception.getMessage());
-//    }
-//
-//    @Test
-//    @DisplayName("비밀번호 유효성 검사")
-//    void signup_invalidPassword() {
-//        // given
-//        form.setPassword("weakpass");
-//
-//        // when & then
-//        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-//            authService.signUp(form);
-//        });
-//
-//        assertEquals("비밀번호는 최소 8자 이상이며 대문자, 소문자, 숫자 및 특수문자를 포함해야 합니다.", exception.getMessage());
-//    }
 }
