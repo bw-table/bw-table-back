@@ -61,24 +61,24 @@ public class AuthService {
     public SignUpResDto signUp(SignUpReqDto form) {
         // 이메일 중복 체크
         if (isEmailDuplicate(form.getEmail())) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+            throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
         // 닉네임 중복 체크
         if (isNicknameDuplicate(form.getNickname())) {
-            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+            throw new CustomException(ErrorCode.NICKNAME_ALREADY_EXISTS);
         }
         // 전화번호 중복 체크 및 하이픈 제거
         if (isPhoneDuplicate(form.getPhone())) {
 //            form.setPhone(cleanPhoneNumber(form.getPhone()));
-            throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
+            throw new CustomException(ErrorCode.PHONE_ALREADY_EXISTS);
         }
         // 사업자등록번호 유효성 검사 및 하이픈 제거(사장님 회원가입 시)
-        if (form.getRole() == Role.OWNER) {
+        if ("OWNER".equals(form.getRole())) {
 //            form.setBusinessNumber(cleanBusinessNumber(form.getBusinessNumber()));
 
             // 사업자등록번호 중복 체크
             if (isBusinessNumberDuplicate(form.getBusinessNumber())) {
-                throw new IllegalArgumentException("이미 사용 중인 사업자등록번호입니다.");
+                throw new CustomException(ErrorCode.MISSING_BUSINESS_NUMBER);
             }
         }
 
