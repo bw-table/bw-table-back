@@ -1,9 +1,9 @@
 package com.zero.bwtableback.member.controller;
 
-import com.zero.bwtableback.member.dto.EmailLoginDto;
-import com.zero.bwtableback.member.dto.SignUpDto;
+import com.zero.bwtableback.member.dto.EmailLoginReqDto;
+import com.zero.bwtableback.member.dto.SignUpReqDto;
+import com.zero.bwtableback.member.dto.SignUpResDto;
 import com.zero.bwtableback.member.dto.TokenDto;
-import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.service.AuthService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,16 +23,16 @@ public class AuthController {
      * 회원가입
      */
     @PostMapping("/signup")
-    public ResponseEntity<Member> signUp(@RequestBody SignUpDto signUpDto) {
-        Member member = authService.signUp(signUpDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(member);
+    public ResponseEntity<SignUpResDto> signUp(@RequestBody SignUpReqDto signUpReqDto) {
+        SignUpResDto responseDto = authService.signUp(signUpReqDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 
     /**
      * 로그인
      */
     @PostMapping("/login")
-    public ResponseEntity<TokenDto> login(@RequestBody EmailLoginDto loginDto,
+    public ResponseEntity<TokenDto> login(@RequestBody EmailLoginReqDto loginDto,
                                           HttpServletResponse response) {
         TokenDto tokenDto = authService.login(loginDto);
 

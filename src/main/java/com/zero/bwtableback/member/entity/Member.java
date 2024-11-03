@@ -1,7 +1,7 @@
 package com.zero.bwtableback.member.entity;
 
 import com.zero.bwtableback.common.BaseEntity;
-import com.zero.bwtableback.member.dto.SignUpDto;
+import com.zero.bwtableback.member.dto.SignUpReqDto;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -59,17 +59,17 @@ public class Member extends BaseEntity {
 
     private String refreshToken; //FIXME 임시 사용 후 삭제 예정
 
-    public static Member from(SignUpDto form) {
+    public static Member from(SignUpReqDto form, String encodedPassword) {
         Member.MemberBuilder memberBuilder = Member.builder()
                 .email(form.getEmail().toLowerCase(Locale.ROOT))
                 .loginType(LoginType.EMAIL)
-                .password(form.getPassword())
+                .password(encodedPassword) // 암호화된 비밀번호 사용
                 .name(form.getName())
                 .nickname(form.getNickname())
                 .role(form.getRole())
                 .phone(form.getPhone());
 
-        // 역할이 사장님인 경우 사업자 등록번호 추가
+        // 역할이 사장님인 경우 사업자 등록번호 추가 (필수)
         if (Role.OWNER == form.getRole()) {
             memberBuilder.businessNumber(form.getBusinessNumber());
         }

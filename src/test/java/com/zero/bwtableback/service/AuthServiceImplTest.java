@@ -1,7 +1,10 @@
 package com.zero.bwtableback.service;
 
-import com.zero.bwtableback.member.dto.SignUpDto;
+import com.zero.bwtableback.member.dto.SignUpReqDto;
+import com.zero.bwtableback.member.dto.SignUpResDto;
+import com.zero.bwtableback.member.entity.LoginType;
 import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.member.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,14 +48,19 @@ class AuthServiceImplTest {
     @InjectMocks
     private AuthService authService;
 
-    private SignUpDto form;
+    private SignUpReqDto form;
 
     @BeforeEach
     void setUp() {
-        form = new SignUpDto();
+        form = new SignUpReqDto();
         form.setEmail("test@example.com");
+        form.setName("홍길동");
         form.setNickname("길동");
         form.setPassword("Test123@");
+        form.setPhone("01012345678");
+        form.setLoginType(LoginType.EMAIL);
+        form.setRole(Role.GUEST
+        );
     }
 
     @Test
@@ -61,18 +69,33 @@ class AuthServiceImplTest {
         when(memberRepository.existsByNickname(form.getNickname())).thenReturn(false);
         when(passwordEncoder.encode(form.getPassword())).thenReturn("encodedPassword");
 
-        Member member = new Member();
-        member.setEmail(form.getEmail());
-        member.setNickname(form.getNickname());
-        member.setPassword("encodedPassword");
+        Member savedMember = Member.builder()
+                .id(1L)
+                .email(form.getEmail())
+                .name(form.getName())
+                .nickname(form.getNickname())
+                .password("encodedPassword")
+                .phone(form.getPhone())
+                .loginType(form.getLoginType())
+                .role(form.getRole())
+                .build();
 
-        when(memberRepository.save(any(Member.class))).thenReturn(member);
+        when(memberRepository.save(any(Member.class))).thenReturn(savedMember);
 
-        Member result = authService.signUp(form);
+        SignUpResDto result = authService.signUp(form);
 
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
         assertEquals("test@example.com", result.getEmail());
+        assertEquals("홍길동", result.getName());
         assertEquals("길동", result.getNickname());
-        assertEquals("encodedPassword", result.getPassword());
+        assertEquals("01012345678", result.getPhone());
+        assertEquals(LoginType.EMAIL, result.getLoginType());
+        assertEquals(Role.GUEST, result.getRole());
+
+        // password는 SignUpResponseDto에 포함되지 않아야 함
+        assertThrows(NoSuchMethodException.class, () -> SignUpResDto.class.getDeclaredMethod("getPassword"));
+
         // save 메서드가 한 번 호출되었는지 검증
         verify(memberRepository, times(1)).save(any(Member.class));
     }

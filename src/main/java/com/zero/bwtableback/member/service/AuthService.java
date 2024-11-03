@@ -2,8 +2,9 @@ package com.zero.bwtableback.member.service;
 
 import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
-import com.zero.bwtableback.member.dto.EmailLoginDto;
-import com.zero.bwtableback.member.dto.SignUpDto;
+import com.zero.bwtableback.member.dto.EmailLoginReqDto;
+import com.zero.bwtableback.member.dto.SignUpReqDto;
+import com.zero.bwtableback.member.dto.SignUpResDto;
 import com.zero.bwtableback.member.dto.TokenDto;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.entity.Role;
@@ -29,7 +30,7 @@ public class AuthService {
     /**
      * 새로운 사용자 회원가입
      */
-    public Member signUp(SignUpDto form) {
+    public SignUpResDto signUp(SignUpReqDto form) {
         // 이메일 유효성 검사 및 중복 체크
         validateEmail(form.getEmail());
 
@@ -42,16 +43,16 @@ public class AuthService {
         // 사업자등록번호 유효성 검사 및 하이픈 제거(사장님 회원가입 시)
         if (form.getRole() == Role.OWNER) {
             validateBusinessNumber(form);
-            form.setBusinessNumber(cleanBusinessNumber(form.getBusinessNumber()));
         }
 
         // 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(form.getPassword());
-        form.setPassword(encodedPassword);
 
-        Member member = Member.from(form);
+        Member member = Member.from(form, encodedPassword);
 
-        return memberRepository.save(member);
+        Member savedMember = memberRepository.save(member);
+
+        return SignUpResDto.from(savedMember);
     }
 
     // FIXME 아래 모든 유효성 검사 @Valid로 처리 예정 (코드리뷰X)
@@ -96,7 +97,7 @@ public class AuthService {
     }
 
     // 사장님 회원가입 시 사업자등록번호 체크 함수
-    private void validateBusinessNumber(SignUpDto form) {
+    private void validateBusinessNumber(SignUpReqDto form) {
         if (form.getBusinessNumber() == null || form.getBusinessNumber().trim().isEmpty()) {
             throw new CustomException(ErrorCode.MISSING_BUSINESS_NUMBER);
         }
@@ -114,7 +115,7 @@ public class AuthService {
     /**
      * 사용자 로그인을 처리하고 인증 토큰을 반환
      */
-    public TokenDto login(EmailLoginDto loginDto) {
+    public TokenDto login(EmailLoginReqDto loginDto) {
         Member member = memberRepository.findByEmail(loginDto.getEmail())
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_CREDENTIALS));
 
@@ -129,7 +130,7 @@ public class AuthService {
 
         // TODO 리프레시 토큰 저장 (레디스)
 
-        // FIXME 리프레시 토큰 임시 저장 (Member DB)
+        // FIXME 리프레시 토큰 임시 저장 (Member DB) 저장소 변경 후 setter Member의 @Setter 삭제
         member.setRefreshToken(refreshToken);
         memberRepository.save(member);
 
