@@ -12,6 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 
+/**
+ * 카테고리, 편의시설 초기 데이터 세팅
+ */
 @Component
 public class DatabaseInitializer implements CommandLineRunner {
 

@@ -1,5 +1,6 @@
 package com.zero.bwtableback.restaurant.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -7,7 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 @Getter
-
+@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -32,7 +33,7 @@ public class Restaurant {
 
     private String closedDay; // 정기휴무일(요일)
 
-    @OneToMany(mappedBy = "restaurant")
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
     @Column(nullable = false)
     private List<OperatingHours> operatingHours;
 
@@ -51,7 +52,8 @@ public class Restaurant {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @OneToMany(mappedBy = "restaurant")
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
+    @Column(nullable = false)
     private List<Menu> menus;
 
     @ManyToMany

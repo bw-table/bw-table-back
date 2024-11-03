@@ -5,6 +5,7 @@ import com.zero.bwtableback.restaurant.entity.*;
 import com.zero.bwtableback.restaurant.exception.RestaurantException;
 import com.zero.bwtableback.restaurant.repository.*;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class RestaurantService {
 
     private final RestaurantRepository restaurantRepository;
@@ -23,23 +25,9 @@ public class RestaurantService {
     private final HashtagRepository hashtagRepository;
     private final RestaurantImageRepository restaurantImageRepository;
 
-    public RestaurantService(RestaurantRepository restaurantRepository,
-                             CategoryRepository categoryRepository,
-                             FacilityRepository facilityRepository,
-                             HashtagRepository hashtagRepository,
-                             RestaurantImageRepository restaurantImageRepository) {
-        this.restaurantRepository = restaurantRepository;
-        this.categoryRepository = categoryRepository;
-        this.facilityRepository = facilityRepository;
-        this.hashtagRepository = hashtagRepository;
-        this.restaurantImageRepository = restaurantImageRepository;
-    }
-
     // 등록
     @Transactional
     public Restaurant registerRestaurant(RegisterReqDto reqDto) {
-        System.out.println("registerRestaurant 메서드 호출됨");
-
         // 카테고리 설정
         Category category = null;
         if (reqDto.getCategory() != null) {
@@ -47,13 +35,12 @@ public class RestaurantService {
                 CategoryType categoryType = CategoryType.valueOf(reqDto.getCategory().toUpperCase());
                 category = categoryRepository.findByCategoryType(categoryType)
                         .orElseThrow(() -> new EntityNotFoundException("Category not found"));
-                System.out.println("카테고리 설정됨: " + category);
             } catch (IllegalArgumentException e) {
                 throw new RestaurantException("Invalid category type provided: " + reqDto.getCategory());
             }
         }
 
-        // 중복 체크: 주소와 연락처
+        // 주소, 연락처 중복 체크
         if (restaurantRepository.existsByAddress(reqDto.getAddress())) {
             throw new RestaurantException("Restaurant with this address already exists.");
         }
@@ -68,11 +55,14 @@ public class RestaurantService {
                 .address(reqDto.getAddress())
                 .contact(reqDto.getContact())
                 .closedDay(reqDto.getClosedDay())
+                .link(reqDto.getLink())
+                .notice(reqDto.getNotice())
                 .category(category)
-                .operatingHours(new ArrayList<>()) // 초기화
-                .menus(new ArrayList<>()) // 초기화
-                .facilities(new ArrayList<>()) // 초기화
-                .hashtags(new ArrayList<>()) // 초기화
+                .images(new HashSet<>())
+                .operatingHours(new ArrayList<>())
+                .menus(new ArrayList<>())
+                .facilities(new ArrayList<>())
+                .hashtags(new ArrayList<>())
                 .build();
 
         // 영업시간 설정
@@ -81,9 +71,10 @@ public class RestaurantService {
                         .dayOfWeek(hoursDto.getDayOfWeek())
                         .openingTime(hoursDto.getOpeningTime())
                         .closingTime(hoursDto.getClosingTime())
-                        .restaurant(restaurant) // 레스토랑을 설정
+                        .restaurant(restaurant)
                         .build())
                 .collect(Collectors.toList());
+        restaurant.setOperatingHours(operatingHours);
 
         // 메뉴 설정
         List<Menu> menus = reqDto.getMenus().stream()
@@ -92,9 +83,10 @@ public class RestaurantService {
                         .price(menuDto.getPrice())
                         .description(menuDto.getDescription())
                         .imageUrl(menuDto.getImageUrl())
-                        .restaurant(restaurant) // 레스토랑을 설정
+                        .restaurant(restaurant)
                         .build())
                 .collect(Collectors.toList());
+        restaurant.setMenus(menus);
 
         // 편의시설 설정
         List<Facility> facilities = reqDto.getFacilities().stream()
@@ -104,47 +96,100 @@ public class RestaurantService {
                             .orElseThrow(() -> new EntityNotFoundException("Facility not found"));
                 })
                 .collect(Collectors.toList());
+        restaurant.setFacilities(facilities);
 
         // 해시태그 설정
-        List<Hashtag> hashtagList = reqDto.getHashtags().stream()
+        List<Hashtag> hashtags = reqDto.getHashtags().stream()
                 .map(tag -> hashtagRepository.findByName(tag)
                         .orElseGet(() -> {
                             Hashtag newHashtag = new Hashtag(tag);
                             return hashtagRepository.save(newHashtag);
                         }))
                 .collect(Collectors.toList());
+        restaurant.setHashtags(hashtags);
 
         // 레스토랑 저장
         Restaurant savedRestaurant = restaurantRepository.save(restaurant);
 
-        // 이미지를 설정할 때도 builder 패턴 사용
         Set<RestaurantImage> images = reqDto.getImages().stream()
                 .map(imageUrl -> RestaurantImage.builder()
                         .imageUrl(imageUrl)
-                        .restaurant(savedRestaurant) // savedRestaurant를 설정
+                        .restaurant(savedRestaurant)
                         .build())
                 .collect(Collectors.toSet());
-        restaurantImageRepository.saveAll(images); // 이미지 저장
+        savedRestaurant.setImages(images);
 
-        System.out.println("레스토랑 등록 서비스 코드 종료");
+        if (images.isEmpty()) {
+            System.out.println("No images to save.");
+        } else {
+            restaurantImageRepository.saveAll(images);
+        }
+
         return savedRestaurant;
     }
 
     // 모든 식당 리스트 검색
-    @Transactional(readOnly = true)
     public List<RestaurantListDto> getRestaurants() {
         List<Restaurant> restaurants = restaurantRepository.findAll();
+
         return restaurants.stream()
-                .map(restaurant -> new RestaurantListDto(
-                        restaurant.getId(),
-                        restaurant.getName(),
-                        restaurant.getAddress(),
-                        restaurant.getCategory() != null ? restaurant.getCategory().getCategoryType().name() : null
-                )).collect(Collectors.toList());
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
     }
 
-    // 특정 식당 검색
-    @Transactional(readOnly = true)
+    // 이름으로 식당 검색
+    public List<RestaurantListDto> getRestaurantsByName(String name) {
+        List<Restaurant> restaurants = restaurantRepository.findByNameContainingIgnoreCase(name);
+
+        return restaurants.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    // 업종으로 식당 검색
+    public List<RestaurantListDto> getRestaurantsByCategory(String category) {
+        CategoryType categoryType = convertToCategoryType(category);
+
+        List<Restaurant> restaurants = restaurantRepository.findByCategory_CategoryType(categoryType);
+
+        return restaurants.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    // 해시태그로 식당 검색
+    public List<RestaurantListDto> getRestaurantsByHashtag(String hashtag) {
+        List<Restaurant> restaurants = restaurantRepository.findByHashtags_NameContaining(hashtag);
+
+        return restaurants.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    // Restaurant -> dto로 변환하는 헬퍼 메서드
+    private RestaurantListDto convertToDto(Restaurant restaurant) {
+        return new RestaurantListDto(
+                restaurant.getId(),
+                restaurant.getName(),
+                restaurant.getAddress(),
+                restaurant.getCategory() != null ? restaurant.getCategory().getCategoryType().name() : null
+        );
+    }
+
+    // category String -> categoryType enum 으로 변환하는 헬퍼 메서드
+    private CategoryType convertToCategoryType(String category) {
+        if (category == null) {
+            throw new IllegalArgumentException("Category must not be null");
+        }
+
+        try {
+            return CategoryType.valueOf(category.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid category type: " + category);
+        }
+    }
+
+    // 식당 상세정보 조회
     public RestaurantInfoDto getRestaurantById(Long id) {
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
@@ -160,12 +205,23 @@ public class RestaurantService {
 
         // 메뉴
         List<MenuDto> menus = restaurant.getMenus().stream()
-                .map(menu -> new MenuDto(menu.getName(), menu.getPrice(), menu.getDescription(), menu.getImageUrl()))
+                .map(menu -> new MenuDto(
+                                    menu.getId(),
+                                    menu.getName(),
+                                    menu.getPrice(),
+                                    menu.getDescription(),
+                                    menu.getImageUrl(),
+                                    menu.getRestaurant().getId()))
                 .collect(Collectors.toList());
 
         // 영업시간
         List<OperatingHoursDto> operatingHours = restaurant.getOperatingHours().stream()
-                .map(hours -> new OperatingHoursDto(hours.getDayOfWeek(), hours.getOpeningTime(), hours.getClosingTime()))
+                .map(hours -> new OperatingHoursDto(
+                                    hours.getId(),
+                                    hours.getDayOfWeek(),
+                                    hours.getOpeningTime(),
+                                    hours.getClosingTime(),
+                                    hours.getRestaurant().getId()))
                 .collect(Collectors.toList());
 
         // 편의시설
@@ -183,6 +239,7 @@ public class RestaurantService {
                 .name(restaurant.getName())
                 .description(restaurant.getDescription())
                 .address(restaurant.getAddress())
+                .contact(restaurant.getContact())
                 .closedDay(restaurant.getClosedDay())
                 .category(category)
                 .link(restaurant.getLink())
