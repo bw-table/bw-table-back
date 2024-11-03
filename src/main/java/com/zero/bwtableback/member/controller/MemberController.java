@@ -2,6 +2,7 @@ package com.zero.bwtableback.member.controller;
 
 import com.zero.bwtableback.member.dto.MemberDto;
 import com.zero.bwtableback.member.service.MemberService;
+import com.zero.bwtableback.security.MemberDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,8 +42,8 @@ public class MemberController {
      *  FIXME 코드 리뷰 (X) : 토큰에서 검증과 함께 구현 예정
      */
     @GetMapping("/me")
-    public MemberDto getMyInfo(@AuthenticationPrincipal UserDetails userDetails) {
-        String email = userDetails.getUsername();
+    public MemberDto getMyInfo(@AuthenticationPrincipal MemberDetails memberDetails) {
+        String email = memberDetails.getUsername();
         return memberService.getMyInfo(email);
     }
 }

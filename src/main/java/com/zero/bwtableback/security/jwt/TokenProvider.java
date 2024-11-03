@@ -1,7 +1,10 @@
 package com.zero.bwtableback.security.jwt;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -46,5 +49,41 @@ public class TokenProvider {
                 .compact();
     }
 
-    //TODO 토큰 검증 메소드
+    /**
+     * 요청에서 JWT 토큰을 추출합니다.
+     */
+    public String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization"); // Authorization 헤더에서 토큰 추출
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7); // "Bearer "를 제거하고 토큰 반환
+        }
+        return null; // 유효한 토큰이 없으면 null 반환
+    }
+
+    /**
+     * JWT 토큰의 유효성을 검증합니다.
+     *
+     * 유효한 경우 true, 그렇지 않은 경우 false
+     */
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    /**
+     * JWT 토큰에서 사용자 이름(이메일)을 추출합니다.
+     *
+     * 사용자 이름(이메일) 반환
+     */
+    public String getUsername(String token) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(jwtSecret)
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.getSubject();
+    }
 }
