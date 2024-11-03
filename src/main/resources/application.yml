@@ -1,4 +1,11 @@
 spring:
+  profiles:
+    active: dev
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
   datasource:
     url: jdbc:h2:mem:testdb
     driver-class-name: org.h2.Driver
@@ -6,28 +13,42 @@ spring:
     password:
   jpa:
     hibernate:
-      ddl-auto: create  # ?????? ?? ? ??? ??
-    show-sql: true  # ???? SQL ?? ?? ??
+      ddl-auto: update
+    show-sql: true
   h2:
     console:
       enabled: true
-  security:
-    oauth2:
-      client:
-        registration:
-          kakao:
-            client-id: ${KAKAO_CLIENT_ID}
-            client-secret: ${KAKAO_CLIENT_SECRET}
-            scope:
-              - account_email
-              - profile_nickname
-            authorization-grant-type: authorization_code
-            redirect-uri: http://localhost:8080/login/oauth2/code/kakao
-            client-name: Kakao
-            client-authentication-method: POST
-        provider:
-          kakao:
-            authorization-uri: https://kauth.kakao.com/oauth/authorize
-            token-uri: https://kauth.kakao.com/oauth/token
-            user-info-uri: https://kapi.kakao.com/v2/user/me
-            user-name-attribute: id
+  jwt:
+    secret: ${JWT_SECRET:your-256-bit-secret-key-default} # HS512 알고리즘을 사용할 경우, 비밀 키는 최소 512비트(64바이트) 이상
+    accessTokenValidityInMilliseconds: ${JWT_ACCESS_TOKEN_VALIDITY:3600000}
+    refreshTokenValidityInMilliseconds: ${JWT_REFRESH_TOKEN_VALIDITY:86400000}
+
+#  security:
+#    oauth2:
+#      client:
+#        registration:
+#          kakao:
+#            client-id: ${KAKAO_CLIENT_ID}
+#            client-secret: ${KAKAO_CLIENT_SECRET}
+#            scope:
+#              - account_email
+#              - profile_nickname
+#            authorization-grant-type: authorization_code
+#            redirect-uri: http://localhost:8080/login/oauth2/code/kakao
+#            client-name: Kakao
+#            client-authentication-method: POST
+#        provider:
+#          kakao:
+#            authorization-uri: https://kauth.kakao.com/oauth/authorize
+#            token-uri: https://kauth.kakao.com/oauth/token
+#            user-info-uri: https://kapi.kakao.com/v2/user/me
+#            user-name-attribute: id
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+jwt:
+  secret: ${JWT_SECRET}
+  accessTokenValidityInMilliseconds: ${JWT_ACCESS_TOKEN_VALIDITY}
+  refreshTokenValidityInMilliseconds: ${JWT_REFRESH_TOKEN_VALIDITY}

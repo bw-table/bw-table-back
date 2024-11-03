@@ -1,18 +1,19 @@
 package com.zero.bwtableback.restaurant.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.util.List;
 
-@Entity
 @Getter
-@Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Entity
 @Table(name = "facility")
 public class Facility {
 
@@ -24,5 +25,11 @@ public class Facility {
     private FacilityType facilityType;
 
     @ManyToMany(mappedBy = "facilities")
+    @JsonIgnore
     private List<Restaurant> restaurants;
+
+    public Facility(Long id, FacilityType type) {
+        this.id = id;
+        this.facilityType = type;
+    }
 }
