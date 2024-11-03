@@ -9,6 +9,7 @@ import com.zero.bwtableback.restaurant.service.RestaurantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -78,29 +79,35 @@ public class RestaurantController {
 
     // 모든 식당 조회
     @GetMapping
-    public ResponseEntity<List<RestaurantListDto>> getRestaurants() {
-        List<RestaurantListDto> restaurantList = restaurantService.getRestaurants();
+    public ResponseEntity<List<RestaurantListDto>> getRestaurants(Pageable pageable) {
+        List<RestaurantListDto> restaurantList = restaurantService.getRestaurants(pageable);
         return ResponseEntity.ok(restaurantList);
     }
 
     // 이름으로 식당 검색
     @GetMapping("/search")
-    public ResponseEntity<List<RestaurantListDto>> getRestaurantByName(@RequestParam String name) {
-        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByName(name);
+    public ResponseEntity<List<RestaurantListDto>> getRestaurantByName(
+                                                        @RequestParam String name,
+                                                        Pageable pageable) {
+        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByName(name, pageable);
         return ResponseEntity.ok(restaurants);
     }
 
     // 업종으로 식당 검색
     @GetMapping("/search/categories")
-    public ResponseEntity<List<RestaurantListDto>> getRestaurantsByCategory(@RequestParam String category) {
-        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByCategory(category);
+    public ResponseEntity<List<RestaurantListDto>> getRestaurantsByCategory(
+                                                        @RequestParam String category,
+                                                        Pageable pageable) {
+        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByCategory(category, pageable);
         return ResponseEntity.ok(restaurants);
     }
 
     // 해시태그로 식당 검색
     @GetMapping("/search/hashtags")
-    public ResponseEntity<List<RestaurantListDto>> getRestaurantsByHashtag(@RequestParam String hashtag) {
-        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByHashtag(hashtag);
+    public ResponseEntity<List<RestaurantListDto>> getRestaurantsByHashtag(
+                                                        @RequestParam String hashtag,
+                                                        Pageable pageable) {
+        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByHashtag(hashtag, pageable);
         return ResponseEntity.ok(restaurants);
     }
 
@@ -110,5 +117,4 @@ public class RestaurantController {
         RestaurantInfoDto infoDto = restaurantService.getRestaurantById(id);
         return ResponseEntity.ok(infoDto);
     }
-
 }

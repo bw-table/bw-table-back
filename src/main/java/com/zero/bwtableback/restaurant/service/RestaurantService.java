@@ -6,6 +6,8 @@ import com.zero.bwtableback.restaurant.exception.RestaurantException;
 import com.zero.bwtableback.restaurant.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -129,8 +131,8 @@ public class RestaurantService {
     }
 
     // 모든 식당 리스트 검색
-    public List<RestaurantListDto> getRestaurants() {
-        List<Restaurant> restaurants = restaurantRepository.findAll();
+    public List<RestaurantListDto> getRestaurants(Pageable pageable) {
+        Page<Restaurant> restaurants = restaurantRepository.findAll(pageable);
 
         return restaurants.stream()
                 .map(this::convertToDto)
@@ -138,8 +140,8 @@ public class RestaurantService {
     }
 
     // 이름으로 식당 검색
-    public List<RestaurantListDto> getRestaurantsByName(String name) {
-        List<Restaurant> restaurants = restaurantRepository.findByNameContainingIgnoreCase(name);
+    public List<RestaurantListDto> getRestaurantsByName(String name, Pageable pageable) {
+        Page<Restaurant> restaurants = restaurantRepository.findByNameContainingIgnoreCase(name, pageable);
 
         return restaurants.stream()
                 .map(this::convertToDto)
@@ -147,10 +149,10 @@ public class RestaurantService {
     }
 
     // 업종으로 식당 검색
-    public List<RestaurantListDto> getRestaurantsByCategory(String category) {
+    public List<RestaurantListDto> getRestaurantsByCategory(String category, Pageable pageable) {
         CategoryType categoryType = convertToCategoryType(category);
 
-        List<Restaurant> restaurants = restaurantRepository.findByCategory_CategoryType(categoryType);
+        Page<Restaurant> restaurants = restaurantRepository.findByCategory_CategoryType(categoryType, pageable);
 
         return restaurants.stream()
                 .map(this::convertToDto)
@@ -158,8 +160,8 @@ public class RestaurantService {
     }
 
     // 해시태그로 식당 검색
-    public List<RestaurantListDto> getRestaurantsByHashtag(String hashtag) {
-        List<Restaurant> restaurants = restaurantRepository.findByHashtags_NameContaining(hashtag);
+    public List<RestaurantListDto> getRestaurantsByHashtag(String hashtag, Pageable pageable) {
+        Page<Restaurant> restaurants = restaurantRepository.findByHashtags_NameContaining(hashtag, pageable);
 
         return restaurants.stream()
                 .map(this::convertToDto)
