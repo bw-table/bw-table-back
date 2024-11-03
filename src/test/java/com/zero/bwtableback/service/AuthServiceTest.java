@@ -1,10 +1,12 @@
 package com.zero.bwtableback.service;
 
-import com.zero.bwtableback.member.dto.SignUpDto;
+import com.zero.bwtableback.member.dto.SignUpReqDto;
+import com.zero.bwtableback.member.dto.SignUpResDto;
+import com.zero.bwtableback.member.entity.LoginType;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.repository.MemberRepository;
-import com.zero.bwtableback.member.service.AuthServiceImpl;
+import com.zero.bwtableback.member.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,8 +35,9 @@ import static org.mockito.Mockito.*;
  * Executable: 예외가 발생해야 하는 코드 블록입니다. 일반적으로 람다 표현식으로 작성
  */
 
+// FIXME 이슈번호-#19번에서 테스트 코드 변경 (코드리뷰X)
 @ExtendWith(MockitoExtension.class)
-class AuthServiceImplTest {
+class AuthServiceTest {
 
     @Mock
     private MemberRepository memberRepository;
@@ -43,19 +46,21 @@ class AuthServiceImplTest {
     private BCryptPasswordEncoder passwordEncoder;
 
     @InjectMocks
-    private AuthServiceImpl authService;
+    private AuthService authService;
 
-    private SignUpDto form;
+    private SignUpReqDto form;
 
     @BeforeEach
     void setUp() {
-        form = new SignUpDto();
-        form.setRole(Role.OWNER); // 사업자등록번호는 조건이 필요하므로 사장님으로 등록
-        form.setEmail("test@example.com");
-        form.setNickname("길동");
-        form.setPassword("Test123@");
-        form.setPhone("01012341234");
-        form.setBusinessNumber("0122233333");
+//        form = new SignUpReqDto(
+//                LoginType.EMAIL,
+//                Role.GUEST,
+//                "test@example.com",
+//                "홍길동",
+//                "Test123@",
+//                "길동",
+//                "01012345678"
+//        );
     }
 
     @Test
@@ -66,20 +71,28 @@ class AuthServiceImplTest {
         when(memberRepository.existsByNickname(form.getNickname())).thenReturn(false);
         when(passwordEncoder.encode(form.getPassword())).thenReturn("encodedPassword");
 
-        Member member = new Member();
-        member.setEmail(form.getEmail());
-        member.setNickname(form.getNickname());
-        member.setPassword("encodedPassword");
+        Member savedMember = Member.builder()
+                .id(1L)
+                .email(form.getEmail())
+                .name(form.getName())
+                .nickname(form.getNickname())
+                .password("encodedPassword")
+                .phone(form.getPhone())
+                .loginType(form.getLoginType())
+                .role(form.getRole())
+                .build();
 
-        when(memberRepository.save(any(Member.class))).thenReturn(member);
+        when(memberRepository.save(any(Member.class))).thenReturn(savedMember);
 
         // when
-        Member result = authService.signUp(form);
+        SignUpResDto result = authService.signUp(form);
 
         // then
         assertEquals("test@example.com", result.getEmail());
+        assertEquals("홍길동", result.getName());
         assertEquals("길동", result.getNickname());
-        assertEquals("encodedPassword", result.getPassword());
+
+//        assertEquals("encodedPassword", result.getPassword());
 
         // save 메서드가 한 번 호출되었는지 검증
         verify(memberRepository, times(1)).save(any(Member.class));

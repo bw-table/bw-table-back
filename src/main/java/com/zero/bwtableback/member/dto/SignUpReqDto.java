@@ -2,20 +2,28 @@ package com.zero.bwtableback.member.dto;
 
 import com.zero.bwtableback.member.entity.LoginType;
 import com.zero.bwtableback.member.entity.Role;
+<<<<<<< HEAD:src/main/java/com/zero/bwtableback/member/dto/SignUpDto.java
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+=======
+import lombok.AllArgsConstructor;
+>>>>>>> develop:src/main/java/com/zero/bwtableback/member/dto/SignUpReqDto.java
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
-@Setter
-public class SignUpDto {
+@AllArgsConstructor
+public class SignUpReqDto {
     private LoginType loginType;
+<<<<<<< HEAD:src/main/java/com/zero/bwtableback/member/dto/SignUpDto.java
 
     @NotBlank(message = "이메일을 입력하세요.")
     @Email(message = "유효한 이메일 주소를 입력하세요.")
+=======
+    private Role role;
+>>>>>>> develop:src/main/java/com/zero/bwtableback/member/dto/SignUpReqDto.java
     private String email;
 
     @NotBlank(message = "이름을 입력하세요.")
@@ -34,9 +42,12 @@ public class SignUpDto {
 
     @Pattern(regexp = "^\\d{10,15}$", message = "전화번호는 10~15자리 숫자로 입력하세요.")
     private String phone;
+<<<<<<< HEAD:src/main/java/com/zero/bwtableback/member/dto/SignUpDto.java
 
     private Role role;
 
     @Pattern(regexp = "^\\d{10,12}$", message = "사업자 번호는 10~12자리 숫자로 입력하세요.")
+=======
+>>>>>>> develop:src/main/java/com/zero/bwtableback/member/dto/SignUpReqDto.java
     private String businessNumber;
 }

@@ -8,7 +8,6 @@ import lombok.Setter;
  * JWT와 리프레시 토큰을 포함한 응답 DTO
  */
 @Getter
-@Setter
 @AllArgsConstructor
 public class TokenDto {
     private String accessToken;
