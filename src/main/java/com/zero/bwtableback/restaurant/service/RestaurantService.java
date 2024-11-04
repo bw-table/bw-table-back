@@ -161,6 +161,15 @@ public class RestaurantService {
                 .collect(Collectors.toList());
     }
 
+    // 메뉴로 식당 검색
+    public List<RestaurantListDto> getRestaurantsByMenu(String menu, Pageable pageable) {
+        Page<Restaurant> restaurants = restaurantRepository.findByMenus_NameContaining(menu, pageable);
+
+        return restaurants.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
     // 해시태그로 식당 검색
     public List<RestaurantListDto> getRestaurantsByHashtag(String hashtag, Pageable pageable) {
         Page<Restaurant> restaurants = restaurantRepository.findByHashtags_NameContaining(hashtag, pageable);
@@ -170,12 +179,12 @@ public class RestaurantService {
                 .collect(Collectors.toList());
     }
 
-    // 메뉴로 식당 검색
-    public List<RestaurantListDto> getRestaurantsByMenu(String menu, Pageable pageable) {
-        Page<Restaurant> restaurants = restaurantRepository.findByMenus_NameContaining(menu, pageable);
+    // 해시태그 자동완성
+    public List<String> getHashtagSuggestions(String hashtag) {
+        List<Hashtag> hashtags = hashtagRepository.findTop10ByNameContainingIgnoreCase(hashtag);
 
-        return restaurants.stream()
-                .map(this::convertToDto)
+        return hashtags.stream()
+                .map(Hashtag::getName)
                 .collect(Collectors.toList());
     }
 

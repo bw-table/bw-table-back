@@ -102,6 +102,15 @@ public class RestaurantController {
         return ResponseEntity.ok(restaurants);
     }
 
+    // 메뉴로 식당 검색
+    @GetMapping("/search/menus")
+    public ResponseEntity<List<RestaurantListDto>> getRestaurantsByMenu(
+            @RequestParam String menu,
+            Pageable pageable) {
+        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByMenu(menu, pageable);
+        return ResponseEntity.ok(restaurants);
+    }
+
     // 해시태그로 식당 검색
     @GetMapping("/search/hashtags")
     public ResponseEntity<List<RestaurantListDto>> getRestaurantsByHashtag(
@@ -111,13 +120,11 @@ public class RestaurantController {
         return ResponseEntity.ok(restaurants);
     }
 
-    // 메뉴로 식당 검색
-    @GetMapping("/search/menus")
-    public ResponseEntity<List<RestaurantListDto>> getRestaurantsByMenu(
-                                                        @RequestParam String menu,
-                                                        Pageable pageable) {
-        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByMenu(menu, pageable);
-        return ResponseEntity.ok(restaurants);
+    // 해시태그 자동완성
+    @GetMapping("/search/hashtags/suggestions")
+    public ResponseEntity<List<String>> getHashtagSuggestions(@RequestParam String hashtag) {
+        List<String> suggestions = restaurantService.getHashtagSuggestions(hashtag);
+        return ResponseEntity.ok(suggestions);
     }
 
     // 식당 상세정보 조회
