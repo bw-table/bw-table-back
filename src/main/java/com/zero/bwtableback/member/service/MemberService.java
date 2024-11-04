@@ -3,6 +3,7 @@ package com.zero.bwtableback.member.service;
 import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.dto.MemberDto;
+import com.zero.bwtableback.member.dto.MemberPrivateDto;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,12 +37,11 @@ public class MemberService {
 
     /**
      * 본인 정보 조회
-     * FIXME 코드 리뷰 (X) : 토큰에서 검증과 함께 구현 예정
      */
-    public MemberDto getMyInfo(String email) {
+    public MemberPrivateDto getMyInfo(String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        return convertToDto(member);
+        return convertToPrivateDto(member);
     }
 
     private MemberDto convertToDto(Member member) {
@@ -51,6 +51,21 @@ public class MemberService {
                 member.getName(),
                 member.getNickname(),
                 member.getPhone(),
-                member.getRole());
+                member.getRole(),
+                member.getProfileImage(),
+                member.getBusinessNumber());
+    }
+
+    private MemberPrivateDto convertToPrivateDto(Member member) {
+        return new MemberPrivateDto(
+                member.getId(),
+                member.getEmail(),
+                member.getName(),
+                member.getNickname(),
+                member.getPhone(),
+                member.getRole(),
+                member.getProfileImage(),
+                member.getBusinessNumber(),
+                member.getLoginType());
     }
 }

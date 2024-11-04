@@ -13,4 +13,6 @@ public class MemberDto {
     private String nickname;
     private String phone;
     private Role role;
+    private String profileImage;
+    private String businessNumber; // OWNER 역할일 경우에만
 }

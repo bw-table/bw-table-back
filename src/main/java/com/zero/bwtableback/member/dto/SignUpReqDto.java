@@ -37,6 +37,5 @@ public class SignUpReqDto {
     private String phone;
 
     @Pattern(regexp = "^\\d{10,12}$", message = "사업자 번호는 10~12자리 숫자로 입력하세요.")
-
     private String businessNumber;
 }
