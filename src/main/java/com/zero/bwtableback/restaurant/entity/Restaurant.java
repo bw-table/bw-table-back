@@ -55,7 +55,7 @@ public class Restaurant {
     private Set<RestaurantImage> images;
 
     @ManyToOne
-    @JoinColumn(name = "category_id")
+    @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
