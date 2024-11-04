@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/**
+ * 식당 상세정보 조회 시 응답
+ */
 @Builder
 @Getter
 @AllArgsConstructor

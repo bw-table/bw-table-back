@@ -168,6 +168,15 @@ public class RestaurantService {
                 .collect(Collectors.toList());
     }
 
+    // 메뉴로 식당 검색
+    public List<RestaurantListDto> getRestaurantsByMenu(String menu, Pageable pageable) {
+        Page<Restaurant> restaurants = restaurantRepository.findByMenus_NameContaining(menu, pageable);
+
+        return restaurants.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
     // Restaurant -> dto로 변환하는 헬퍼 메서드
     private RestaurantListDto convertToDto(Restaurant restaurant) {
         return new RestaurantListDto(
