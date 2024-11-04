@@ -30,6 +30,8 @@ public class RestaurantService {
     // 등록
     @Transactional
     public Restaurant registerRestaurant(RegisterReqDto reqDto) {
+        reqDto.validate();
+
         // 카테고리 설정
         Category category = null;
         if (reqDto.getCategory() != null) {
@@ -91,7 +93,7 @@ public class RestaurantService {
         restaurant.setMenus(menus);
 
         // 편의시설 설정
-        List<Facility> facilities = reqDto.getFacilities().stream()
+        List<Facility> facilities =  reqDto.getFacilities().stream()
                 .map(facilityType -> {
                     FacilityType type = FacilityType.valueOf(facilityType);
                     return facilityRepository.findByFacilityType(type)
@@ -183,7 +185,8 @@ public class RestaurantService {
                 restaurant.getId(),
                 restaurant.getName(),
                 restaurant.getAddress(),
-                restaurant.getCategory() != null ? restaurant.getCategory().getCategoryType().name() : null
+                restaurant.getCategory() != null ? restaurant.getCategory().getCategoryType().name() : null,
+                restaurant.getAverageRating()
         );
     }
 

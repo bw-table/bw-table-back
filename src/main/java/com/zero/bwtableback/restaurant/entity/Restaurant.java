@@ -1,6 +1,5 @@
 package com.zero.bwtableback.restaurant.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -29,6 +28,12 @@ public class Restaurant {
     private String address;
 
     @Column(nullable = false)
+    private double latitude; // 위도
+
+    @Column(nullable = false)
+    private double longitude; // 경도
+
+    @Column(nullable = false)
     private String contact;
 
     private String closedDay; // 정기휴무일(요일)
@@ -46,6 +51,7 @@ public class Restaurant {
             cascade = CascadeType.ALL, // 음식점 삭제 시 관련 이미지 함께 삭제
             fetch = FetchType.LAZY // 이미지 필요할 때만 로드
     )
+    @Column(nullable = false)
     private Set<RestaurantImage> images;
 
     @ManyToOne
@@ -71,4 +77,7 @@ public class Restaurant {
             inverseJoinColumns = @JoinColumn(name = "hashtag_id")
     )
     private List<Hashtag> hashtags;
+
+    @Column(nullable = false)
+    private double averageRating; // 평균 평점
 }

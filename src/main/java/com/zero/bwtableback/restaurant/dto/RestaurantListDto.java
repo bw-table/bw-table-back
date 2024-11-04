@@ -14,4 +14,5 @@ public class RestaurantListDto {
     private String name;
     private String address;
     private String category;
+    private double averageRating;
 }

@@ -7,16 +7,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
 public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     boolean existsByAddress(String address);
     boolean existsByContact(String contact);
+
     Page<Restaurant> findByNameContainingIgnoreCase(String name, Pageable pageable);
     Page<Restaurant> findByCategory_CategoryType(CategoryType type, Pageable pageable);
     Page<Restaurant> findByHashtags_NameContaining(String hashtag, Pageable pageable);
-
     Page<Restaurant> findByMenus_NameContaining(String menu, Pageable pageable);
 }

@@ -21,6 +21,8 @@ public class RestaurantInfoDto {
     private String name;
     private String description;
     private String address;
+    private double latitude;
+    private double longitude;
     private String contact;
     private String closedDay;
     private String category;
@@ -31,4 +33,5 @@ public class RestaurantInfoDto {
     private List<String> facilities;
     private List<String> hashtags;
     private List<OperatingHoursDto> operatingHours;
+    private double averageRating;
 }
