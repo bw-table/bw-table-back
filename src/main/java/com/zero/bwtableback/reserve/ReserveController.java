@@ -16,17 +16,14 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/reserve")
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/reserve")
 public class ReserveController {
     private final ReserveService reserveService; // 예약 처리 서비스
     private final HttpSession httpSession; // 세션 관리
 
     /**
-     * 예약 정보를 임시 저장
-     *
-     * @param payload "date": "2024-11-05", "time": "19:00", "people": 2
-     * @return
+     * 예약 정보 생성 및 세션에 임시 저장
      */
     @PostMapping("/create")
     public ResponseEntity<Map<String, Object>> createReservation(@RequestBody Map<String, Object> payload) {
@@ -70,21 +67,28 @@ public class ReserveController {
 
     /**
      * 결제 완료 처리
+     *
+     * KG이니시스 결제 완료와 함께 창이 닫히면서 실행
      */
     @PostMapping("/complete-payment")
     public ResponseEntity<Object> completePayment(@RequestBody PaymentCompleteRequest request) throws IamportResponseException, IOException {
 
-        System.out.println("결제 완료!!");
-        // 아임포트 API를 통해 결제 검증
+        System.out.println("complete-payment!!");
 
+        // 아임포트 API를 통해 결제 검증
         PaymentVerificationResponse verificationResponse = reserveService.verifyPayment(request.getImp_uid());
 
         if (!verificationResponse.isPaid()) {
             return ResponseEntity.badRequest().body("결제가 완료되지 않았습니다.");
         }
 
+        System.out.println(verificationResponse);
+        //TODO Payment 결제 정보 저장
+
         // 예약 확정 로직 (임시 예약 정보 가져오기)
         Reserve temporaryReservation = (Reserve) httpSession.getAttribute("temporaryReservation");
+
+        temporaryReservation.setStatus("CONFIRMED");
 
         if (temporaryReservation == null) {
             return ResponseEntity.badRequest().body("임시 예약 정보를 찾을 수 없습니다.");
@@ -96,28 +100,10 @@ public class ReserveController {
         // 응답 DTO 변환
         ReserveResDto reservationResponseDto = new ReserveResDto(completedReservation);
 
+        // 세션에 저장된 값 삭제
+        httpSession.removeAttribute("temporaryReservation");
+        
         return ResponseEntity.ok(reservationResponseDto);
     }
-
-    /**
-     * 최종 예약 테이블 생성
-     */
-//    @PostMapping("/done")
-//    public ResponseEntity<Object> completeReservation(@RequestBody ReserveDto request) {
-//        // 세션에서 임시 예약 정보를 가져옴
-//        Reserve temporaryReservation = (Reserve) httpSession.getAttribute("temporaryReservation");
-//
-//        if (temporaryReservation == null) {
-//            return ResponseEntity.badRequest().body("임시 예약 정보를 찾을 수 없습니다.");
-//        }
-
-    // 최종 예약 확정 처리
-//        Reserve completedReservation = reserveService.confirmReserve(temporaryReservation, request);
-
-    // 응답 DTO 변환
-//        ReserveResDto reservationResponseDto = new ReserveResDto(completedReservation);
-
-//        return ResponseEntity.ok(reservationResponseDto);
-//        return null;
-//    }
 }
+

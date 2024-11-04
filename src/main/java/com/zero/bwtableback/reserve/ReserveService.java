@@ -10,8 +10,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-
 @Service
 @RequiredArgsConstructor
 public class ReserveService {
@@ -78,13 +76,13 @@ public class ReserveService {
     /**
      * 최종 예약 확정 메서드
      */
-    @Transactional
     public Reserve confirmReserve(Reserve temporaryReserve, PaymentCompleteRequest request) {
         // 필요한 정보로 최종 예약 객체 생성 후 저장
         Reserve completedReserve = new Reserve();
         completedReserve.setDate(temporaryReserve.getDate());
         completedReserve.setTime(temporaryReserve.getTime());
         completedReserve.setPeople(temporaryReserve.getPeople());
+        completedReserve.setStatus(temporaryReserve.getStatus());
 
         return reserveRepository.save(completedReserve); // DB에 저장 후 반환
     }

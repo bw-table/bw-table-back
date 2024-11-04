@@ -78,7 +78,7 @@
     });
 
     document.getElementById('pay-button').addEventListener('click', function () {
-        IMP.init('imp45115062'); // 아임포트 키로 초기화
+        IMP.init('imp45115062'); // 가맹점 식별 코드
 
         IMP.request_pay({
             pg: "html5_inicis", // 올바른 PG사 선택
@@ -112,9 +112,9 @@
             .then(response => response.json())
             .then(data => {
                 console.log("예약 확정 전 데이터: " + JSON.stringify(data, null, 2));
-                if (data.status === "SUCCESS") {
+                if (data.status === "CONFIRMED") {
                     alert("예약이 완료되었습니다!");
-                    window.location.href = "/reservation/complete"; // 예약 완료 페이지로 이동
+
                 } else {
                     alert("예약 확정에 실패하였습니다.");
                 }

@@ -20,4 +20,18 @@ public class PaymentVerificationResponse {
     public boolean isPaid() {
         return "paid".equals(status); // status가 "paid"인 경우 true 반환
     }
+
+    @Override
+    public String toString() {
+        return "PaymentVerificationResponse{" +
+                "imp_uid='" + imp_uid + '\'' +
+                ", merchant_uid='" + merchant_uid + '\'' +
+                ", status='" + status + '\'' +
+                ", amount=" + amount +
+                ", currency='" + currency + '\'' +
+                ", buyer_name='" + buyer_name + '\'' +
+                ", buyer_email='" + buyer_email + '\'' +
+                ", buyer_tel='" + buyer_tel + '\'' +
+                '}';
+    }
 }
