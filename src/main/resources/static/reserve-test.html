@@ -20,6 +20,9 @@
     <label for="people">인원수:</label>
     <input type="number" id="people" min="1" required><br>
 
+    <label for="special_request">요청사항:</label>
+    <input type="text" id="special_request" required><br>
+
     <button id="next-button">다음</button>
 </div>
 
@@ -32,15 +35,17 @@
 
 <script>
     document.getElementById('next-button').addEventListener('click', function () {
-        const date = document.getElementById('date').value;
-        const time = document.getElementById('time').value;
-        const people = document.getElementById('people').value;
+        const reservation_date = document.getElementById('date').value;
+        const reservation_time = document.getElementById('time').value;
+        const number_of_people = document.getElementById('people').value;
+        const special_request = document.getElementById('re').value;
 
         // 예약 정보를 확인하는 부분
         const reservationData = {
-            date: date,
-            time: time,
-            people: people
+            date: reservation_date,
+            time: reservation_time,
+            people: number_of_people,
+            special_request: special_request
         };
 
         // 백엔드의 예약 생성 API 호출
@@ -114,7 +119,7 @@
                 console.log("예약 확정 전 데이터: " + JSON.stringify(data, null, 2));
                 if (data.status === "CONFIRMED") {
                     alert("예약이 완료되었습니다!");
-
+                    // TODO 백엔드에서 페이지 리다이렉션 (소셜로그인도 그렇다)
                 } else {
                     alert("예약 확정에 실패하였습니다.");
                 }

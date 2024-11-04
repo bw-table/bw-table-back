@@ -35,7 +35,9 @@ public class ReserveController {
             people = Integer.parseInt(payload.get("people").toString());  // String으로 변환 후 Integer로 변환
         } catch (NumberFormatException e) {
             return null;
-        } // 문자열을 정수로 변환
+        }
+//        String special_request = (String) payload.get("number_of_people");
+
 
         System.out.println("임식 에약 생성 전");
 
@@ -45,11 +47,7 @@ public class ReserveController {
         // 세션에 임시 예약 정보를 저장
         httpSession.setAttribute("temporaryReservation", temporaryReservation);
 
-        System.out.println("임식 에약 저장 완료");
-
-        System.out.println(date);
-        System.out.println(time);
-        System.out.println(people);
+        System.out.println("임시 에약 저장 완료");
 
         Map<String, Object> response = new HashMap<>();
         response.put("status", "success");
@@ -102,7 +100,7 @@ public class ReserveController {
 
         // 세션에 저장된 값 삭제
         httpSession.removeAttribute("temporaryReservation");
-        
+
         return ResponseEntity.ok(reservationResponseDto);
     }
 }
