@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>예약 결제 테스트</title>
+    <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+    <!-- 아임포트 SDK 추가 -->
+</head>
+<body>
+<h1>예약 및 결제 테스트 페이지</h1>
+<!-- 예약 정보 입력 폼 -->
+<div>
+    <label for="date">날짜:</label>
+    <input type="date" id="date" required><br>
+
+    <label for="time">시간:</label>
+    <input type="time" id="time" required><br>
+
+    <label for="people">인원수:</label>
+    <input type="number" id="people" min="1" required><br>
+
+    <button id="next-button">다음</button>
+</div>
+
+<!-- 예약 정보 확인 부분 -->
+<div id="reservation-details" style="display:none;">
+    <h2>예약 정보 확인</h2>
+    <span id="details"></span><br>
+    <button id="pay-button">확인</button>
+</div>
+
+<script>
+    document.getElementById('next-button').addEventListener('click', function () {
+        const date = document.getElementById('date').value;
+        const time = document.getElementById('time').value;
+        const people = document.getElementById('people').value;
+
+        // 예약 정보를 확인하는 부분
+        const reservationData = {
+            date: date,
+            time: time,
+            people: people
+        };
+
+        // 백엔드의 예약 생성 API 호출
+        fetch('/api/v1/reserve/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(reservationData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    // HTTP 오류 발생 시 에러 처리
+                    return response.json().then(err => {
+                        throw new Error(err.message || '예약 생성에 실패하였습니다.');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(data)
+                if (data.reservationId) {
+                    // 예약이 성공적으로 생성되면 확인 페이지로 이동
+                    document.getElementById('details').innerText = `
+                예약 날짜: ${date}
+                예약 시간: ${time}
+                인원수: ${people}
+            `;
+                    document.getElementById('reservation-details').style.display = 'block'; // reservation-details 보이기
+                } else {
+                    alert("예약 생성에 실패하였습니다.");
+                }
+            })
+            .catch(error => console.error('Error:', error.message)); // error.message로 에러 메시지 출력
+    });
+
+    document.getElementById('pay-button').addEventListener('click', function () {
+        IMP.init('imp45115062'); // 아임포트 키로 초기화
+
+        IMP.request_pay({
+            pg: "html5_inicis", // 올바른 PG사 선택
+            merchant_uid: "order_" + new Date().getTime(), // 주문 ID
+            name: "예약 상품명", // 상품명
+            amount: 100, // 결제 금액 (예시)
+            buyer_email: "buyer@example.com", // 구매자 이메일
+            buyer_name: "홍길동", // 구매자 이름
+            buyer_tel: "010-1234-5678" // 구매자 전화번호
+        }, function (rsp) {
+            if (rsp.success) {
+                // 결제 성공 시 서버에 확인 요청
+                confirmPayment(rsp);
+            } else {
+                alert("결제에 실패하였습니다. 에러 내용: " + rsp.error_msg);
+            }
+        });
+    });
+
+    function confirmPayment(paymentResult) {
+        fetch('/api/v1/reserve/complete-payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                imp_uid: paymentResult.imp_uid,
+                merchant_uid: paymentResult.merchant_uid
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log("예약 확정 전 데이터: " + JSON.stringify(data, null, 2));
+                if (data.status === "SUCCESS") {
+                    alert("예약이 완료되었습니다!");
+                    window.location.href = "/reservation/complete"; // 예약 완료 페이지로 이동
+                } else {
+                    alert("예약 확정에 실패하였습니다.");
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+</script>
+</body>
+</html>
