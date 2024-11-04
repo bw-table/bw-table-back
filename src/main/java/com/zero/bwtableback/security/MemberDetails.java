@@ -2,7 +2,6 @@ package com.zero.bwtableback.security;
 
 import com.zero.bwtableback.member.entity.Member;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 

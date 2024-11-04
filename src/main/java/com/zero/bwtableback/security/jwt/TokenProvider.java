@@ -1,9 +1,8 @@
 package com.zero.bwtableback.security.jwt;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import com.zero.bwtableback.common.exception.CustomException;
+import com.zero.bwtableback.common.exception.ErrorCode;
+import io.jsonwebtoken.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -63,14 +62,18 @@ public class TokenProvider {
     /**
      * JWT 토큰의 유효성을 검증합니다.
      *
-     * 유효한 경우 true, 그렇지 않은 경우 false
+     * 유효한 경우 true
      */
     public boolean validateToken(String token) {
         try {
             Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token);
             return true;
-        } catch (JwtException | IllegalArgumentException e) {
-            return false;
+        } catch (ExpiredJwtException e) {
+            // 만료된 토큰인 경우
+            throw new CustomException(ErrorCode.EXPIRED_TOKEN);
+        } catch (JwtException e) {
+            // JWT 관련 모든 다른 예외를 INVALID_TOKEN으로 처리
+            throw new CustomException(ErrorCode.INVALID_TOKEN);
         }
     }
 
