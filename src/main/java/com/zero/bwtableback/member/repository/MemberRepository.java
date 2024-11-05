@@ -18,4 +18,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     // 회원가입 시 유효성 검사
     boolean existsByEmail(String email);
     boolean existsByNickname(String nickname);
+    boolean existsByPhone(String phone);
+    boolean existsByBusinessNumber(String businessNumber);
+
 }
