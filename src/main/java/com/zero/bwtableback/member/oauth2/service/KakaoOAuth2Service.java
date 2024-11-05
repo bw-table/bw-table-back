@@ -40,6 +40,9 @@ public class KakaoOAuth2Service {
     private final RestTemplate restTemplate;
     private final MemberRepository memberRepository;
 
+    /**
+     * AccessToken 발급과 RefreshToken을 HttpOnly 쿠키에 저장
+     */
     public String getAccessToken(String code) throws JsonProcessingException {
         RestTemplate restTemplate = new RestTemplate();
 
@@ -97,6 +100,9 @@ public class KakaoOAuth2Service {
         }
     }
 
+    /**
+     * 카카오 API로 토큰에 대한 사용자 정보 받기 및 저장
+     */
     public Member getUserInfo(String accessToken) throws
             JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
@@ -151,8 +157,7 @@ public class KakaoOAuth2Service {
         headers.set("Authorization", "Bearer " + accessToken);
 
         HttpEntity<String> entity = new HttpEntity<>(headers);
-
-        // POST 요청으로 로그아웃 수행
+        
         restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
     }
 }
