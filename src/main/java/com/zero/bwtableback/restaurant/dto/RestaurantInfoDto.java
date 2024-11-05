@@ -27,7 +27,7 @@ public class RestaurantInfoDto {
     private String closedDay;
     private String category;
     private String link;
-    private String notice;
+    private String info;
     private List<String> images;
     private List<MenuDto> menus;
     private List<String> facilities;
