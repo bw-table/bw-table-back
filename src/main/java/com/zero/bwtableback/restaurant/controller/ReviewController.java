@@ -5,6 +5,7 @@ import com.zero.bwtableback.restaurant.dto.ReviewResDto;
 import com.zero.bwtableback.restaurant.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -13,14 +14,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/restaurants/review")
+@RequestMapping("/api/restaurants")
 @RequiredArgsConstructor
 public class ReviewController {
 
     private final ReviewService reviewService;
 
     // 리뷰 작성
-    @PostMapping("/{restaurantId}/new")
+    @PostMapping("/{restaurantId}/reviews/new")
     public ResponseEntity<ReviewResDto> createReview(
                                             @PathVariable Long restaurantId,
                                             @RequestBody @Valid ReviewReqDto reqDto) {
@@ -30,10 +31,11 @@ public class ReviewController {
     }
 
     // 식당 리뷰 목록 조회
-    @GetMapping("/{restaurantId}")
+    @GetMapping("/{restaurantId}/reviews")
     public ResponseEntity<List<ReviewResDto>> getReviewsByRestaurant(
-                                            @PathVariable Long restaurantId) {
-        List<ReviewResDto> reviews = reviewService.getReviewsByRestaurant(restaurantId);
+                                            @PathVariable Long restaurantId,
+                                            Pageable pageable) {
+        List<ReviewResDto> reviews = reviewService.getReviewsByRestaurant(restaurantId, pageable);
         return ResponseEntity.ok(reviews);
     }
 

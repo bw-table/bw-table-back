@@ -8,6 +8,8 @@ import com.zero.bwtableback.restaurant.entity.Review;
 import com.zero.bwtableback.restaurant.repository.ReviewRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -42,8 +44,8 @@ public class ReviewService {
     }
 
     // 식당 리뷰 목록 조회
-    public List<ReviewResDto> getReviewsByRestaurant(Long restaurantId) {
-        List<Review> reviews = reviewRepository.findByRestaurant_Id(restaurantId);
+    public List<ReviewResDto> getReviewsByRestaurant(Long restaurantId, Pageable pageable) {
+        Page<Review> reviews = reviewRepository.findByRestaurant_Id(restaurantId, pageable);
 
         return reviews.stream()
                 .map(this::convertToResDto)
