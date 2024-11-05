@@ -12,17 +12,9 @@ import java.util.Map;
  */
 @Setter
 @AllArgsConstructor
-public class KakaoUserInfo {
+public class KakaoUserInfoDto {
 
     private Map<String, Object> attributes;
-
-    public String getProviderId() {
-        return attributes.get("id").toString();
-    }
-
-    public String getProvider() {
-        return "kakao";
-    }
 
     public String getEmail() {
         Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
@@ -47,5 +39,13 @@ public class KakaoUserInfo {
     public String getProfileImage() {
         Map<String, Object> properties = (Map<String, Object>) attributes.get("properties");
         return properties.get("profile_image") != null ? (String) properties.get("profile_image") : null;
+    }
+
+    public String getProviderId() {
+        return attributes.get("id").toString();
+    }
+
+    public String getProvider() {
+        return "kakao";
     }
 }
