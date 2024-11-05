@@ -1,7 +1,6 @@
 package com.zero.bwtableback.member.oauth2.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zero.bwtableback.member.entity.LoginType;
@@ -9,6 +8,7 @@ import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.oauth2.dto.KakaoUserInfoDto;
 import com.zero.bwtableback.member.repository.MemberRepository;
+import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,7 +40,7 @@ public class KakaoOAuth2Service {
     private final RestTemplate restTemplate;
     private final MemberRepository memberRepository;
 
-    public String getAccessToken(String code) {
+    public String getAccessToken(String code) throws JsonProcessingException {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
@@ -66,26 +66,39 @@ public class KakaoOAuth2Service {
 
             String responseBody = response.getBody();
 
-            // JSON 응답에서 access_token 추출
+            // JSON 응답에서 accessToken, refreshToken 추출
+
             if (responseBody != null) {
                 ObjectMapper objectMapper = new ObjectMapper();
-                Map<String, Object> responseMap = objectMapper.readValue(responseBody, new TypeReference<Map<String, Object>>() {
-                });
+                JsonNode jsonNode = objectMapper.readTree(responseBody);
 
-                if (responseMap.containsKey("access_token")) {
-                    return (String) responseMap.get("access_token");
-                } else {
-                    throw new RuntimeException("Access token not found in the response");
+                String accessToken = jsonNode.path("access_token").asText();
+                String refreshToken = jsonNode.path("refresh_token").asText();
+
+
+                // 리프레시 토큰 처리 (예: 쿠키에 저장 또는 데이터베이스에 저장)
+                // 여기서는 쿠키에 저장하는 예시를 보여줍니다.
+                Cookie cookie = new Cookie("refreshToken", refreshToken);
+                cookie.setHttpOnly(true);
+                cookie.setSecure(true);
+                cookie.setPath("/");
+                cookie.setMaxAge(86400); // 1일 동안 유효
+
+                if (accessToken.isEmpty()) {
+                    throw new RuntimeException("응답에서 토큰을 찾을 수 없습니다.");
                 }
+                return accessToken;
             } else {
-                throw new RuntimeException("Response body is null");
+                throw new RuntimeException("응답값이 존재하지 않습니다.");
             }
-        } catch (Exception e) {
+        } catch (
+                Exception e) {
             throw new RuntimeException("오류 발생: " + e.getMessage());
         }
     }
 
-    public Member getUserInfo(String accessToken) throws JsonProcessingException {
+    public Member getUserInfo(String accessToken) throws
+            JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
 
@@ -132,5 +145,14 @@ public class KakaoOAuth2Service {
     }
 
     public void kakaoLogout(String accessToken) {
+        String url = "https://kapi.kakao.com/v1/user/logout";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + accessToken);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        // POST 요청으로 로그아웃 수행
+        restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
     }
 }

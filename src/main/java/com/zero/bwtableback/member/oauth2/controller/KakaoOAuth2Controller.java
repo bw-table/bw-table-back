@@ -40,14 +40,6 @@ public class KakaoOAuth2Controller {
     public ResponseEntity<KakaoLoginResDto> kakaoLogin(@RequestParam String code) throws JsonProcessingException {
         String accessToken = kakaoService.getAccessToken(code);
 
-        // TODO Refresh 토큰 받아오기
-        String refreshToken = accessToken;
-        Cookie cookie = new Cookie("refreshToken", refreshToken);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(86400);
-
         Member member = kakaoService.getUserInfo(accessToken);
 
         KakaoLoginResDto response = new KakaoLoginResDto(
@@ -60,15 +52,20 @@ public class KakaoOAuth2Controller {
 
     @GetMapping("/logout")
     @Operation(summary = "카카오 로그아웃", description = "사용자를 카카오에서 로그아웃 처리합니다.")
-    public String kakaoLogout(HttpSession session) {
+    public ResponseEntity<?> kakaoLogout(HttpSession session) {
         String accessToken = (String) session.getAttribute("kakaoToken");
 
         if (accessToken != null) {
             kakaoService.kakaoLogout(accessToken);
-            session.removeAttribute("kakaoToken"); // 세션에서 토큰 제거
+
+            // 세션에서 토큰 제거
+            session.removeAttribute("kakaoToken");
             session.invalidate(); // 세션 무효화
         }
 
-        return "redirect:/";
+        return ResponseEntity.noContent().build();
     }
+
+    // TODO 엑세스 토큰 검증
+    // TODO 엑세스 토큰 만료 시
 }

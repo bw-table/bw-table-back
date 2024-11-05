@@ -11,8 +11,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     Optional<Member> findByEmail(String email);
 
-    Optional<Member> findBySocialId(String socialId);
-
     // 회원가입 시 유효성 검사
     boolean existsByEmail(String email);
 
