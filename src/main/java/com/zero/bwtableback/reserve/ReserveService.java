@@ -3,17 +3,28 @@ package com.zero.bwtableback.reserve;
 import com.siot.IamportRestClient.IamportClient;
 import com.siot.IamportRestClient.response.IamportResponse;
 import com.siot.IamportRestClient.response.Payment;
+import com.zero.bwtableback.common.exception.CustomException;
+import com.zero.bwtableback.common.exception.ErrorCode;
+import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.payment.PaymentCompleteRequest;
+import com.zero.bwtableback.reservation.entity.ReservationStatus;
+import com.zero.bwtableback.restaurant.entity.Restaurant;
+import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class ReserveService {
+    private final MemberRepository memberRepository;
+    private final RestaurantRepository restaurantRepository;
     private final ReserveRepository reserveRepository;
+
+    private final HttpSession httpSession;
 
     @Value("${IMP_API_KEY}")
     private String apiKey;
@@ -31,13 +42,32 @@ public class ReserveService {
     /**
      * 임시 예약 생성 메서드
      */
-    public Reserve createReservation(String date, String time, Integer people) {
+    public Reserve createReservation(String date, String time, Integer people, String specialRequest) {
         Reserve reservation = Reserve.builder()
                 .date(date)
                 .time(time)
                 .people(people)
+                .specialRequest(specialRequest)
+                .status(ReservationStatus.CONFIRMED)
                 .build();
         return reservation; // 임시 예약 객체 반환 (세션에 저장할 것임)
+    }
+
+    /**
+     * 반환 값 생성
+     */
+    public ReserveCreateResDto createReserveResponseRes(String email, Long restaurantId) {
+        // 회원 정보
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        // 가게 정보
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new RuntimeException("레스토랑 없습니다."));
+
+        // 객체에 담기
+        ReserveCreateResDto response = new ReserveCreateResDto(member, restaurant);
+
+        return response;
     }
 
     /**
@@ -76,14 +106,25 @@ public class ReserveService {
     /**
      * 최종 예약 확정 메서드
      */
-    public Reserve confirmReserve(Reserve temporaryReserve, PaymentCompleteRequest request) {
-        // 필요한 정보로 최종 예약 객체 생성 후 저장
-        Reserve completedReserve = new Reserve();
-        completedReserve.setDate(temporaryReserve.getDate());
-        completedReserve.setTime(temporaryReserve.getTime());
-        completedReserve.setPeople(temporaryReserve.getPeople());
-        completedReserve.setStatus(temporaryReserve.getStatus());
+    public ReserveConfirmedResDto confirmReserve(Reserve temporaryReserve, PaymentCompleteRequest request) {
+        System.out.println(request);
+        // TODO payment에 저장
 
-        return reserveRepository.save(completedReserve); // DB에 저장 후 반환
+        // 가게 정보
+        Restaurant restaurant = restaurantRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("레스토랑 없습니다."));
+
+        // 필요한 정보로 최종 예약 객체 생성 후 저장
+        ReserveConfirmedResDto response = new ReserveConfirmedResDto(
+                restaurant,
+                temporaryReserve
+        );
+
+        reserveRepository.save(temporaryReserve); // DB에 저장 후 반환
+
+        // 세션에 저장된 값 삭제
+        httpSession.removeAttribute("temporaryReservation");
+
+        return response;
     }
 }

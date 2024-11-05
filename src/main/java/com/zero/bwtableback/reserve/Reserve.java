@@ -1,5 +1,6 @@
 package com.zero.bwtableback.reserve;
 
+import com.zero.bwtableback.reservation.entity.ReservationStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,7 +25,8 @@ public class Reserve {
     private String date; // 예약 날짜
     private String time; // 예약 시간
     private Integer people; // 인원 수
-    private String status; // 예약 상태
+    private String specialRequest;
+    private ReservationStatus status; // 예약 상태
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt; // 생성 시간

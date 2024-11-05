@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>예약 결제 테스트</title>
     <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
-    <!-- 아임포트 SDK 추가 -->
 </head>
 <body>
 <h1>예약 및 결제 테스트 페이지</h1>
+
 <!-- 예약 정보 입력 폼 -->
 <div>
     <label for="date">날짜:</label>
@@ -21,7 +21,7 @@
     <input type="number" id="people" min="1" required><br>
 
     <label for="special_request">요청사항:</label>
-    <input type="text" id="special_request" required><br>
+    <input type="text" id="special_request"><br>
 
     <button id="next-button">다음</button>
 </div>
@@ -34,6 +34,8 @@
 </div>
 
 <script>
+    let reservationData; // 전역 변수로 선언
+
     document.getElementById('next-button').addEventListener('click', function () {
         const reservation_date = document.getElementById('date').value;
         const reservation_time = document.getElementById('time').value;
@@ -41,60 +43,37 @@
         const special_request = document.getElementById('special_request').value;
 
         // 예약 정보를 확인하는 부분
-        const reservationData = {
+        reservationData = { // 전역 변수에 저장
             date: reservation_date,
             time: reservation_time,
             people: number_of_people,
             special_request: special_request
         };
 
-        // 백엔드의 예약 생성 API 호출
-        fetch('/api/v1/reserve/create', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(reservationData)
-        })
-            .then(response => {
-                if (!response.ok) {
-                    // HTTP 오류 발생 시 에러 처리
-                    return response.json().then(err => {
-                        throw new Error(err.message || '예약 생성에 실패하였습니다.');
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log(data)
-                if (data) {
-                    // 예약이 성공적으로 생성되면 확인 페이지로 이동
-                    document.getElementById('details').innerText = `
-                    예약 날짜: ${reservationData.date}
-                    예약 시간: ${reservationData.time}
-                    인원수: ${reservationData.people}
-                    요청사항: ${special_request}
-            `;
-                    document.getElementById('reservation-details').style.display = 'block'; // reservation-details 보이기
-                } else {
-                    alert("예약 생성에 실패하였습니다.");
-                }
-            })
-            .catch(error => console.error('Error:', error.message)); // error.message로 에러 메시지 출력
+        // 예약 정보 표시
+        document.getElementById('details').innerText = `
+            예약 날짜: ${reservation_date}
+            예약 시간: ${reservation_time}
+            인원수: ${number_of_people}
+            요청사항: ${special_request}
+        `;
+        document.getElementById('reservation-details').style.display = 'block'; // reservation-details 보이기
     });
 
     document.getElementById('pay-button').addEventListener('click', function () {
+        // 아임포트 결제 요청
         IMP.init('imp45115062'); // 가맹점 식별 코드
 
         IMP.request_pay({
-            pg: "html5_inicis", // 올바른 PG사 선택
+            pg: "html5_inicis", // PG사 선택(고정)
             merchant_uid: "order_" + new Date().getTime(), // 주문 ID
             name: "트리드", // 가게명
             amount: 100, // 결제 금액 (예약금)
             buyer_email: "buyer@example.com", // 구매자 이메일
             buyer_name: "홍길동", // 구매자 이름
             buyer_tel: "010-1234-5678" // 구매자 전화번호
-        }, function (rsp) {
+        }, function (rsp) { // 결제 성공 시 rsp 응답(imp_uid, merchant_uid, 예약 정보) 객체 반환
+            console.log(rsp)
             if (rsp.success) {
                 // 결제 성공 시 서버에 확인 요청
                 confirmPayment(rsp);
@@ -105,36 +84,30 @@
     });
 
     function confirmPayment(paymentResult) {
-        fetch('/api/v1/reserve/complete-payment', {
+        // 결제 정보와 예약 정보를 모두 포함
+        const requestBody = {
+            paymentResult,
+            ...reservationData // 전역 변수에서 예약 데이터 가져오기
+        };
+
+        fetch('/api/v1/reserve/create-and-pay', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                imp_uid: paymentResult.imp_uid,
-                merchant_uid: paymentResult.merchant_uid
-            })
+            body: JSON.stringify(requestBody) // 결제 정보와 예약 정보를 포함한 요청 본문
         })
-            .then(response => {
-                // 응답이 성공적인지 확인
-                if (!response.ok) {
-                    // HTTP 오류 발생 시 에러 처리
-                    return response.json().then(err => {
-                        throw new Error(err.message || '예약 생성에 실패하였습니다.');
-                    });
-                }
-                return response.json(); // 성공적인 응답일 경우 JSON 변환
-            })
+            .then(response => response.json())
             .then(data => {
-                if (data.reserve.status === "CONFIRMED") {
-                    console.log(data);
+                console.log("예약 확정 전 데이터: " + JSON.stringify(data, null, 2));
+                if (data.status === "CONFIRMED") {
                     alert("예약이 완료되었습니다!");
-                    // 페이지 리다이렉션
+                    // TODO: 페이지 리다이렉션 또는 다른 처리
                 } else {
                     alert("예약 확정에 실패하였습니다.");
                 }
             })
-            .catch(error => console.error('Error:', error.message)); // 에러 메시지 출력
+            .catch(error => console.error('Error:', error));
     }
 </script>
 </body>
