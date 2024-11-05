@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Set;
+
 @Getter
 @Builder
 @AllArgsConstructor
@@ -25,6 +27,13 @@ public class Review extends BaseEntity {
 
     @Column(nullable = false)
     private int rating;
+
+    @OneToMany(
+            mappedBy = "review",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY
+    )
+    private Set<ReviewImage> images;
 
     @ManyToOne
     @JoinColumn(name = "restaurant_id", nullable = false)

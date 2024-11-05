@@ -1,7 +1,9 @@
 package com.zero.bwtableback.restaurant.controller;
 
+import com.zero.bwtableback.restaurant.dto.ReviewInfoDto;
 import com.zero.bwtableback.restaurant.dto.ReviewReqDto;
 import com.zero.bwtableback.restaurant.dto.ReviewResDto;
+import com.zero.bwtableback.restaurant.entity.Review;
 import com.zero.bwtableback.restaurant.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,18 +27,26 @@ public class ReviewController {
     public ResponseEntity<ReviewResDto> createReview(
                                             @PathVariable Long restaurantId,
                                             @RequestBody @Valid ReviewReqDto reqDto) {
-        System.out.println("createReview 컨트롤러 호출");
-        ReviewResDto review = reviewService.createReview(restaurantId, reqDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(review);
+        ReviewResDto resDto = reviewService.createReview(restaurantId, reqDto);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(resDto);
     }
 
     // 식당 리뷰 목록 조회
     @GetMapping("/{restaurantId}/reviews")
-    public ResponseEntity<List<ReviewResDto>> getReviewsByRestaurant(
+    public ResponseEntity<List<ReviewInfoDto>> getReviewsByRestaurant(
                                             @PathVariable Long restaurantId,
                                             Pageable pageable) {
-        List<ReviewResDto> reviews = reviewService.getReviewsByRestaurant(restaurantId, pageable);
+        List<ReviewInfoDto> reviews = reviewService.getReviewsByRestaurant(restaurantId, pageable);
         return ResponseEntity.ok(reviews);
+    }
+
+    // 리뷰 상세 조회
+    @GetMapping("/reviews/{id}")
+    public ResponseEntity<ReviewInfoDto> getReviewById(@PathVariable Long id) {
+        ReviewInfoDto reviewInfo = reviewService.getReviewById(id);
+
+        return ResponseEntity.ok(reviewInfo);
     }
 
 }

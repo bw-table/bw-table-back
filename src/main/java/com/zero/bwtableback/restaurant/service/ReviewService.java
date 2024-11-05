@@ -1,5 +1,6 @@
 package com.zero.bwtableback.restaurant.service;
 
+import com.zero.bwtableback.restaurant.dto.ReviewInfoDto;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import com.zero.bwtableback.restaurant.dto.ReviewReqDto;
@@ -25,8 +26,6 @@ public class ReviewService {
     // 리뷰 작성
     public ReviewResDto createReview(Long restaurantId, ReviewReqDto reqDto) {
 
-        System.out.println("createReview 서비스 메서드 호출");
-
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found with id: " + restaurantId));
 
@@ -38,27 +37,41 @@ public class ReviewService {
 
         Review savedReview = reviewRepository.save(review);
 
-        System.out.println("createReview 완료");
-
-        return convertToResDto(savedReview);
+        return ReviewResDto.builder()
+                .id(savedReview.getId())
+                .restaurantId(savedReview.getRestaurant().getId())
+                .message("Review and rating added successfully")
+                .build();
     }
 
     // 식당 리뷰 목록 조회
-    public List<ReviewResDto> getReviewsByRestaurant(Long restaurantId, Pageable pageable) {
+    public List<ReviewInfoDto> getReviewsByRestaurant(Long restaurantId, Pageable pageable) {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new EntityNotFoundException("Restaurant not found with id: " + restaurantId));
+
         Page<Review> reviews = reviewRepository.findByRestaurant_Id(restaurantId, pageable);
 
         return reviews.stream()
-                .map(this::convertToResDto)
+                .map(this::convertToInfoDto)
                 .collect(Collectors.toList());
     }
 
-    private ReviewResDto convertToResDto(Review review) {
-        return ReviewResDto.builder()
+    // 리뷰 상세 조회
+    public ReviewInfoDto getReviewById(Long id) {
+        Review review = reviewRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Review not found with id: " + id));
+
+        return convertToInfoDto(review);
+    }
+
+    private ReviewInfoDto convertToInfoDto(Review review) {
+        return ReviewInfoDto.builder()
                 .id(review.getId())
                 .content(review.getContent())
                 .rating(review.getRating())
                 .createdAt(review.getCreatedAt())
+                .updatedAt(review.getUpdatedAt())
+                .restaurantId(review.getRestaurant().getId())
                 .build();
     }
-
 }
