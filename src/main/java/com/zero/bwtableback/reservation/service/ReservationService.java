@@ -34,10 +34,12 @@ public class ReservationService {
     private final MemberRepository memberRepository;
 
     @Transactional(readOnly = true)
-    public Page<ReservationResponseDto> findReservationsWithFilters(Long restaurantId, Long memberId,
+    public Page<ReservationResponseDto> findReservationsWithFilters(Long restaurantId, 
+                                                                    Long memberId,
                                                                     ReservationStatus reservationStatus,
                                                                     LocalDate reservationDate,
-                                                                    LocalTime reservationTime, Pageable pageable) {
+                                                                    LocalTime reservationTime, 
+                                                                    Pageable pageable) {
 
         Specification<Reservation> spec = Specification.where(ReservationSpecifications.hasRestaurantId(restaurantId))
                 .and(ReservationSpecifications.hasMemberId(memberId))

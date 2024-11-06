@@ -9,12 +9,16 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
     // 회원 관련 오류
     INVALID_EMAIL_FORMAT(HttpStatus.BAD_REQUEST, "유효하지 않은 이메일 형식입니다."),
-    EMAIL_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 이메일입니다."),
     INVALID_NICKNAME_FORMAT(HttpStatus.BAD_REQUEST, "유효하지 않은 닉네임입니다."),
-    NICKNAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 닉네임입니다."),
     INVALID_PASSWORD_FORMAT(HttpStatus.BAD_REQUEST, "비밀번호는 최소 8자 이상이며 대문자, 소문자, 숫자 및 특수문자를 포함해야 합니다."),
-    MISSING_BUSINESS_NUMBER(HttpStatus.BAD_REQUEST, "사업자등록번호는 사장님 역할에 필수입니다."),
     INVALID_BUSINESS_NUMBER_FORMAT(HttpStatus.BAD_REQUEST, "유효하지 않은 사업자 등록번호 형식입니다."),
+
+    MISSING_BUSINESS_NUMBER(HttpStatus.BAD_REQUEST, "사업자등록번호는 사장님 역할에 필수입니다."),
+
+    EMAIL_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 이메일입니다."),
+    NICKNAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 닉네임입니다."),
+    PHONE_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 전화번호입니다."),
+    BUSINESS_NUMBER_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 사업자등록번호입니다."),
 
     // 인증 관련 오류
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 유효하지 않습니다."),
@@ -42,6 +46,9 @@ public enum ErrorCode {
     INVALID_STATUS_NO_SHOW(HttpStatus.CONFLICT, "노쇼로 변경은 확정된 예약에 대해서만 가능합니다."),
     INVALID_STATUS_VISITED(HttpStatus.CONFLICT, "방문 완료로 변경은 확정된 예약에 대해서만 가능합니다."),
     CUSTOMER_CANCEL_TOO_LATE(HttpStatus.FORBIDDEN, "예약일 3일 전까지만 취소할 수 있습니다."),
+
+  
+    EMPTY_TOKEN(HttpStatus.UNAUTHORIZED, "토큰이 비어있습니다."),
 
     // 기타 오류
     UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),

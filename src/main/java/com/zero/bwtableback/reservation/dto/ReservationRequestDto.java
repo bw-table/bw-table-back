@@ -30,6 +30,7 @@ public record ReservationRequestDto(
         if (reservationTime.isBefore(LocalTime.now())) {
             throw new CustomException(INVALID_RESERVATION_TIME);
         }
+        
     }
 
     public static Reservation toEntity(ReservationRequestDto dto, Restaurant restaurant, Member member) {

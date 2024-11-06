@@ -65,7 +65,7 @@ public class Reservation extends BaseEntity {
     @Column(nullable = false)
     private ReservationStatus reservationStatus;
 
-    // Payment 엔티티 미작성으로 주석 처리
+    // Payment, Notification 엔티티 미작성으로 주석 처리
 //    @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL)
 //    private List<Payment> payments;
 //
@@ -113,6 +113,7 @@ public class Reservation extends BaseEntity {
             throw new CustomException(INVALID_STATUS_VISITED);
         }
         this.reservationStatus = ReservationStatus.VISITED;
+
     }
 
 }
