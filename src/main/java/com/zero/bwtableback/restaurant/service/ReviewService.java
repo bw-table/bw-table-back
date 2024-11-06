@@ -1,6 +1,7 @@
 package com.zero.bwtableback.restaurant.service;
 
 import com.zero.bwtableback.restaurant.dto.ReviewInfoDto;
+import com.zero.bwtableback.restaurant.dto.ReviewUpdateReqDto;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.entity.ReviewImage;
 import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
@@ -92,5 +94,64 @@ public class ReviewService {
                 .updatedAt(review.getUpdatedAt())
                 .restaurantId(review.getRestaurant().getId())
                 .build();
+    }
+
+    // 리뷰 수정
+    // TODO: 방문일 3일 이내에만 수정 가능하도록 하는 코드 추가
+    @Transactional
+    public ReviewResDto updateReview(Long reviewId, Long restaurantId, ReviewUpdateReqDto reqDto) {
+        Review review = findRestaurantAndReview(reviewId, restaurantId);
+
+        Review updatedReview = review.toBuilder()
+                .content(reqDto.getContent() != null ? reqDto.getContent() : review.getContent())
+                .rating(reqDto.getRating() != null ? reqDto.getRating() : review.getRating())
+                .build();
+
+        if (reqDto.getImages() != null && !reqDto.getImages().isEmpty()) {
+            reviewImageRepository.deleteByReviewId(reviewId);
+
+            Set<ReviewImage> newImages = new HashSet<>();
+            for (String imageUrl: reqDto.getImages()) {
+                newImages.add(new ReviewImage(imageUrl, updatedReview));
+            }
+
+            updatedReview = updatedReview.toBuilder()
+                    .images(newImages)
+                    .build();
+        }
+
+        Review savedReview = reviewRepository.save(updatedReview);
+
+        ReviewResDto resDto = new ReviewResDto(
+                savedReview.getId(),
+                restaurantId,
+                "Review updated successfully"
+        );
+        return resDto;
+    }
+
+    // 리뷰 삭제
+    @Transactional
+    public void deleteReview(Long reviewId, Long restaurantId) {
+        findRestaurantAndReview(reviewId, restaurantId);
+        Review review = findRestaurantAndReview(reviewId, restaurantId);
+
+        reviewRepository.delete(review);
+        reviewImageRepository.deleteByReviewId(reviewId);
+    }
+
+    // 레스토랑, 리뷰 검증
+    private Review findRestaurantAndReview(Long reviewId, Long restaurantId) {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new EntityNotFoundException("Restaurant not found with id: " + restaurantId));
+
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new EntityNotFoundException("Review not found with id: " + reviewId));
+
+        if (!review.getRestaurant().getId().equals(restaurantId)) {
+            throw new IllegalArgumentException("해당 레스토랑의 리뷰가 아닙니다");
+        }
+
+        return review;
     }
 }

@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 import java.util.Set;
 
 @Getter
-@Builder
+@Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
