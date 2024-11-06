@@ -24,6 +24,24 @@ public enum ErrorCode {
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "만료된 토큰입니다."),
 
+    // 예약 생성 관련 오류
+    INVALID_PEOPLE_COUNT(HttpStatus.BAD_REQUEST, "인원 설정은 최소 한 명입니다."),
+    INVALID_RESERVATION_DATE(HttpStatus.BAD_REQUEST, "현재보다 과거의 날짜는 예약이 불가합니다."),
+    INVALID_RESERVATION_TIME(HttpStatus.BAD_REQUEST, "현재보다 과거의 시간은 예약이 불가합니다."),
+
+    // 예약 내역 조회 관련 오류
+    RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 예약을 찾을 수 없습니다."),
+    RESTAURANT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 가게를 찾을 수 없습니다."),
+    MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 회원을 찾을 수 없습니다."),
+    RESERVATION_FULL(HttpStatus.CONFLICT, "해당 시간대 예약이 마감되었습니다."),
+
+    // 예약 상태 변경 관련 오류
+    INVALID_STATUS_CONFIRM(HttpStatus.CONFLICT, "이미 확정되었거나, 취소, 노쇼, 방문 완료된 예약은 다시 확정할 수 없습니다."),
+    INVALID_STATUS_CUSTOMER_CANCEL(HttpStatus.CONFLICT, "고객 취소는 확정된 예약에 대해서만 가능합니다."),
+    INVALID_STATUS_OWNER_CANCEL(HttpStatus.CONFLICT, "가게 취소는 확정된 예약에 대해서만 가능합니다."),
+    INVALID_STATUS_NO_SHOW(HttpStatus.CONFLICT, "노쇼로 변경은 확정된 예약에 대해서만 가능합니다."),
+    INVALID_STATUS_VISITED(HttpStatus.CONFLICT, "방문 완료로 변경은 확정된 예약에 대해서만 가능합니다."),
+    CUSTOMER_CANCEL_TOO_LATE(HttpStatus.FORBIDDEN, "예약일 3일 전까지만 취소할 수 있습니다."),
 
     // 기타 오류
     UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
