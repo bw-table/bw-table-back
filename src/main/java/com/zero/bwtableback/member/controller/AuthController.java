@@ -83,6 +83,8 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<TokenDto> login(@RequestBody EmailLoginReqDto loginDto,
                                           HttpServletResponse response) {
+
+        // FIXME accesstoken만 반환하고 쿠키 설정은 service에 구현 변경 필요
         TokenDto tokenDto = authService.login(loginDto);
 
         // HttpOnly 쿠키에 리프레시 토큰 저장
