@@ -7,10 +7,10 @@ import com.zero.bwtableback.member.dto.SignUpReqDto;
 import com.zero.bwtableback.member.dto.SignUpResDto;
 import com.zero.bwtableback.member.dto.TokenDto;
 import com.zero.bwtableback.member.entity.Member;
-import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.security.jwt.TokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +26,8 @@ public class AuthService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenProvider tokenProvider;
+
+    private final RedisTemplate<String, String> redisTemplate;
 
     /**
      * 이메일 중복 확인
@@ -97,6 +99,7 @@ public class AuthService {
     private String cleanPhoneNumber(String phone) {
         return phone.replaceAll("-", "").trim();
     }
+
     // 사업자등록번호 하이픈 제거
     private String cleanBusinessNumber(String businessNumber) {
         return businessNumber.replaceAll("-", "").trim();
@@ -118,11 +121,12 @@ public class AuthService {
         String accessToken = tokenProvider.createAccessToken(member.getEmail());
         String refreshToken = tokenProvider.createRefreshToken();
 
-        // TODO 리프레시 토큰 저장 (레디스)
-
-        // FIXME 리프레시 토큰 임시 저장 (Member DB) 저장소 변경 후 setter Member의 @Setter 삭제
-        member.setRefreshToken(refreshToken);
-        memberRepository.save(member);
+        // FIXME 리프레시 토큰 저장 (레디스)
+        // TODO 레디스 자체에 TTL: 만료시간 설정 사용 여부 결정
+        // 리프레시 토큰을 Redis에 저장 (예: key는 member ID 또는 email)
+        String key = "refresh_token:" + member.getId(); // memberId를 키로 사용
+        redisTemplate.opsForValue().set(key, refreshToken);
+        System.out.println(redisTemplate.opsForValue().get(key));
 
         // TokenDto 생성 및 반환
         return new TokenDto(accessToken, refreshToken);
