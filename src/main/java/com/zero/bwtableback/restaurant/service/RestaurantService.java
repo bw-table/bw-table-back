@@ -131,13 +131,14 @@ public class RestaurantService {
     // 모든 식당 리스트 검색
     public List<RestaurantListDto> getRestaurants() {
         List<Restaurant> restaurants = restaurantRepository.findAll();
-        return restaurants.stream()
-                .map(restaurant -> new RestaurantListDto(
-                        restaurant.getId(),
-                        restaurant.getName(),
-                        restaurant.getAddress(),
-                        restaurant.getCategory() != null ? restaurant.getCategory().getCategoryType().name() : null
-                )).collect(Collectors.toList());
+        return null;
+//        return restaurants.stream()
+//                .map(restaurant -> new RestaurantListDto(
+//                        restaurant.getId(),
+//                        restaurant.getName(),
+//                        restaurant.getAddress(),
+//                        restaurant.getCategory() != null ? restaurant.getCategory().getCategoryType().name() : null
+//                )).collect(Collectors.toList());
     }
 
     // 식당 상세정보 조회
