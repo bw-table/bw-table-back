@@ -1,6 +1,7 @@
 package com.zero.bwtableback.reservation.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.zero.bwtableback.common.exception.CustomException;
+import com.zero.bwtableback.common.exception.ErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -47,14 +48,16 @@ public class Notification {
     private NotificationStatus status;
 
 
-    // TODO: 상태 업데이트 로직 보완 및 예외 처리 필요
     public void markAsSent() {
+        if (this.status == NotificationStatus.SENT) {
+            throw new CustomException(ErrorCode.NOTIFICATION_ALREADY_SENT);
+        }
+        if (LocalDateTime.now().isBefore(this.scheduledTime)) {
+            throw new CustomException(ErrorCode.NOTIFICATION_SCHEDULED_TIME_NOT_REACHED);
+        }
+
         this.sentTime = LocalDateTime.now();
         this.status = NotificationStatus.SENT;
-    }
-
-    public void markAsRead() {
-        this.status = NotificationStatus.READ;
     }
 
 }
