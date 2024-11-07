@@ -10,5 +10,5 @@ public enum CategoryType {
     FUSION,
     FAST_FOOD,
     BUFFET,
-    ETC // 기타
+    ETC
 }
