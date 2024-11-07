@@ -1,12 +1,10 @@
 package com.zero.bwtableback.restaurant.controller;
 
 import com.zero.bwtableback.restaurant.dto.AnnouncementDetailDto;
-import com.zero.bwtableback.restaurant.dto.AnnouncementReqDto;
 import com.zero.bwtableback.restaurant.dto.AnnouncementResDto;
 import com.zero.bwtableback.restaurant.dto.AnnouncementUpdateReqDto;
 import com.zero.bwtableback.restaurant.service.AnnouncementService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,20 +15,6 @@ public class AnnouncementController {
 
     private final AnnouncementService announcementService;
 
-    // 공지 생성
-    // TODO: RestaurantService로 이동
-    @PostMapping("/new")
-    public ResponseEntity<AnnouncementResDto> createAnnouncement(@RequestBody AnnouncementReqDto reqDto) {
-        AnnouncementResDto resDto = announcementService.createAnnouncement(
-                reqDto.getRestaurantId(),
-                reqDto.getTitle(),
-                reqDto.getContent(),
-                reqDto.isEvent()
-        );
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(resDto);
-    }
-
     // 공지 수정
     @PutMapping("/{announcementId}")
     public ResponseEntity<AnnouncementResDto> updateAnnouncement(@PathVariable Long announcementId,
@@ -38,7 +22,6 @@ public class AnnouncementController {
         AnnouncementResDto resDto = announcementService.updateAnnouncement(announcementId, reqDto);
 
         return ResponseEntity.ok(resDto);
-
     }
 
     // 공지 삭제
@@ -56,8 +39,5 @@ public class AnnouncementController {
 
         return ResponseEntity.ok(detailDto);
     }
-
-    // 특정 식당 공지 목록 조회
-    // TODO: RestaurantService에서 구현
 
 }

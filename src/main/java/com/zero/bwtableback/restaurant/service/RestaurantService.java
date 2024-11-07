@@ -26,6 +26,7 @@ public class RestaurantService {
     private final FacilityRepository facilityRepository;
     private final HashtagRepository hashtagRepository;
     private final RestaurantImageRepository restaurantImageRepository;
+    private final AnnouncementRepository announcementRepository;
 
     // 등록
 //    @Transactional
@@ -415,9 +416,6 @@ public class RestaurantService {
                         review.getRestaurant().getId()))
                 .collect(Collectors.toList());
 
-
-
-
         return RestaurantInfoDto.builder()
                 .id(restaurant.getId())
                 .name(restaurant.getName())
@@ -439,5 +437,9 @@ public class RestaurantService {
                 .announcements(announcements)
                 .build();
     }
+
+
+
+
 
 }
