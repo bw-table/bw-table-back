@@ -3,6 +3,8 @@ package com.zero.bwtableback.member.oauth2.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zero.bwtableback.common.exception.CustomException;
+import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.entity.LoginType;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.entity.Role;
@@ -12,6 +14,7 @@ import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -29,19 +32,21 @@ public class KakaoOAuth2Service {
     private String clientId;
 
     @Value("${KAKAO_CLIENT_SECRET}")
-    String clientSecret;
+    private String clientSecret;
 
     @Value("${kakao.redirect-uri}")
     private String redirectUri;
 
-    private String kakaoTokenUrl = "https://kauth.kakao.com/oauth/token";
-    private String kakaoUserInfoUrl = "https://kapi.kakao.com/v2/user/me";
+    private static final int REFRESH_TOKEN_TTL = 86400;
+    private static final String KAKAO_TOKEN_URL = "https://kauth.kakao.com/oauth/token";
+    private static final String KAKAO_USER_INFO_URL = "https://kapi.kakao.com/v2/user/me";
 
     private final RestTemplate restTemplate;
     private final MemberRepository memberRepository;
+    private final RedisTemplate<String, String> redisTemplate;
 
     /**
-     * AccessToken 발급과 RefreshToken을 HttpOnly 쿠키에 저장
+     * 카카오 플랫폼에서 AccessToken 발급
      */
     public String getAccessToken(String code) throws JsonProcessingException {
         RestTemplate restTemplate = new RestTemplate();
@@ -62,30 +67,19 @@ public class KakaoOAuth2Service {
         try {
             // POST 요청으로 Access Token 받기
             ResponseEntity<String> response = restTemplate.exchange(
-                    kakaoTokenUrl,
+                    KAKAO_TOKEN_URL,
                     HttpMethod.POST,
                     request,
                     String.class);
 
             String responseBody = response.getBody();
 
-            // JSON 응답에서 accessToken, refreshToken 추출
-
+            // JSON 응답에서 accessToken 추출
             if (responseBody != null) {
                 ObjectMapper objectMapper = new ObjectMapper();
                 JsonNode jsonNode = objectMapper.readTree(responseBody);
 
                 String accessToken = jsonNode.path("access_token").asText();
-                String refreshToken = jsonNode.path("refresh_token").asText();
-
-
-                // 리프레시 토큰 처리 (예: 쿠키에 저장 또는 데이터베이스에 저장)
-                // 여기서는 쿠키에 저장하는 예시를 보여줍니다.
-                Cookie cookie = new Cookie("refreshToken", refreshToken);
-                cookie.setHttpOnly(true);
-                cookie.setSecure(true);
-                cookie.setPath("/");
-                cookie.setMaxAge(86400); // 1일 동안 유효
 
                 if (accessToken.isEmpty()) {
                     throw new RuntimeException("응답에서 토큰을 찾을 수 없습니다.");
@@ -111,7 +105,7 @@ public class KakaoOAuth2Service {
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
         ResponseEntity<String> response = restTemplate.exchange(
-                kakaoUserInfoUrl,
+                KAKAO_USER_INFO_URL,
                 HttpMethod.GET,
                 entity, // 요청에 포함될 헤더와 바디 담은 객체
                 String.class // 응답 본문 타입
@@ -128,36 +122,67 @@ public class KakaoOAuth2Service {
 
         boolean isExistingMember = memberRepository.existsByEmail(userInfo.getEmail());
 
-        Member member = new Member();
-
-        if (!isExistingMember) {
-            // 회원 등록 - 소셜 로그인은 비즈앱으로 등록해야 정보를 제공하기에 임시 정보로 대체 (이메일, 전화번호, 이름)
-            member = Member.builder()
-                    .loginType(LoginType.SOCIAL)
-                    .email(userInfo.getEmail())
-                    .name(userInfo.getName())
-                    .nickname(userInfo.getNickName())
-                    .phone(userInfo.getPhone())
-                    .role(Role.GUEST)
-                    .provider(userInfo.getProvider())
-                    .providerId(userInfo.getProviderId())
-                    .profileImage(userInfo.getProfileImage())
-                    .build();
-
-            memberRepository.save(member);
+        if (isExistingMember) {
+          throw new CustomException(ErrorCode.USER_ALREADY_EXISTS);
         }
 
-        return member;
+        // 회원 등록 - 소셜 로그인은 비즈앱으로 등록해야 정보를 제공하기에 임시 정보로 대체 (이메일, 전화번호, 이름)
+        Member member = Member.builder()
+                .loginType(LoginType.SOCIAL)
+                .email(userInfo.getEmail())
+                .name(userInfo.getName())
+                .nickname(userInfo.getNickName())
+                .phone(userInfo.getPhone())
+                .role(Role.GUEST)
+                .provider(userInfo.getProvider())
+                .providerId(userInfo.getProviderId())
+                .profileImage(userInfo.getProfileImage())
+                .build();
+
+        return memberRepository.save(member);
+    }
+
+    /**
+     * 자체 리프레시 토큰을 레디스에 저장하고 HttpOnly Cookie에 저장
+     */
+    public Cookie saveRefreshTokenAndCreateCookie(Long memberId, String refreshToken) {
+        // Redis에 저장
+        String key = "refresh_token:" + memberId;
+        redisTemplate.opsForValue().set(key, refreshToken,REFRESH_TOKEN_TTL);
+
+        // HttpOnly 쿠키 생성
+        Cookie cookie = new Cookie("refreshToken", refreshToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(REFRESH_TOKEN_TTL); // 1일 동안 유효
+
+        return cookie;
     }
 
     public void kakaoLogout(String accessToken) {
         String url = "https://kapi.kakao.com/v1/user/logout";
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + accessToken);
+        System.out.println(accessToken);
 
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.set("Authorization", "Bearer " + accessToken);
+//
         HttpEntity<String> entity = new HttpEntity<>(headers);
-        
+
         restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+
+        // TODO accessToken, refreshToken 삭제
+        // HTTP-only 쿠키에서 액세스 토큰 삭제
+        Cookie cookie = new Cookie("accessToken", null);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/"); // 쿠키가 설정된 경로와 동일하게 설정
+        cookie.setMaxAge(0); // 만료 시간을 0으로 설정하여 삭제
+        // response.addCookie(cookie);
+
+        // TODO 회원 정보 가져오기
+        //String key = "refresh_token:" + memberId; // 삭제할 키 생성
+        //redisTemplate.delete(key);
     }
 }

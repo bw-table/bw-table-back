@@ -15,6 +15,7 @@ public enum ErrorCode {
 
     MISSING_BUSINESS_NUMBER(HttpStatus.BAD_REQUEST, "사업자등록번호는 사장님 역할에 필수입니다."),
 
+    USER_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 이메일입니다."),
     EMAIL_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 이메일입니다."),
     NICKNAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 닉네임입니다."),
     PHONE_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 전화번호입니다."),

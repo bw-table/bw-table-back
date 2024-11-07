@@ -137,9 +137,9 @@ public class AuthService {
     }
 
     /**
-     * 사용자 로그아웃 처리
+     * TODO 사용자 로그아웃 처리
      */
-    public void logout() {
+    public void logout(String email) {
 //        Member member = memberRepository.findById()
 //                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 

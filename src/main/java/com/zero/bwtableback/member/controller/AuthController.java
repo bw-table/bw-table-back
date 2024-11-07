@@ -5,12 +5,14 @@ import com.zero.bwtableback.member.dto.SignUpReqDto;
 import com.zero.bwtableback.member.dto.SignUpResDto;
 import com.zero.bwtableback.member.dto.TokenDto;
 import com.zero.bwtableback.member.service.AuthService;
+import com.zero.bwtableback.security.MemberDetails;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -110,8 +112,9 @@ public class AuthController {
      * 로그아웃 처리
      */
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
-        authService.logout();
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal MemberDetails memberDetails) {
+        String email = memberDetails.getUsername();
+        authService.logout(email);
         return ResponseEntity.noContent().build();
     }
 }
