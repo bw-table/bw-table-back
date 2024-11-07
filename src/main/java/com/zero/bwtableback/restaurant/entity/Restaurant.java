@@ -80,7 +80,7 @@ public class Restaurant {
     )
     private List<Hashtag> hashtags;
 
-    @Column(nullable = false)
+    @Column(nullable = false) // TODO: 평점 null 허용?
     private double averageRating; // 평균 평점
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)

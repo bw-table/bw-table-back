@@ -35,4 +35,6 @@ public class RestaurantInfoDto {
     private List<String> hashtags;
     private List<OperatingHoursDto> operatingHours;
     private double averageRating;
+    private List<ReviewInfoDto> reviews;
+    private List<AnnouncementDetailDto> announcements;
 }

@@ -77,6 +77,9 @@ public class RestaurantController {
         }
     }
 
+    // 식당 정보 수정
+
+
     // 모든 식당 조회
     @GetMapping
     public ResponseEntity<List<RestaurantListDto>> getRestaurants(Pageable pageable) {
