@@ -13,6 +13,7 @@ import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.security.jwt.TokenProvider;
 import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +29,8 @@ public class AuthService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenProvider tokenProvider;
+
+    private final RedisTemplate<String, String> redisTemplate;
 
     private static final int REFRESH_TOKEN_TTL = 86400;
 
@@ -71,15 +74,12 @@ public class AuthService {
         if (isNicknameDuplicate(form.getNickname())) {
             throw new CustomException(ErrorCode.NICKNAME_ALREADY_EXISTS);
         }
-        // 전화번호 중복 체크 및 하이픈 제거
+        // 전화번호 중복 체크
         if (isPhoneDuplicate(form.getPhone())) {
-//            form.setPhone(cleanPhoneNumber(form.getPhone()));
             throw new CustomException(ErrorCode.PHONE_ALREADY_EXISTS);
         }
-        // 사업자등록번호 유효성 검사 및 하이픈 제거(사장님 회원가입 시)
+        // 사업자등록번호 유효성 검사(사장님 회원가입 시)
         if ("OWNER".equals(form.getRole())) {
-//            form.setBusinessNumber(cleanBusinessNumber(form.getBusinessNumber()));
-
             // 사업자등록번호 중복 체크
             if (isBusinessNumberDuplicate(form.getBusinessNumber())) {
                 throw new CustomException(ErrorCode.MISSING_BUSINESS_NUMBER);
@@ -96,7 +96,7 @@ public class AuthService {
         return SignUpResDto.from(savedMember);
     }
 
-    // FIXME util로 이동, 사용 여부 결정
+       // TODO util로 이동 및 사용 여부 결정
     // 전화번호 하이픈 제거
     private String cleanPhoneNumber(String phone) {
         return phone.replaceAll("-", "").trim();
@@ -134,6 +134,7 @@ public class AuthService {
     public void saveRefreshTokenAndCreateCookie(Long memberId, String refreshToken) {
         // Redis에 저장
         String key = "refresh_token:" + memberId;
+        redisTemplate.opsForValue().set(key, refreshToken);
 
         // HttpOnly 쿠키 생성
         Cookie cookie = new Cookie("refreshToken", refreshToken);

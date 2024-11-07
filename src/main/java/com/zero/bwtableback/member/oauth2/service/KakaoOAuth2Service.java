@@ -39,18 +39,15 @@ public class KakaoOAuth2Service {
     private String redirectUri;
 
     private static final String KAKAO_TOKEN_URL = "https://kauth.kakao.com/oauth/token";
-    private static final String KAKAO_USER_INFO_URL = "https://kapi.kakao.com/v2/user/me";
+    private static final String KAKAO_USER_INFO_URL = "https://kapi.kakao.com/v2/user/me";;
 
     private final RestTemplate restTemplate;
     private final MemberRepository memberRepository;
-    private final RedisTemplate<String, String> redisTemplate;
 
     /**
      * 카카오 플랫폼에서 AccessToken 발급
      */
     public String getAccessToken(String code) throws JsonProcessingException {
-        RestTemplate restTemplate = new RestTemplate();
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -140,8 +137,6 @@ public class KakaoOAuth2Service {
                 .build();
 
         memberRepository.save(member);
-
-        System.out.println("저장됨" + member.getId());
 
         MemberDto memberDto = MemberDto.from(member);
 
