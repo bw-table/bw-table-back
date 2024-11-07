@@ -1,50 +1,81 @@
 package com.zero.bwtableback.member.entity;
 
 import com.zero.bwtableback.common.BaseEntity;
+import com.zero.bwtableback.member.dto.SignUpReqDto;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-import java.time.LocalDate;
+import java.util.Locale;
 
 @Entity
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "member") // 데이터베이스의 테이블 이름
+@Table(name = "member")
 public class Member extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // 자동 증가 PK 설정
+    @Column(nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private LoginType loginType; // SOCIAL, EMAIL
+
+    @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(nullable = true)
+    private String password;
 
     @Column(nullable = false)
     private String name;
 
     @Column(nullable = false)
-    private String nickname; // 추가: 닉네임
+    private String nickname;
 
-    @Enumerated(EnumType.STRING) // 역할을 문자열로 저장
     @Column(nullable = false)
-    private Role role; // 추가: 역할 (손님, 사장님)
+    private String phone; // 연락처
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role; // 역할 (GUEST(손님), OWNER(사장님))
+
+    @Column(name = "business_number")
+    private String businessNumber; // 사업자등록번호 (예시:"123-01-11111")
 
     @Column(name = "profile_image_url") // 프로필 이미지 URL
     private String profileImage; // 추가: 프로필 이미지
 
-    private LocalDate birthday; // 추가: 생일
-
-    @Column(nullable = false) // 연락처는 null이 아니어야 함
-    private String contactNumber; // 추가: 연락처
-
-    @Column(nullable = false)
     private String provider; // 소셜 로그인 제공자 (예: "Kakao", "Google")
 
-    @Column(nullable = false, unique = true)
     private String providerId; // 소셜 로그인 제공자의 고유 ID
+
+    @Column(unique = true)
+    private String socialId; // provider + "_" + providerId
+
+    private String refreshToken; //FIXME 임시 사용 후 삭제 예정
+
+    public static Member from(SignUpReqDto form, String encodedPassword) {
+        Role role = Role.valueOf(form.getRole().toUpperCase());
+        LoginType loginType = LoginType.valueOf(form.getLoginType().toUpperCase());
+
+        Member.MemberBuilder memberBuilder = Member.builder()
+                .loginType(loginType)
+                .role(role)
+                .email(form.getEmail().toLowerCase(Locale.ROOT))
+                .password(encodedPassword) // 암호화된 비밀번호 사용
+                .name(form.getName())
+                .nickname(form.getNickname())
+                .phone(form.getPhone());
+
+        // 역할이 사장님인 경우 사업자 등록번호 추가 (필수)
+        if (Role.OWNER == role) {
+            memberBuilder.businessNumber(form.getBusinessNumber());
+        }
+
+        return memberBuilder.build();
+    }
 }

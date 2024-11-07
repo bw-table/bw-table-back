@@ -6,6 +6,7 @@ import com.zero.bwtableback.restaurant.exception.RestaurantException;
 import com.zero.bwtableback.restaurant.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ public class RestaurantService {
     // 등록
     @Transactional
     public Restaurant registerRestaurant(RegisterReqDto reqDto) {
+
         reqDto.validate();
 
         // 카테고리 설정
@@ -133,6 +135,7 @@ public class RestaurantService {
     }
 
     // 모든 식당 리스트 검색
+
     public List<RestaurantListDto> getRestaurants(Pageable pageable) {
         Page<Restaurant> restaurants = restaurantRepository.findAll(pageable);
 
