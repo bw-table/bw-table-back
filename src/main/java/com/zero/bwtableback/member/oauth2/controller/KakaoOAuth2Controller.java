@@ -1,19 +1,18 @@
 package com.zero.bwtableback.member.oauth2.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.zero.bwtableback.member.entity.Member;
-import com.zero.bwtableback.member.oauth2.dto.KakaoLoginResDto;
+import com.zero.bwtableback.member.dto.LoginResDto;
+import com.zero.bwtableback.member.dto.MemberDto;
 import com.zero.bwtableback.member.oauth2.service.KakaoOAuth2Service;
+import com.zero.bwtableback.member.service.AuthService;
 import com.zero.bwtableback.security.jwt.TokenProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,6 +27,7 @@ public class KakaoOAuth2Controller {
     String redirectUri;
 
     private final KakaoOAuth2Service kakaoService;
+    private final AuthService authService;
     private final TokenProvider tokenProvider;
 
     @GetMapping("/callback")
@@ -36,20 +36,20 @@ public class KakaoOAuth2Controller {
             @ApiResponse(responseCode = "200", description = "로그인 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청")
     })
-    public ResponseEntity<KakaoLoginResDto> kakaoLogin(@RequestParam String code) throws JsonProcessingException {
+    public ResponseEntity<LoginResDto> kakaoLogin(@RequestParam String code) throws JsonProcessingException {
         // 카카오 토큰 생성
         String kakaoToken = kakaoService.getAccessToken(code);
-        Member member = kakaoService.getUserInfo(kakaoToken);
+        MemberDto memberDto = kakaoService.getUserInfo(kakaoToken);
 
         // 자체 토큰 생성
-        String accessToken = tokenProvider.createAccessToken(member.getEmail());
+        String accessToken = tokenProvider.createAccessToken(memberDto.getEmail());
         String refreshToken = tokenProvider.createRefreshToken();
 
-        kakaoService.saveRefreshTokenAndCreateCookie(member.getId(),refreshToken);
+        authService.saveRefreshTokenAndCreateCookie(memberDto.getId(),refreshToken);
 
-        KakaoLoginResDto response = new KakaoLoginResDto(
+        LoginResDto response = new LoginResDto(
                 accessToken,
-                member
+                memberDto
         );
 
         return ResponseEntity.ok(response);

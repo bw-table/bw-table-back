@@ -8,8 +8,10 @@ import com.zero.bwtableback.member.dto.SignUpResDto;
 import com.zero.bwtableback.member.dto.TokenDto;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.entity.Role;
+import com.zero.bwtableback.member.oauth2.service.KakaoOAuth2Service;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.security.jwt.TokenProvider;
+import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,8 @@ public class AuthService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenProvider tokenProvider;
+
+    private static final int REFRESH_TOKEN_TTL = 86400;
 
     /**
      * 이메일 중복 확인
@@ -118,14 +122,25 @@ public class AuthService {
         String accessToken = tokenProvider.createAccessToken(member.getEmail());
         String refreshToken = tokenProvider.createRefreshToken();
 
-        // TODO 리프레시 토큰 저장 (레디스)
+        // 리프레시 토큰 레디스에 저장
+        saveRefreshTokenAndCreateCookie(member.getId(), refreshToken);
 
-        // FIXME 리프레시 토큰 임시 저장 (Member DB) 저장소 변경 후 setter Member의 @Setter 삭제
-        member.setRefreshToken(refreshToken);
-        memberRepository.save(member);
-
-        // TokenDto 생성 및 반환
         return new TokenDto(accessToken, refreshToken);
+    }
+
+    /**
+     * 자체 리프레시 토큰을 레디스에 저장하고 HttpOnly Cookie에 저장
+     */
+    public void saveRefreshTokenAndCreateCookie(Long memberId, String refreshToken) {
+        // Redis에 저장
+        String key = "refresh_token:" + memberId;
+
+        // HttpOnly 쿠키 생성
+        Cookie cookie = new Cookie("refreshToken", refreshToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(REFRESH_TOKEN_TTL); // 1일 동안 유효
     }
 
     /**

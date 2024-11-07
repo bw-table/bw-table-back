@@ -7,22 +7,26 @@ spring:
     activate:
       on-profile: dev
   datasource:
-    url: jdbc:h2:mem:testdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/bwtable-mysql?useSSL=false&serverTimezone=Asia/Seoul&useUnicode=true&characterEncoding=utf8&allowPublicKeyRetrieval=true
+    username: root
+    password: 1
   jpa:
     hibernate:
+      defer-datasource-initialization: true
       ddl-auto: update
     show-sql: true
-  h2:
-    console:
-      enabled: true
+  #  sql:  // data.sql 을 위한 설정
+  #    init:
+  #      mode: always
+  data:
+    redis:
+      host: localhost
+      port: 6379
   jwt:
     secret: ${JWT_SECRET:your-256-bit-secret-key-default} # HS512 알고리즘을 사용할 경우, 비밀 키는 최소 512비트(64바이트) 이상
     accessTokenValidityInMilliseconds: ${JWT_ACCESS_TOKEN_VALIDITY:3600000}
     refreshTokenValidityInMilliseconds: ${JWT_REFRESH_TOKEN_VALIDITY:86400000}
-
   security:
     oauth2:
       client:
@@ -43,16 +47,12 @@ spring:
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
-
-  logging:
-    level:
-      org.springframework.web: DEBUG
 ---
 spring:
   config:
     activate:
       on-profile: prod
-jwt:
-  secret: ${JWT_SECRET}
-  accessTokenValidityInMilliseconds: ${JWT_ACCESS_TOKEN_VALIDITY}
-  refreshTokenValidityInMilliseconds: ${JWT_REFRESH_TOKEN_VALIDITY}
+#jwt:
+#  secret: ${JWT_SECRET}
+#  accessTokenValidityInMilliseconds: ${JWT_ACCESS_TOKEN_VALIDITY}
+#  refreshTokenValidityInMilliseconds: ${JWT_REFRESH_TOKEN_VALIDITY}

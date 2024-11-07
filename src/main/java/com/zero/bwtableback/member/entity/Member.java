@@ -54,8 +54,6 @@ public class Member extends BaseEntity {
 
     private String providerId; // 소셜 로그인 제공자의 고유 ID
 
-    private String refreshToken; //FIXME 임시 사용 후 삭제 예정
-
     public static Member from(SignUpReqDto form, String encodedPassword) {
         Role role = Role.valueOf(form.getRole().toUpperCase());
         LoginType loginType = LoginType.valueOf(form.getLoginType().toUpperCase());

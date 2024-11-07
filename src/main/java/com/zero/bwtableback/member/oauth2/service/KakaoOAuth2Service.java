@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
+import com.zero.bwtableback.member.dto.MemberDto;
 import com.zero.bwtableback.member.entity.LoginType;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.entity.Role;
@@ -37,7 +38,6 @@ public class KakaoOAuth2Service {
     @Value("${kakao.redirect-uri}")
     private String redirectUri;
 
-    private static final int REFRESH_TOKEN_TTL = 86400;
     private static final String KAKAO_TOKEN_URL = "https://kauth.kakao.com/oauth/token";
     private static final String KAKAO_USER_INFO_URL = "https://kapi.kakao.com/v2/user/me";
 
@@ -97,7 +97,7 @@ public class KakaoOAuth2Service {
     /**
      * 카카오 API로 토큰에 대한 사용자 정보 받기 및 저장
      */
-    public Member getUserInfo(String accessToken) throws
+    public MemberDto getUserInfo(String accessToken) throws
             JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
@@ -123,7 +123,7 @@ public class KakaoOAuth2Service {
         boolean isExistingMember = memberRepository.existsByEmail(userInfo.getEmail());
 
         if (isExistingMember) {
-          throw new CustomException(ErrorCode.USER_ALREADY_EXISTS);
+            throw new CustomException(ErrorCode.USER_ALREADY_EXISTS);
         }
 
         // 회원 등록 - 소셜 로그인은 비즈앱으로 등록해야 정보를 제공하기에 임시 정보로 대체 (이메일, 전화번호, 이름)
@@ -139,25 +139,13 @@ public class KakaoOAuth2Service {
                 .profileImage(userInfo.getProfileImage())
                 .build();
 
-        return memberRepository.save(member);
-    }
+        memberRepository.save(member);
 
-    /**
-     * 자체 리프레시 토큰을 레디스에 저장하고 HttpOnly Cookie에 저장
-     */
-    public Cookie saveRefreshTokenAndCreateCookie(Long memberId, String refreshToken) {
-        // Redis에 저장
-        String key = "refresh_token:" + memberId;
-        redisTemplate.opsForValue().set(key, refreshToken,REFRESH_TOKEN_TTL);
+        System.out.println("저장됨" + member.getId());
 
-        // HttpOnly 쿠키 생성
-        Cookie cookie = new Cookie("refreshToken", refreshToken);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(REFRESH_TOKEN_TTL); // 1일 동안 유효
+        MemberDto memberDto = MemberDto.from(member);
 
-        return cookie;
+        return memberDto;
     }
 
     public void kakaoLogout(String accessToken) {
