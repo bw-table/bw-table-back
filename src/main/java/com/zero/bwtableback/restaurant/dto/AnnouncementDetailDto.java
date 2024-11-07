@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 @AllArgsConstructor
-public class AnnouncementInfoDto {
+public class AnnouncementDetailDto {
 
     private Long id;
     private String title;

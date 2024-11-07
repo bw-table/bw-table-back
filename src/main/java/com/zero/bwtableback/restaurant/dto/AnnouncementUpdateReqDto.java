@@ -5,10 +5,9 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class AnnouncementReqDto {
+public class AnnouncementUpdateReqDto {
 
     private String title;
     private String content;
-    private boolean event;
-    private Long restaurantId;
+    private Boolean event;
 }
