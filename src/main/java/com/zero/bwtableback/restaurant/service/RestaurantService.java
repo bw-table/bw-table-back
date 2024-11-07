@@ -61,6 +61,7 @@ public class RestaurantService {
                 .closedDay(reqDto.getClosedDay())
                 .link(reqDto.getLink())
                 .info(reqDto.getInfo())
+                .deposit(reqDto.getDeposit())
                 .category(category)
                 .images(new HashSet<>())
                 .operatingHours(new ArrayList<>())
@@ -267,11 +268,13 @@ public class RestaurantService {
                 .category(category)
                 .link(restaurant.getLink())
                 .info(restaurant.getInfo())
+                .deposit(restaurant.getDeposit())
                 .images(images)
                 .menus(menus)
                 .facilities(facilities)
                 .hashtags(hashtags)
                 .operatingHours(operatingHours)
+                .averageRating(restaurant.getAverageRating())
                 .build();
     }
 

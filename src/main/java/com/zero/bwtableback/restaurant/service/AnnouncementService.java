@@ -19,6 +19,7 @@ public class AnnouncementService {
     private final RestaurantRepository restaurantRepository;
 
     // 공지 생성
+    // TODO: RestaurantService로 이동
     public AnnouncementResDto createAnnouncement(Long restaurantId, String title, String content, boolean isEvent) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
@@ -87,5 +88,8 @@ public class AnnouncementService {
                 announcement.getUpdatedAt()
         );
     }
+
+    // 특정 식당 공지 목록 조회
+    // TODO: RestaurantService에서 구현
 
 }

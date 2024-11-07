@@ -18,6 +18,7 @@ public class AnnouncementController {
     private final AnnouncementService announcementService;
 
     // 공지 생성
+    // TODO: RestaurantService로 이동
     @PostMapping("/new")
     public ResponseEntity<AnnouncementResDto> createAnnouncement(@RequestBody AnnouncementReqDto reqDto) {
         AnnouncementResDto resDto = announcementService.createAnnouncement(
@@ -55,5 +56,8 @@ public class AnnouncementController {
 
         return ResponseEntity.ok(detailDto);
     }
+
+    // 특정 식당 공지 목록 조회
+    // TODO: RestaurantService에서 구현
 
 }

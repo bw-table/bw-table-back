@@ -28,6 +28,7 @@ public class RestaurantInfoDto {
     private String category;
     private String link;
     private String info;
+    private int deposit;
     private List<String> images;
     private List<MenuDto> menus;
     private List<String> facilities;

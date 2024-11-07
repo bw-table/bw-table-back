@@ -46,6 +46,8 @@ public class Restaurant {
 
     private String link; // 홈페이지 링크
 
+    private int deposit; // 인당예약금
+
     @OneToMany(
             mappedBy = "restaurant", // 양방향 관계 설정
             cascade = CascadeType.ALL, // 음식점 삭제 시 관련 이미지 함께 삭제

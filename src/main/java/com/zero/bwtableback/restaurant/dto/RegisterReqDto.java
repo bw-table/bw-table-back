@@ -42,6 +42,8 @@ public class RegisterReqDto {
 
     private String link;
 
+    private int deposit;
+
     @NotNull(message = "Menu must not be null")
     private List<MenuDto> menus;
 
