@@ -8,6 +8,10 @@ import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.payment.PaymentCompleteRequest;
+import com.zero.bwtableback.payment.dto.PaymentDto;
+import com.zero.bwtableback.payment.entity.PaymentEntity;
+import com.zero.bwtableback.payment.entity.PaymentStatus;
+import com.zero.bwtableback.payment.repository.PaymentRepository;
 import com.zero.bwtableback.reservation.entity.ReservationStatus;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
@@ -23,6 +27,7 @@ public class ReserveService {
     private final MemberRepository memberRepository;
     private final RestaurantRepository restaurantRepository;
     private final ReserveRepository reserveRepository;
+    private final PaymentRepository paymentRepository;
 
     private final HttpSession httpSession;
 
@@ -104,12 +109,55 @@ public class ReserveService {
     }
 
     /**
+     * 결제 정보 저장
+     */
+    public PaymentDto savePayment(PaymentVerificationResponse response) {
+        System.out.println(response);
+        PaymentDto paymentDto = getPaymentDto(response);
+        savePayment(paymentDto);
+        return paymentDto;
+    }
+
+    private static PaymentDto getPaymentDto(PaymentVerificationResponse response) {
+        PaymentDto paymentDto = new PaymentDto();
+        paymentDto.setImpUid(response.getImp_uid());
+        paymentDto.setMerchantUid(response.getMerchant_uid());
+        paymentDto.setStatus(response.getStatus());
+        paymentDto.setPaidAmount(response.getAmount().intValue());
+        paymentDto.setCurrency(response.getCurrency());
+        paymentDto.setBuyerName(response.getBuyer_name());
+        paymentDto.setBuyerEmail(response.getBuyer_email());
+        paymentDto.setBuyerTel(response.getBuyer_tel());
+        return paymentDto;
+    }
+
+
+    // 결제 정보 저장 메서드
+    private void savePayment(PaymentDto paymentDto) {
+        PaymentEntity paymentEntity = new PaymentEntity();
+        paymentEntity.setImpUid(paymentDto.getImpUid());
+        paymentEntity.setMerchantUid(paymentDto.getMerchantUid());
+        paymentEntity.setBuyerName(paymentDto.getBuyerName());
+        paymentEntity.setBuyerEmail(paymentDto.getBuyerEmail());
+        paymentEntity.setBuyerTel(paymentDto.getBuyerTel());
+        paymentEntity.setPaidAmount(paymentDto.getPaidAmount());
+        paymentEntity.setCurrency(paymentDto.getCurrency());
+        paymentEntity.setStatus(PaymentStatus.PAID);  // 상태 설정
+        paymentEntity.setPaidAt(System.currentTimeMillis());  // 현재 시간 설정
+
+        Reserve temporaryReservation = (Reserve) httpSession.getAttribute("temporaryReservation");
+
+        if (temporaryReservation != null) {
+            paymentEntity.setReservation(temporaryReservation);  // 예약과 연결
+        }
+
+        paymentRepository.save(paymentEntity);  // DB에 저장
+    }
+
+    /**
      * 최종 예약 확정 메서드
      */
     public ReserveConfirmedResDto confirmReserve(Reserve temporaryReserve, PaymentCompleteRequest request) {
-        System.out.println(request);
-        // TODO payment에 저장
-
         // 가게 정보
         Restaurant restaurant = restaurantRepository.findById(1L)
                 .orElseThrow(() -> new RuntimeException("레스토랑 없습니다."));

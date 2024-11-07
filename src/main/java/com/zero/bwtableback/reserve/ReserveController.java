@@ -2,9 +2,12 @@ package com.zero.bwtableback.reserve;
 
 import com.siot.IamportRestClient.exception.IamportResponseException;
 import com.zero.bwtableback.payment.PaymentCompleteRequest;
+import com.zero.bwtableback.payment.dto.PaymentDto;
+import com.zero.bwtableback.payment.entity.PaymentStatus;
 import com.zero.bwtableback.reservation.entity.ReservationStatus;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -69,6 +72,25 @@ public class ReserveController {
     }
 
     /**
+     * 결제창 진입 전 세션 체크 및 예약 정보 세션 연장
+     */
+    @PostMapping("/extend-session")
+    public ResponseEntity<?> extendSession() {
+        // 세션에서 임시 예약 정보 가져오기
+        Reserve temporaryReservation = (Reserve) httpSession.getAttribute("temporaryReservation");
+
+        // 세션이 비어 있는 경우
+        if (temporaryReservation == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("예약 세션이 만료되었습니다. 다시 시도해 주세요.");
+        }
+
+        // 세션이 존재하는 경우, 세션 연장
+        httpSession.setMaxInactiveInterval(600); // 10분으로 설정
+        return ResponseEntity.ok(Map.of("message", "세션이 연장되었습니다."));
+    }
+
+    /**
      * 결제 완료 처리
      *
      * KG이니시스 결제 완료와 함께 창이 닫히면서 실행
@@ -76,34 +98,29 @@ public class ReserveController {
     @PostMapping("/complete-payment")
     public ResponseEntity<Object> completePayment(@RequestBody PaymentCompleteRequest request) throws IamportResponseException, IOException {
 
-        System.out.println("complete-payment!!");
-
         // 아임포트 API를 통해 결제 검증
         PaymentVerificationResponse verificationResponse = reserveService.verifyPayment(request.getImp_uid());
 
-        if (!verificationResponse.isPaid()) {
-            return ResponseEntity.badRequest().body("결제가 완료되지 않았습니다.");
+        if (!"paid".equals(verificationResponse.getStatus())) {
+            return ResponseEntity.badRequest().body(Map.of("message","결제가 완료되지 않았습니다."));
         }
 
-        System.out.println(verificationResponse);
-        //TODO Payment 결제 정보 저장
+        // 결제 정보 저장
+        PaymentDto paymentDto = reserveService.savePayment(verificationResponse);
 
-        // 예약 확정 로직 (임시 예약 정보 가져오기)
+        // 임시 예약 정보 가져오기
         Reserve temporaryReservation = (Reserve) httpSession.getAttribute("temporaryReservation");
 
         temporaryReservation.setStatus(ReservationStatus.CONFIRMED);
 
-        System.out.println(temporaryReservation);
+        System.out.println("TEMP " + temporaryReservation.getStatus());
 
         if (temporaryReservation == null) {
-            return ResponseEntity.badRequest().body("임시 예약 정보를 찾을 수 없습니다.");
+            return ResponseEntity.badRequest().body(Map.of("message","임시 예약 정보를 찾을 수 없습니다."));
         }
 
-        // 최종 예약 확정 처리
-        // 응답 DTO 변환
-        ReserveConfirmedResDto reserveConfirmedResDto =  reserveService.confirmReserve(temporaryReservation, request);
-
-        // 예약이 저장되고 세션(max 10분)은 삭제 반환 값은 전부 다
+        // 최종 예약 확정 처리 및 응답 반환
+        ReserveConfirmedResDto reserveConfirmedResDto = reserveService.confirmReserve(temporaryReservation, request);
 
         return ResponseEntity.ok(reserveConfirmedResDto);
     }

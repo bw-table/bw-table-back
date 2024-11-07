@@ -84,58 +84,75 @@
     });
 
     document.getElementById('pay-button').addEventListener('click', function () {
-        IMP.init('imp45115062'); // 가맹점 식별 코드
-
-        IMP.request_pay({
-            pg: "html5_inicis", // 올바른 PG사 선택
-            merchant_uid: "order_" + new Date().getTime(), // 주문 ID
-            name: "트리드", // 가게명
-            amount: 100, // 결제 금액 (예약금)
-            buyer_email: "buyer@example.com", // 구매자 이메일
-            buyer_name: "홍길동", // 구매자 이름
-            buyer_tel: "010-1234-5678" // 구매자 전화번호
-        }, function (rsp) {
-            if (rsp.success) {
-                // 결제 성공 시 서버에 확인 요청
-                confirmPayment(rsp);
-            } else {
-                alert("결제에 실패하였습니다. 에러 내용: " + rsp.error_msg);
-            }
-        });
-    });
-
-    function confirmPayment(paymentResult) {
-        fetch('/api/v1/reserve/complete-payment', {
+        // 세션 연장 요청
+        fetch('/api/v1/reserve/extend-session', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                imp_uid: paymentResult.imp_uid,
-                merchant_uid: paymentResult.merchant_uid
-            })
+            }
         })
             .then(response => {
-                // 응답이 성공적인지 확인
                 if (!response.ok) {
-                    // HTTP 오류 발생 시 에러 처리
-                    return response.json().then(err => {
-                        throw new Error(err.message || '예약 생성에 실패하였습니다.');
-                    });
+                    throw new Error('세션 연장에 실패하였습니다.');
                 }
-                return response.json(); // 성공적인 응답일 경우 JSON 변환
+                return response.json();
             })
             .then(data => {
-                if (data.reserve.status === "CONFIRMED") {
-                    console.log(data);
-                    alert("예약이 완료되었습니다!");
-                    // 페이지 리다이렉션
-                } else {
-                    alert("예약 확정에 실패하였습니다.");
-                }
+                console.log(data); // 세션 연장이 성공적으로 이루어진 경우
+
+                IMP.init('imp45115062'); // 가맹점 식별 코드
+
+                IMP.request_pay({
+                    pg: "html5_inicis", // 올바른 PG사 선택
+                    merchant_uid: "order_" + new Date().getTime(), // 주문 ID
+                    name: "트리드", // 가게명
+                    amount: 100, // 결제 금액 (예약금)
+                    buyer_email: "buyer@example.com", // 구매자 이메일
+                    buyer_name: "홍길동", // 구매자 이름
+                    buyer_tel: "010-1234-5678" // 구매자 전화번호
+                }, function (rsp) {
+                    if (rsp.success) {
+                        // 결제 성공 시 서버에 확인 요청
+                        confirmPayment(rsp);
+                    } else {
+                        alert("결제에 실패하였습니다. 에러 내용: " + rsp.error_msg);
+                    }
+                });
+            });
+
+        function confirmPayment(paymentResult) {
+            fetch('/api/v1/reserve/complete-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    imp_uid: paymentResult.imp_uid,
+                    merchant_uid: paymentResult.merchant_uid
+                })
             })
-            .catch(error => console.error('Error:', error.message)); // 에러 메시지 출력
-    }
+                .then(response => {
+                    // 응답이 성공적인지 확인
+                    if (!response.ok) {
+                        // HTTP 오류 발생 시 에러 처리
+                        return response.json().then(err => {
+                            throw new Error(err.message || '예약 생성에 실패하였습니다.');
+                        });
+                    }
+                    return response.json(); // 성공적인 응답일 경우 JSON 변환
+                })
+                .then(data => {
+                    if (data.reserve.status === "CONFIRMED") {
+                        console.log(data);
+                        alert("예약이 완료되었습니다!");
+                        // 페이지 리다이렉션
+                    } else {
+                        alert("예약 확정에 실패하였습니다.");
+                    }
+                })
+                .catch(error => console.error('Error:', error.message)); // 에러 메시지 출력
+        }
+    });
 </script>
 </body>
 </html>

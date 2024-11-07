@@ -26,6 +26,7 @@ public class Reserve {
     private String time; // 예약 시간
     private Integer people; // 인원 수
     private String specialRequest;
+    @Enumerated(EnumType.STRING)
     private ReservationStatus status; // 예약 상태
 
     @Column(name = "created_at", updatable = false)

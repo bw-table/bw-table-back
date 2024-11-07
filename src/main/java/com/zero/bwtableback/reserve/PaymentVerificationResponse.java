@@ -17,10 +17,6 @@ public class PaymentVerificationResponse {
     private String buyer_email; // 구매자 이메일
     private String buyer_tel; // 구매자 전화번호
 
-    public boolean isPaid() {
-        return "paid".equals(status); // status가 "paid"인 경우 true 반환
-    }
-
     @Override
     public String toString() {
         return "PaymentVerificationResponse{" +
