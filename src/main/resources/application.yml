@@ -16,9 +16,9 @@ spring:
       defer-datasource-initialization: true
       ddl-auto: update
     show-sql: true
-  #  sql:  // data.sql 을 위한 설정
-  #    init:
-  #      mode: always
+#  sql:  // data.sql 을 위한 설정
+#    init:
+#      mode: always
   data:
     redis:
       host: localhost

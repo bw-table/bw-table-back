@@ -9,7 +9,6 @@ import java.util.Locale;
 
 @Entity
 @Getter
-@Setter //FIXME redis 구성 시 삭제
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

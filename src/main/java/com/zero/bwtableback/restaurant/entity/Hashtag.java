@@ -1,16 +1,13 @@
 package com.zero.bwtableback.restaurant.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.util.List;
 
 @Getter
-@Setter
-@AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Table(name = "hashtag")
@@ -26,5 +23,15 @@ public class Hashtag {
     private int searchCount;
 
     @ManyToMany(mappedBy = "hashtags")
+    @JsonIgnore
     private List<Restaurant> restaurants;
+
+    public Hashtag(Long id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    public Hashtag(String name) {
+        this.name = name;
+    }
 }

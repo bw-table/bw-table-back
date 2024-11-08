@@ -7,8 +7,6 @@ import com.zero.bwtableback.member.dto.SignUpReqDto;
 import com.zero.bwtableback.member.dto.SignUpResDto;
 import com.zero.bwtableback.member.dto.TokenDto;
 import com.zero.bwtableback.member.entity.Member;
-import com.zero.bwtableback.member.entity.Role;
-import com.zero.bwtableback.member.oauth2.service.KakaoOAuth2Service;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.security.jwt.TokenProvider;
 import jakarta.servlet.http.Cookie;
@@ -96,11 +94,12 @@ public class AuthService {
         return SignUpResDto.from(savedMember);
     }
 
-       // TODO util로 이동 및 사용 여부 결정
+    // TODO util로 이동 및 사용 여부 결정
     // 전화번호 하이픈 제거
     private String cleanPhoneNumber(String phone) {
         return phone.replaceAll("-", "").trim();
     }
+
     // 사업자등록번호 하이픈 제거
     private String cleanBusinessNumber(String businessNumber) {
         return businessNumber.replaceAll("-", "").trim();
