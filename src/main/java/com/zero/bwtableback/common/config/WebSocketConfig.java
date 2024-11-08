@@ -1,5 +1,6 @@
 package com.zero.bwtableback.common.config;
 
+import com.zero.bwtableback.chat.handler.ChatHandler;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;

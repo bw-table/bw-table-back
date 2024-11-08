@@ -1,20 +1,23 @@
 package com.zero.bwtableback.chat.entity;
 
+import com.zero.bwtableback.member.entity.Member;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "messages")
+@Table(name = "message")
 public class Message {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String content;
+    @ManyToOne
+    @JoinColumn(name = "sender_id", nullable = false)
+    private Member sender;
 
-    private String sender;
+    private String content;
 
     private LocalDateTime timestamp;
 
