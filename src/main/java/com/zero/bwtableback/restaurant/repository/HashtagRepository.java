@@ -11,5 +11,5 @@ import java.util.Optional;
 public interface HashtagRepository extends JpaRepository<Hashtag, Long> {
 
     Optional<Hashtag> findByName(String name);
-    List<Hashtag> findTop10ByNameContainingIgnoreCase(String hashtag);
+    List<Hashtag> findTop10ByNameStartingWithIgnoreCase(String hashtag);
 }
