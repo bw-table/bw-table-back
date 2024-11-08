@@ -1,32 +1,28 @@
-package com.zero.bwtableback.member.oauth2;
+package com.zero.bwtableback.security;
 
 import com.zero.bwtableback.member.entity.Member;
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.util.Collection;
-import java.util.Map;
 
 /**
- * 일반 로그인과 OAuth 로그인 모두에 사용될 수 있는 사용자 정보 컨테이너
+ * Spring Security와 통합된 사용자 인증 및 권한 부여 시스템
  */
-@NoArgsConstructor
 @AllArgsConstructor
-public class PrincipalDetails implements UserDetails, OAuth2User {
-    private Member member; // Member 객체
-    private Map<String, Object> attributes; // OAuth2 사용자 정보
+public class MemberDetails implements UserDetails {
+    private final Member member;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null; // 필요에 따라 권한을 설정
+        // 사용자의 역할을 권한으로 변환하여 반환
+        return member.getRole().getAuthorities();
     }
 
     @Override
     public String getPassword() {
-        return null;
+        return member.getPassword(); // 비밀번호 반환
     }
 
     @Override
@@ -54,19 +50,7 @@ public class PrincipalDetails implements UserDetails, OAuth2User {
         return true; // 계정 활성화 여부
     }
 
-    // OAuth2User 메서드 구현
-    @Override
-    public String getName() {
-        return (String) attributes.get("name"); // 사용자 이름 (예: 닉네임)
-    }
-
-    @Override
-    public Map<String, Object> getAttributes() {
-        return attributes; // OAuth2 사용자 정보 반환
-    }
-
     public Member getMember() {
-        return member; // Member 객체 반환 (추가)
+        return member; // Member 객체 반환
     }
 }
-

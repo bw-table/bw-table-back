@@ -6,6 +6,9 @@ import com.zero.bwtableback.restaurant.exception.RestaurantException;
 import com.zero.bwtableback.restaurant.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +31,9 @@ public class RestaurantService {
     // 등록
     @Transactional
     public Restaurant registerRestaurant(RegisterReqDto reqDto) {
+
+        reqDto.validate();
+
         // 카테고리 설정
         Category category = null;
         if (reqDto.getCategory() != null) {
@@ -89,7 +95,7 @@ public class RestaurantService {
         restaurant.setMenus(menus);
 
         // 편의시설 설정
-        List<Facility> facilities = reqDto.getFacilities().stream()
+        List<Facility> facilities =  reqDto.getFacilities().stream()
                 .map(facilityType -> {
                     FacilityType type = FacilityType.valueOf(facilityType);
                     return facilityRepository.findByFacilityType(type)
@@ -129,15 +135,84 @@ public class RestaurantService {
     }
 
     // 모든 식당 리스트 검색
-    public List<RestaurantListDto> getRestaurants() {
-        List<Restaurant> restaurants = restaurantRepository.findAll();
+
+    public List<RestaurantListDto> getRestaurants(Pageable pageable) {
+        Page<Restaurant> restaurants = restaurantRepository.findAll(pageable);
+
         return restaurants.stream()
-                .map(restaurant -> new RestaurantListDto(
-                        restaurant.getId(),
-                        restaurant.getName(),
-                        restaurant.getAddress(),
-                        restaurant.getCategory() != null ? restaurant.getCategory().getCategoryType().name() : null
-                )).collect(Collectors.toList());
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    // 이름으로 식당 검색
+    public List<RestaurantListDto> getRestaurantsByName(String name, Pageable pageable) {
+        Page<Restaurant> restaurants = restaurantRepository.findByNameContainingIgnoreCase(name, pageable);
+
+        return restaurants.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    // 업종으로 식당 검색
+    public List<RestaurantListDto> getRestaurantsByCategory(String category, Pageable pageable) {
+        CategoryType categoryType = convertToCategoryType(category);
+
+        Page<Restaurant> restaurants = restaurantRepository.findByCategory_CategoryType(categoryType, pageable);
+
+        return restaurants.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    // 메뉴로 식당 검색
+    public List<RestaurantListDto> getRestaurantsByMenu(String menu, Pageable pageable) {
+        Page<Restaurant> restaurants = restaurantRepository.findByMenus_NameContaining(menu, pageable);
+
+        return restaurants.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    // 해시태그로 식당 검색
+    public List<RestaurantListDto> getRestaurantsByHashtag(String hashtag, Pageable pageable) {
+        Page<Restaurant> restaurants = restaurantRepository.findByHashtags_NameContaining(hashtag, pageable);
+
+        return restaurants.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    // 해시태그 자동완성
+    public List<String> getHashtagSuggestions(String hashtag) {
+        List<Hashtag> hashtags = hashtagRepository.findTop10ByNameContainingIgnoreCase(hashtag);
+
+        return hashtags.stream()
+                .map(Hashtag::getName)
+                .collect(Collectors.toList());
+    }
+
+    // Restaurant -> dto로 변환하는 헬퍼 메서드
+    private RestaurantListDto convertToDto(Restaurant restaurant) {
+        return new RestaurantListDto(
+                restaurant.getId(),
+                restaurant.getName(),
+                restaurant.getAddress(),
+                restaurant.getCategory() != null ? restaurant.getCategory().getCategoryType().name() : null,
+                restaurant.getAverageRating()
+        );
+    }
+
+    // category String -> categoryType enum 으로 변환하는 헬퍼 메서드
+    private CategoryType convertToCategoryType(String category) {
+        if (category == null) {
+            throw new IllegalArgumentException("Category must not be null");
+        }
+
+        try {
+            return CategoryType.valueOf(category.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid category type: " + category);
+        }
     }
 
     // 식당 상세정보 조회

@@ -7,10 +7,11 @@ import com.zero.bwtableback.member.dto.SignUpReqDto;
 import com.zero.bwtableback.member.dto.SignUpResDto;
 import com.zero.bwtableback.member.dto.TokenDto;
 import com.zero.bwtableback.member.entity.Member;
-import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.security.jwt.TokenProvider;
+import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -27,22 +28,60 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final TokenProvider tokenProvider;
 
+    private final RedisTemplate<String, String> redisTemplate;
+
+    private static final int REFRESH_TOKEN_TTL = 86400;
+
     /**
-     * 새로운 사용자 회원가입
+     * 이메일 중복 확인
+     */
+    public boolean isEmailDuplicate(String email) {
+        return memberRepository.existsByEmail(email);
+    }
+
+    /**
+     * 닉네임 중복 확인
+     */
+    public boolean isNicknameDuplicate(String nickname) {
+        return memberRepository.existsByNickname(nickname);
+    }
+
+    /**
+     * 전화번호 중복 확인
+     */
+    public boolean isPhoneDuplicate(String phone) {
+        return memberRepository.existsByPhone(phone);
+    }
+
+    /**
+     * 사업자등록번호 중복 확인 (사장님만)
+     */
+    public boolean isBusinessNumberDuplicate(String businessNumber) {
+        return memberRepository.existsByBusinessNumber(businessNumber);
+    }
+
+    /**
+     * 새로운 사용자 이메일 회원가입
      */
     public SignUpResDto signUp(SignUpReqDto form) {
-        // 이메일 유효성 검사 및 중복 체크
-        validateEmail(form.getEmail());
-
-        // 닉네임 유효성 검사 및 중복 체크
-        validateNickname(form.getNickname());
-
-        // 비밀번호 유효성 검사
-        validatePassword(form.getPassword());
-
-        // 사업자등록번호 유효성 검사 및 하이픈 제거(사장님 회원가입 시)
-        if (form.getRole() == Role.OWNER) {
-            validateBusinessNumber(form);
+        // 이메일 중복 체크
+        if (isEmailDuplicate(form.getEmail())) {
+            throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
+        }
+        // 닉네임 중복 체크
+        if (isNicknameDuplicate(form.getNickname())) {
+            throw new CustomException(ErrorCode.NICKNAME_ALREADY_EXISTS);
+        }
+        // 전화번호 중복 체크
+        if (isPhoneDuplicate(form.getPhone())) {
+            throw new CustomException(ErrorCode.PHONE_ALREADY_EXISTS);
+        }
+        // 사업자등록번호 유효성 검사(사장님 회원가입 시)
+        if ("OWNER".equals(form.getRole())) {
+            // 사업자등록번호 중복 체크
+            if (isBusinessNumberDuplicate(form.getBusinessNumber())) {
+                throw new CustomException(ErrorCode.MISSING_BUSINESS_NUMBER);
+            }
         }
 
         // 비밀번호 암호화
@@ -55,61 +94,15 @@ public class AuthService {
         return SignUpResDto.from(savedMember);
     }
 
-    // FIXME 아래 모든 유효성 검사 @Valid로 처리 예정 (코드리뷰X)
-    private void validateEmail(String email) {
-        // FIXME Regex 수정 필요
-        String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
-        if (email == null || email.length() < 3 || email.length() > 50 || !email.matches(emailRegex)) {
-            throw new CustomException(ErrorCode.INVALID_EMAIL_FORMAT);
-        }
-
-        if (isEmailDuplicate(email)) {
-            throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
-        }
+    // TODO util로 이동 및 사용 여부 결정
+    // 전화번호 하이픈 제거
+    private String cleanPhoneNumber(String phone) {
+        return phone.replaceAll("-", "").trim();
     }
 
-    // 닉네임 유효성 검사
-    private void validateNickname(String nickname) {
-        if (nickname.length() < 2 || nickname.length() > 15 || !nickname.matches("^[a-zA-Z0-9가-힣]+$")) {
-            throw new CustomException(ErrorCode.INVALID_NICKNAME_FORMAT);
-        }
-
-        if (isNicknameDuplicate(nickname)) {
-            throw new CustomException(ErrorCode.NICKNAME_ALREADY_EXISTS);
-        }
-    }
-
-    // 비밀번호 유효성 검사
-    private void validatePassword(String password) {
-        if (password.length() < 8 || !password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#])[A-Za-z\\d@$!%*?&#]{8,}$")) {
-            throw new CustomException(ErrorCode.INVALID_PASSWORD_FORMAT);
-        }
-    }
-
-    // 이메일 중복 체크 함수
-    private boolean isEmailDuplicate(String email) {
-        return memberRepository.existsByEmail(email);
-    }
-
-    // 닉네임 중복 체크 함수
-    private boolean isNicknameDuplicate(String nickname) {
-        return memberRepository.existsByNickname(nickname);
-    }
-
-    // 사장님 회원가입 시 사업자등록번호 체크 함수
-    private void validateBusinessNumber(SignUpReqDto form) {
-        if (form.getBusinessNumber() == null || form.getBusinessNumber().trim().isEmpty()) {
-            throw new CustomException(ErrorCode.MISSING_BUSINESS_NUMBER);
-        }
-
-        // 사업자등록번호 형식 예시: 123-01-11111
-        if (form.getBusinessNumber().trim().length() != 12) {
-            throw new CustomException(ErrorCode.INVALID_BUSINESS_NUMBER_FORMAT);
-        }
-    }
-
+    // 사업자등록번호 하이픈 제거
     private String cleanBusinessNumber(String businessNumber) {
-        return businessNumber.trim().replaceAll("-", "");
+        return businessNumber.replaceAll("-", "").trim();
     }
 
     /**
@@ -128,14 +121,26 @@ public class AuthService {
         String accessToken = tokenProvider.createAccessToken(member.getEmail());
         String refreshToken = tokenProvider.createRefreshToken();
 
-        // TODO 리프레시 토큰 저장 (레디스)
+        // 리프레시 토큰 레디스에 저장
+        saveRefreshTokenAndCreateCookie(member.getId(), refreshToken);
 
-        // FIXME 리프레시 토큰 임시 저장 (Member DB) 저장소 변경 후 setter Member의 @Setter 삭제
-        member.setRefreshToken(refreshToken);
-        memberRepository.save(member);
-
-        // TokenDto 생성 및 반환
         return new TokenDto(accessToken, refreshToken);
+    }
+
+    /**
+     * 자체 리프레시 토큰을 레디스에 저장하고 HttpOnly Cookie에 저장
+     */
+    public void saveRefreshTokenAndCreateCookie(Long memberId, String refreshToken) {
+        // Redis에 저장
+        String key = "refresh_token:" + memberId;
+        redisTemplate.opsForValue().set(key, refreshToken);
+
+        // HttpOnly 쿠키 생성
+        Cookie cookie = new Cookie("refreshToken", refreshToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(REFRESH_TOKEN_TTL); // 1일 동안 유효
     }
 
     /**
@@ -147,11 +152,11 @@ public class AuthService {
     }
 
     /**
-     * 사용자 로그아웃 처리
+     * TODO 사용자 로그아웃 처리
      */
     public void logout(String email) {
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+//        Member member = memberRepository.findById()
+//                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
     }
 }

@@ -5,11 +5,15 @@ import com.zero.bwtableback.member.dto.SignUpReqDto;
 import com.zero.bwtableback.member.dto.SignUpResDto;
 import com.zero.bwtableback.member.dto.TokenDto;
 import com.zero.bwtableback.member.service.AuthService;
+import com.zero.bwtableback.security.MemberDetails;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,10 +24,57 @@ public class AuthController {
     private final AuthService authService;
 
     /**
+     * 이메일 중복 검사
+     */
+    @PostMapping("/check/email")
+    public ResponseEntity<Boolean> checkEmailDuplicate(@RequestBody String email) {
+            boolean isDuplicate = authService.isEmailDuplicate(email);
+            return ResponseEntity.ok(isDuplicate);
+    }
+
+    /**
+     * 닉네임 중복 검사
+     */
+    @PostMapping("/check/nickname")
+    public ResponseEntity<Boolean> checkNicknameDuplicate(@RequestBody String nickname) {
+            boolean isDuplicate = authService.isNicknameDuplicate(nickname);
+            return ResponseEntity.ok(isDuplicate);
+    }
+
+    /**
+     * 전화번호 중복 검사
+     */
+    @PostMapping("/check/phone")
+    public ResponseEntity<Boolean> checkPhoneDuplicate(@RequestBody String phone) {
+            //TODO String cleanPhone = PhoneNumberUtil.removeHyphens(phone);
+            boolean isDuplicate = authService.isPhoneDuplicate(phone);
+            return ResponseEntity.ok(isDuplicate);
+    }
+
+    /**
+     * 사업자등록번호 중복 검사
+     */
+    @PostMapping("/check/business-number")
+    public ResponseEntity<Boolean> checkBusinessNumberDuplicate(@RequestBody String businessNumber) {
+            //TODO String cleanBusinessNumber = BusinessNumberUtil.removeHyphens(businessNumber);
+            boolean isDuplicate = authService.isBusinessNumberDuplicate(businessNumber);
+            return ResponseEntity.ok(isDuplicate);
+    }
+
+    /**
      * 회원가입
      */
     @PostMapping("/signup")
-    public ResponseEntity<SignUpResDto> signUp(@RequestBody SignUpReqDto signUpReqDto) {
+    public ResponseEntity<SignUpResDto> signUp(@Valid @RequestBody SignUpReqDto signUpReqDto, BindingResult bindingResult) {
+        // 유효성 검사 결과 확인
+        if (bindingResult.hasErrors()) {
+            // 에러 메시지를 수집하여 ResponseEntity에 담아 반환
+            StringBuilder errorMessage = new StringBuilder();
+            bindingResult.getFieldErrors().forEach(error ->
+                    errorMessage.append(error.getDefaultMessage()).append(" ")
+            );
+        }
+
         SignUpResDto responseDto = authService.signUp(signUpReqDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
@@ -34,6 +85,8 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<TokenDto> login(@RequestBody EmailLoginReqDto loginDto,
                                           HttpServletResponse response) {
+
+        // FIXME accesstoken만 반환하고 쿠키 설정은 service에 구현 변경 필요
         TokenDto tokenDto = authService.login(loginDto);
 
         // HttpOnly 쿠키에 리프레시 토큰 저장
@@ -61,7 +114,8 @@ public class AuthController {
      * 로그아웃 처리
      */
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@RequestParam String email) {
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal MemberDetails memberDetails) {
+        String email = memberDetails.getUsername();
         authService.logout(email);
         return ResponseEntity.noContent().build();
     }

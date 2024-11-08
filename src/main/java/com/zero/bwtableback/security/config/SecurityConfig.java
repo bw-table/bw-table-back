@@ -1,15 +1,25 @@
 package com.zero.bwtableback.security.config;
 
+import com.zero.bwtableback.security.jwt.JwtAuthenticationFilter;
+import com.zero.bwtableback.security.jwt.MemberDetailsService;
+import com.zero.bwtableback.security.jwt.TokenProvider;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+    private final MemberDetailsService memberDetailsService;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final TokenProvider tokenProvider;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -17,13 +27,20 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // CSRF 비활성화
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/signup", "/api/auth/login").permitAll() // 회원가입 및 로그인 허용
-                        .requestMatchers("/h2-console/**").permitAll() // H2 콘솔 접근 허용
-                        .anyRequest().authenticated() // 나머지 요청은 인증 필요
+                                .anyRequest().permitAll() //FIXME 임시로 모든 요청 허용
+//                        .requestMatchers("/api/auth/signup", "/api/auth/login").permitAll() // 회원가입 및 로그인 허용
+//                        .requestMatchers("/h2-console/**").permitAll() // H2 콘솔 접근 허용
+//                        .anyRequest().authenticated() // 나머지 요청은 인증 필요
                 )
                 .headers(headers -> headers
                         .frameOptions(frameOptions -> frameOptions.disable()) // H2 콘솔을 iframe에서 사용할 수 있도록 설정
+                ).sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // JWT 사용 시 세션 비활성화
                 );
+
+        // JwtAuthenticationFilter 필터 추가
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 

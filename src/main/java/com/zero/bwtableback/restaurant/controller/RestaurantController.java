@@ -9,6 +9,7 @@ import com.zero.bwtableback.restaurant.service.RestaurantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -78,9 +79,52 @@ public class RestaurantController {
 
     // 모든 식당 조회
     @GetMapping
-    public ResponseEntity<List<RestaurantListDto>> getRestaurants() {
-        List<RestaurantListDto> restaurantList = restaurantService.getRestaurants();
+    public ResponseEntity<List<RestaurantListDto>> getRestaurants(Pageable pageable) {
+        List<RestaurantListDto> restaurantList = restaurantService.getRestaurants(pageable);
         return ResponseEntity.ok(restaurantList);
+    }
+
+    // 이름으로 식당 검색
+    @GetMapping("/search")
+    public ResponseEntity<List<RestaurantListDto>> getRestaurantByName(
+                                                        @RequestParam String name,
+                                                        Pageable pageable) {
+        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByName(name, pageable);
+        return ResponseEntity.ok(restaurants);
+    }
+
+    // 업종으로 식당 검색
+    @GetMapping("/search/categories")
+    public ResponseEntity<List<RestaurantListDto>> getRestaurantsByCategory(
+                                                        @RequestParam String category,
+                                                        Pageable pageable) {
+        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByCategory(category, pageable);
+        return ResponseEntity.ok(restaurants);
+    }
+
+    // 메뉴로 식당 검색
+    @GetMapping("/search/menus")
+    public ResponseEntity<List<RestaurantListDto>> getRestaurantsByMenu(
+            @RequestParam String menu,
+            Pageable pageable) {
+        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByMenu(menu, pageable);
+        return ResponseEntity.ok(restaurants);
+    }
+
+    // 해시태그로 식당 검색
+    @GetMapping("/search/hashtags")
+    public ResponseEntity<List<RestaurantListDto>> getRestaurantsByHashtag(
+                                                        @RequestParam String hashtag,
+                                                        Pageable pageable) {
+        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByHashtag(hashtag, pageable);
+        return ResponseEntity.ok(restaurants);
+    }
+
+    // 해시태그 자동완성
+    @GetMapping("/search/hashtags/suggestions")
+    public ResponseEntity<List<String>> getHashtagSuggestions(@RequestParam String hashtag) {
+        List<String> suggestions = restaurantService.getHashtagSuggestions(hashtag);
+        return ResponseEntity.ok(suggestions);
     }
 
     // 식당 상세정보 조회
