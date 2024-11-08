@@ -11,10 +11,12 @@ public enum ErrorCode {
     INVALID_EMAIL_FORMAT(HttpStatus.BAD_REQUEST, "유효하지 않은 이메일 형식입니다."),
     INVALID_NICKNAME_FORMAT(HttpStatus.BAD_REQUEST, "유효하지 않은 닉네임입니다."),
     INVALID_PASSWORD_FORMAT(HttpStatus.BAD_REQUEST, "비밀번호는 최소 8자 이상이며 대문자, 소문자, 숫자 및 특수문자를 포함해야 합니다."),
-    INVALID_BUSINESS_NUMBER_FORMAT(HttpStatus.BAD_REQUEST, "유효하지 않은 사업자 등록번호 형식입니다."),
+    INVALID_PHONE_NUMBER(HttpStatus.BAD_REQUEST, "유효하지 않은 전화번호 형식입니다."),
+    INVALID_BUSINESS_NUMBER(HttpStatus.BAD_REQUEST, "유효하지 않은 사업자등록번호 형식입니다."),
 
     MISSING_BUSINESS_NUMBER(HttpStatus.BAD_REQUEST, "사업자등록번호는 사장님 역할에 필수입니다."),
 
+    USER_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 이메일입니다."),
     EMAIL_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 이메일입니다."),
     NICKNAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 닉네임입니다."),
     PHONE_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 전화번호입니다."),
