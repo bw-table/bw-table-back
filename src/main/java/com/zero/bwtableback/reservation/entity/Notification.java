@@ -1,7 +1,5 @@
 package com.zero.bwtableback.reservation.entity;
 
-import com.zero.bwtableback.common.exception.CustomException;
-import com.zero.bwtableback.common.exception.ErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -16,6 +14,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Builder
@@ -42,22 +41,11 @@ public class Notification {
     @Column(nullable = false)
     private LocalDateTime scheduledTime;
 
+    @Setter
     private LocalDateTime sentTime;
 
+    @Setter
     @Enumerated(EnumType.STRING)
     private NotificationStatus status;
-
-
-    public void markAsSent() {
-        if (this.status == NotificationStatus.SENT) {
-            throw new CustomException(ErrorCode.NOTIFICATION_ALREADY_SENT);
-        }
-        if (LocalDateTime.now().isBefore(this.scheduledTime)) {
-            throw new CustomException(ErrorCode.NOTIFICATION_SCHEDULED_TIME_NOT_REACHED);
-        }
-
-        this.sentTime = LocalDateTime.now();
-        this.status = NotificationStatus.SENT;
-    }
 
 }
