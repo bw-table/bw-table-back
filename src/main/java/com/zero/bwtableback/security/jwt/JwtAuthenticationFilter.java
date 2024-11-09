@@ -25,6 +25,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        System.out.println("doFilterInternal");
+
         String token = tokenProvider.extractToken(request);
         if (token != null && tokenProvider.validateToken(token)) {
             String email = tokenProvider.getUsername(token);
@@ -36,7 +38,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
-
 
         filterChain.doFilter(request, response); // 다음 필터로 요청 전달
     }

@@ -1,7 +1,7 @@
 package com.zero.bwtableback.member.controller;
 
 import com.zero.bwtableback.member.dto.EmailLoginReqDto;
-import com.zero.bwtableback.member.dto.EmailLoginResDto;
+import com.zero.bwtableback.member.dto.LoginResDto;
 import com.zero.bwtableback.member.dto.SignUpReqDto;
 import com.zero.bwtableback.member.dto.SignUpResDto;
 import com.zero.bwtableback.member.service.AuthService;
@@ -71,7 +71,6 @@ public class AuthController {
     public ResponseEntity<SignUpResDto> signUp(@Valid @RequestBody SignUpReqDto signUpReqDto, BindingResult bindingResult) {
         // 유효성 검사 결과 확인
         if (bindingResult.hasErrors()) {
-            // 에러 메시지를 수집하여 ResponseEntity에 담아 반환
             StringBuilder errorMessage = new StringBuilder();
             bindingResult.getFieldErrors().forEach(error ->
                     errorMessage.append(error.getDefaultMessage()).append(" ")
@@ -86,22 +85,13 @@ public class AuthController {
      * 로그인
      */
     @PostMapping("/login")
-    public ResponseEntity<EmailLoginResDto> login(@RequestBody EmailLoginReqDto loginReqDto,
-                                                  HttpServletRequest request,
-                                                  HttpServletResponse response) {
+    public ResponseEntity<LoginResDto> login(@RequestBody EmailLoginReqDto loginReqDto,
+                                             HttpServletRequest request,
+                                             HttpServletResponse response) {
         // 로그인 서비스 호출
-        EmailLoginResDto loginResDto = authService.login(loginReqDto, request, response);
+        LoginResDto loginResDto = authService.login(loginReqDto, request, response);
         return ResponseEntity.ok(loginResDto);
     }
-
-//    /**
-//     * 리프레시 토큰을 사용하여 새로운 액세스 토큰 발급
-//     */
-//    @PostMapping("/refresh")
-//    public ResponseEntity<TokenDto> refreshToken(@RequestParam String refreshToken) {
-//        TokenDto tokenDto = authService.refreshToken(refreshToken);
-//        return ResponseEntity.ok(tokenDto);
-//    }
 
     /**
      * 로그아웃 처리
