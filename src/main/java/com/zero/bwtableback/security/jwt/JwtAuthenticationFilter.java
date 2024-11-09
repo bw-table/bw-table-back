@@ -25,13 +25,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // TODO 상태코드와 함께 예외 처리 필요
-        String token = tokenProvider.resolveToken(request); // 요청에서 토큰 추출
-
+        String token = tokenProvider.extractToken(request);
         if (token != null && tokenProvider.validateToken(token)) {
             String email = tokenProvider.getUsername(token);
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-
+            
             // SecurityContext에 사용자 정보 설정
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
