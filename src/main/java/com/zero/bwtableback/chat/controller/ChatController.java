@@ -68,7 +68,7 @@ public class ChatController {
 
     // 메시지 전송
     @PostMapping("/{chatRommId}/message")
-    public ResponseEntity<MessageDto> sendMessage(@PathVariable Long chatRoomId, @Valid MessageDto messageDto) {
+    public ResponseEntity<MessageDto> sendMessage(@PathVariable Long chatRoomId, MessageDto messageDto) {
         MessageDto message = chatService.sendMessage(chatRoomId, messageDto);
         return ResponseEntity.ok(message);
     }
