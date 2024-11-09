@@ -1,21 +1,24 @@
 package com.zero.bwtableback.member.controller;
 
-import com.zero.bwtableback.member.dto.*;
+import com.zero.bwtableback.member.dto.EmailLoginReqDto;
+import com.zero.bwtableback.member.dto.EmailLoginResDto;
+import com.zero.bwtableback.member.dto.SignUpReqDto;
+import com.zero.bwtableback.member.dto.SignUpResDto;
 import com.zero.bwtableback.member.service.AuthService;
+import com.zero.bwtableback.security.MemberDetails;
 import com.zero.bwtableback.security.jwt.TokenProvider;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
-
-import javax.management.remote.JMXAuthenticator;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,8 +33,8 @@ public class AuthController {
      */
     @PostMapping("/check/email")
     public ResponseEntity<Boolean> checkEmailDuplicate(@RequestBody String email) {
-            boolean isDuplicate = authService.isEmailDuplicate(email);
-            return ResponseEntity.ok(isDuplicate);
+        boolean isDuplicate = authService.isEmailDuplicate(email);
+        return ResponseEntity.ok(isDuplicate);
     }
 
     /**
@@ -39,8 +42,8 @@ public class AuthController {
      */
     @PostMapping("/check/nickname")
     public ResponseEntity<Boolean> checkNicknameDuplicate(@RequestBody String nickname) {
-            boolean isDuplicate = authService.isNicknameDuplicate(nickname);
-            return ResponseEntity.ok(isDuplicate);
+        boolean isDuplicate = authService.isNicknameDuplicate(nickname);
+        return ResponseEntity.ok(isDuplicate);
     }
 
     /**
@@ -48,8 +51,8 @@ public class AuthController {
      */
     @PostMapping("/check/phone")
     public ResponseEntity<Boolean> checkPhoneDuplicate(@RequestBody String phone) {
-            boolean isDuplicate = authService.isPhoneDuplicate(phone);
-            return ResponseEntity.ok(isDuplicate);
+        boolean isDuplicate = authService.isPhoneDuplicate(phone);
+        return ResponseEntity.ok(isDuplicate);
     }
 
     /**
@@ -57,8 +60,8 @@ public class AuthController {
      */
     @PostMapping("/check/business-number")
     public ResponseEntity<Boolean> checkBusinessNumberDuplicate(@RequestBody String businessNumber) {
-            boolean isDuplicate = authService.isBusinessNumberDuplicate(businessNumber);
-            return ResponseEntity.ok(isDuplicate);
+        boolean isDuplicate = authService.isBusinessNumberDuplicate(businessNumber);
+        return ResponseEntity.ok(isDuplicate);
     }
 
     /**
@@ -104,8 +107,9 @@ public class AuthController {
      * 로그아웃 처리
      */
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
-        authService.logout();
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal MemberDetails memberDetails) {
+        String email = memberDetails.getUsername();
+        authService.logout(email);
         return ResponseEntity.noContent().build();
     }
 }

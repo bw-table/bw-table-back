@@ -29,6 +29,8 @@ public class AuthService {
 
     private final RedisTemplate<String, String> redisTemplate;
 
+    private static final int REFRESH_TOKEN_TTL = 86400;
+
     /**
      * 이메일 중복 확인
      */
@@ -69,11 +71,11 @@ public class AuthService {
         if (isNicknameDuplicate(form.getNickname())) {
             throw new CustomException(ErrorCode.NICKNAME_ALREADY_EXISTS);
         }
-        // 전화번호 중복 체크 및 하이픈 제거
+        // 전화번호 중복 체크
         if (isPhoneDuplicate(form.getPhone())) {
             throw new CustomException(ErrorCode.PHONE_ALREADY_EXISTS);
         }
-        // 사업자등록번호 유효성 검사 및 하이픈 제거(사장님 회원가입 시)
+        // 사업자등록번호 유효성 검사(사장님 회원가입 시)
         if ("OWNER".equals(form.getRole())) {
 
             // 사업자등록번호 중복 체크
@@ -92,7 +94,7 @@ public class AuthService {
         return SignUpResDto.from(savedMember);
     }
 
-    // FIXME util로 이동, 사용 여부 결정
+    // TODO util로 이동 및 사용 여부 결정
     // 전화번호 하이픈 제거
     private String cleanPhoneNumber(String phone) {
         return phone.replaceAll("-", "").trim();
@@ -174,20 +176,20 @@ public class AuthService {
         return new EmailLoginResDto(accessToken, memberDto);
     }
 
-// 리프레시 토큰을 사용하여 새로운 액세스 토큰 발급
-private EmailLoginResDto handleValidRefreshToken(String email, HttpServletResponse response) {
-    System.out.println("Accesstoken이 만료되거나 없는경우 Refresh 토큰이 유효한 경우");
-    // 사용자 정보를 데이터베이스에서 가져오기
-    Member member = memberRepository.findByEmail(email)
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    // 리프레시 토큰을 사용하여 새로운 액세스 토큰 발급
+    private EmailLoginResDto handleValidRefreshToken(String email, HttpServletResponse response) {
+        System.out.println("Accesstoken이 만료되거나 없는경우 Refresh 토큰이 유효한 경우");
+        // 사용자 정보를 데이터베이스에서 가져오기
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-    String newAccessToken = tokenProvider.createAccessToken(member.getEmail());
+        String newAccessToken = tokenProvider.createAccessToken(member.getEmail());
 
-    MemberDto memberDto = MemberDto.from(member);
-    return new EmailLoginResDto(newAccessToken, memberDto);
-}
+        MemberDto memberDto = MemberDto.from(member);
+        return new EmailLoginResDto(newAccessToken, memberDto);
+    }
 
-   // 요청에서 리프레시 토큰 추출
+    // 요청에서 리프레시 토큰 추출
     private String getRefreshTokenFromRequest(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
@@ -201,9 +203,9 @@ private EmailLoginResDto handleValidRefreshToken(String email, HttpServletRespon
     }
 
     /**
-     * 사용자 로그아웃 처리
+     * TODO 사용자 로그아웃 처리
      */
-    public void logout() {
+    public void logout(String email) {
 //        Member member = memberRepository.findById()
 //                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 

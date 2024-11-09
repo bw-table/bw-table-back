@@ -1,5 +1,10 @@
 package com.zero.bwtableback.reservation.dto;
 
+import static com.zero.bwtableback.common.exception.ErrorCode.INVALID_PEOPLE_COUNT;
+import static com.zero.bwtableback.common.exception.ErrorCode.INVALID_RESERVATION_DATE;
+import static com.zero.bwtableback.common.exception.ErrorCode.INVALID_RESERVATION_TIME;
+
+import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
@@ -15,16 +20,17 @@ public record ReservationRequestDto(
         String specialRequest
 ) {
 
-    public ReservationRequestDto { // TODO: 커스텀 예외 설정으로 변경 필요
+    public ReservationRequestDto {
         if (numberOfPeople < 1) {
-            throw new IllegalArgumentException("인원 설정은 최소 한 명입니다.");
+            throw new CustomException(INVALID_PEOPLE_COUNT);
         }
         if (reservationDate.isBefore(LocalDate.now())) {
-            throw new IllegalArgumentException("현재보다 과거의 날짜는 예약이 불가합니다.");
+            throw new CustomException(INVALID_RESERVATION_DATE);
         }
         if (reservationTime.isBefore(LocalTime.now())) {
-            throw new IllegalArgumentException("현재보다 과거의 시간은 예약이 불가합니다.");
+            throw new CustomException(INVALID_RESERVATION_TIME);
         }
+        
     }
 
     public static Reservation toEntity(ReservationRequestDto dto, Restaurant restaurant, Member member) {
