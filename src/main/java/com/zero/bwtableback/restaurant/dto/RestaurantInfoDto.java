@@ -29,10 +29,13 @@ public class RestaurantInfoDto {
     private String category;
     private String link;
     private String info;
+    private int deposit;
     private List<String> images;
     private List<MenuDto> menus;
     private List<String> facilities;
     private List<String> hashtags;
     private List<OperatingHoursDto> operatingHours;
     private double averageRating;
+    private List<ReviewInfoDto> reviews;
+    private List<AnnouncementDetailDto> announcements;
 }

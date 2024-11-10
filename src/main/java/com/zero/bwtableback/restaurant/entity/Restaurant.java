@@ -47,6 +47,8 @@ public class Restaurant {
 
     private String link; // 홈페이지 링크
 
+    private int deposit; // 인당예약금
+
     @OneToMany(
             mappedBy = "restaurant", // 양방향 관계 설정
             cascade = CascadeType.ALL, // 음식점 삭제 시 관련 이미지 함께 삭제
@@ -79,9 +81,12 @@ public class Restaurant {
     )
     private List<Hashtag> hashtags;
 
-    @Column(nullable = false)
+    @Column(nullable = false) // TODO: 평점 null 허용?
     private double averageRating; // 평균 평점
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
     private List<Review> reviews;
+
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Announcement> announcements;
 }
