@@ -27,6 +27,10 @@ public class TokenProvider {
     @Value("${JWT_REFRESH_TOKEN_VALIDITY}")
     private long refreshTokenValidityInMilliseconds;
 
+    public long getRefreshTokenValidityInMilliseconds() {
+        return refreshTokenValidityInMilliseconds * 1000;
+    }
+
     public String createAccessToken(String email) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds);

@@ -153,29 +153,39 @@ public class KakaoOAuth2Service {
      * 사용자 로그인을 처리하고 인증 토큰을 반환
      */
     public LoginResDto login(MemberDto memberDto, HttpServletRequest request, HttpServletResponse response) {
-        String existingToken = tokenProvider.extractToken(request);
+        try {
+            String existingToken = tokenProvider.extractToken(request);
 
-        // 기존 토큰이 존재하는 경우 유효한 경우
-        if (existingToken != null && tokenProvider.validateToken(existingToken)) {
-            return handleExistingToken(existingToken);
-        }
-
-
-        // 기존 토큰이 존재하지만 유효하지 않은 경우
-        if (existingToken != null && !tokenProvider.validateToken(existingToken)) {
-            // 리프레시 토큰 확인하고 accessToken 반환
-            String refreshToken = getRefreshTokenFromRequest(request); // 요청에서 리프레시 토큰 추출
-
-            if (refreshToken != null && tokenProvider.validateToken(refreshToken)) {
-                // 리프레시 토큰이 유효한 경우 새로운 액세스 토큰 생성
-                String email = tokenProvider.getUsername(refreshToken); // 이메일 추출
-                return handleValidRefreshToken(email, response);
-            } else {
-                throw new CustomException(ErrorCode.INVALID_TOKEN);
+            // 토큰이 없는 경우
+            if (existingToken == null) {
+                return handleNewLogin(memberDto, response);
             }
-        }
 
-        return handleNewLogin(memberDto, response);
+            // 기존 토큰이 유효한 경우
+            if (tokenProvider.validateToken(existingToken)) {
+                return handleExistingToken(existingToken);
+            }
+
+            // 기존 토큰이 유효하지 않은 경우
+            String refreshToken = getRefreshTokenFromRequest(request);
+            if (refreshToken != null && tokenProvider.validateToken(refreshToken)) {
+                String email = tokenProvider.getUsername(refreshToken);
+                // Redis에 저장된 Refresh Token과 비교
+                String storedRefreshToken = redisTemplate.opsForValue().get("refresh_token:" + email);
+                if (refreshToken.equals(storedRefreshToken)) {
+                    return handleValidRefreshToken(email, response);
+                }
+            }
+
+            // Refresh Token이 유효하지 않거나 Redis에 저장된 값과 일치하지 않는 경우
+            throw new CustomException(ErrorCode.INVALID_TOKEN);
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            // 기타 예외 처리
+            log.error("Login error", e);
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // 기존 유효한 AccessToken이 존재하는 경우
@@ -239,6 +249,27 @@ public class KakaoOAuth2Service {
             }
         }
         return null;
+    }
+
+    /**
+     * 회원 정보 가져오기
+     */
+    public MemberDto getMemberInfo(HttpServletRequest request) throws JsonProcessingException {
+        // 요청에서 액세스 토큰 추출
+        // FIXME 해당 accessToken은 카카오에서 준 토큰으로 Redis에 저장 예정
+        String accessToken = tokenProvider.extractToken(request);
+        if (accessToken == null) {
+            throw new CustomException(ErrorCode.INVALID_TOKEN);
+        }
+
+        // 카카오 API를 통해 사용자 정보 가져오기
+        KakaoUserInfoDto userInfo = getUserInfoFromKakao(accessToken);
+
+        // 이메일로 회원 정보 조회
+        Member member = memberRepository.findByEmail(userInfo.getEmail())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        return MemberDto.from(member);
     }
 
     public void kakaoLogout(String accessToken, HttpServletResponse response) {

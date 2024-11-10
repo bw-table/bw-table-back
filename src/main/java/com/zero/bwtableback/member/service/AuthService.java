@@ -10,15 +10,19 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * 사용자 인증 및 권한 부여를 처리하는 서비스 클래스
  *
  * 로그인, 회원가입, 토큰 갱신 등 인증 관련 비즈니스 로직 포함
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -28,8 +32,6 @@ public class AuthService {
     private final TokenProvider tokenProvider;
 
     private final RedisTemplate<String, String> redisTemplate;
-
-    private static final int REFRESH_TOKEN_TTL = 86400; // FIXME 환경변수 처리
 
     /**
      * 이메일 중복 확인
@@ -98,30 +100,41 @@ public class AuthService {
      * 사용자 로그인을 처리하고 인증 토큰을 반환
      */
     public LoginResDto login(EmailLoginReqDto loginDto, HttpServletRequest request, HttpServletResponse response) {
-        String existingToken = tokenProvider.extractToken(request);
+        try {
+            String existingToken = tokenProvider.extractToken(request);
 
-        // 기존 토큰이 존재하는 경우 유효한 경우
-        if (existingToken != null && tokenProvider.validateToken(existingToken)) {
-            return handleExistingToken(existingToken);
-        }
-
-
-        // 기존 토큰이 존재하지만 유효하지 않은 경우
-        if (existingToken != null && !tokenProvider.validateToken(existingToken)) {
-            // 리프레시 토큰 확인하고 accessToken 반환
-            String refreshToken = getRefreshTokenFromRequest(request); // 요청에서 리프레시 토큰 추출
-
-            if (refreshToken != null && tokenProvider.validateToken(refreshToken)) {
-                // 리프레시 토큰이 유효한 경우 새로운 액세스 토큰 생성
-                String email = tokenProvider.getUsername(refreshToken); // 이메일 추출
-                return handleValidRefreshToken(email, response);
-            } else {
-                throw new CustomException(ErrorCode.INVALID_TOKEN);
+            // 토큰이 없는 경우
+            if (existingToken == null) {
+                return handleNewLogin(loginDto, response);
             }
-        }
 
-        // 새로운 로그인 처리
-        return handleNewLogin(loginDto, response);
+            // 기존 토큰이 유효한 경우
+            if (tokenProvider.validateToken(existingToken)) {
+                return handleExistingToken(existingToken);
+            }
+
+            // 기존 토큰이 유효하지 않은 경우
+            String refreshToken = getRefreshTokenFromRequest(request);
+            if (refreshToken != null && tokenProvider.validateToken(refreshToken)) {
+                String email = tokenProvider.getUsername(refreshToken);
+                // Redis에 저장된 Refresh Token과 비교
+                String storedRefreshToken = redisTemplate.opsForValue().get("refresh_token:" + email);
+                if (refreshToken.equals(storedRefreshToken)) {
+                    return handleValidRefreshToken(email, response);
+                }
+            }
+
+            // Refresh Token이 유효하지 않거나 Redis에 저장된 값과 일치하지 않는 경우
+            // 이메일과 비밀번호로 로그인 시도
+            return handleNewLogin(loginDto, response);
+
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            // 기타 예외 처리
+            log.error("Login error", e);
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // 기존 유효한 AccessToken이 존재하는 경우
@@ -139,7 +152,7 @@ public class AuthService {
         Member member = memberRepository.findByEmail(loginDto.getEmail())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        // 비밀번호 유효성 검사
+        // 비밀번호 검사
         if (!passwordEncoder.matches(loginDto.getPassword(), member.getPassword())) {
             throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
         }
@@ -165,8 +178,7 @@ public class AuthService {
         return new LoginResDto(accessToken, memberDto);
     }
 
-    // 리프레시 토큰을 사용하여 새로운 액세스 토큰 발급
-    private LoginResDto handleValidRefreshToken(String email, HttpServletResponse response) {
+    public LoginResDto handleValidRefreshToken(String email, HttpServletResponse response) {
         // 사용자 정보를 데이터베이스에서 가져오기
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
@@ -198,4 +210,42 @@ public class AuthService {
 //                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
     }
+
+    // TODO 순환 참조 문제 해결하여 JwtAuthenticationFilter에서 처리하도록 변경
+//    public LoginResDto login(EmailLoginReqDto loginReqDto, HttpServletRequest request, HttpServletResponse response) {
+//        Member member = memberRepository.findByEmail(loginReqDto.getEmail())
+//                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+//
+//        if (!passwordEncoder.matches(loginReqDto.getPassword(), member.getPassword())) {
+//            throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
+//        }
+//
+//        String accessToken = tokenProvider.createAccessToken(member.getEmail());
+//
+//        String refreshToken = tokenProvider.createRefreshToken();
+//        saveRefreshTokenToRedis(member.getEmail(), refreshToken);
+//
+//        addRefreshTokenToCookie(response, refreshToken);
+//
+//        MemberDto memberDto = MemberDto.from(member);
+//
+//        return new LoginResDto(accessToken, memberDto);
+//    }
+//
+//    private void saveRefreshTokenToRedis(String email, String refreshToken) {
+//        redisTemplate.opsForValue().set("refresh_token:" + email, refreshToken,
+//                tokenProvider.getRefreshTokenValidityInMilliseconds(), TimeUnit.MILLISECONDS);
+//    }
+//
+//    private void addRefreshTokenToCookie(HttpServletResponse response, String refreshToken) {
+//        Cookie cookie = new Cookie("refreshToken", refreshToken);
+//        cookie.setHttpOnly(true); // JavaScript에서 접근 불가
+//        cookie.setSecure(true); // HTTPS에서만 전송
+//        cookie.setPath("/");
+//        cookie.setMaxAge((int) (tokenProvider.getRefreshTokenValidityInMilliseconds() / 1000));
+//        response.addCookie(cookie);
+//    public boolean validateRefreshToken(String email, String refreshToken) {
+//        String storedToken = redisTemplate.opsForValue().get("refresh_token:" + email);
+//        return refreshToken != null && refreshToken.equals(storedToken);
+//    }
 }
