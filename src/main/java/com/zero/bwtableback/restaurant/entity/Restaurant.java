@@ -43,7 +43,7 @@ public class Restaurant {
     @Column(nullable = false)
     private List<OperatingHours> operatingHours;
 
-    private String notice; // 안내 및 유의사항
+    private String info; // 안내 및 유의사항
 
     private String link; // 홈페이지 링크
 
@@ -81,4 +81,7 @@ public class Restaurant {
 
     @Column(nullable = false)
     private double averageRating; // 평균 평점
+
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
+    private List<Review> reviews;
 }
