@@ -107,4 +107,12 @@ public class MemberController {
 //
 //        return ResponseEntity.ok(response);
 //    }
+
+    /**
+     * 이미지 수정
+     */
+
+    /**
+     * TODO 이미지 삭제
+     */
 }
