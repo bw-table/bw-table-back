@@ -4,7 +4,9 @@ import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.dto.*;
 import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.repository.MemberRepository;
+import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import com.zero.bwtableback.security.jwt.TokenProvider;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 public class AuthService {
 
     private final MemberRepository memberRepository;
+    private final RestaurantRepository restaurantRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenProvider tokenProvider;
 
@@ -97,58 +100,11 @@ public class AuthService {
     }
 
     /**
-     * 사용자 로그인을 처리하고 인증 토큰을 반환
+     * 사용자 로그인
+     * @return  accessToken, MemberDto, restaurantId(nullable)
      */
     public LoginResDto login(EmailLoginReqDto loginDto, HttpServletRequest request, HttpServletResponse response) {
-        try {
-            String existingToken = tokenProvider.extractToken(request);
-
-            // 토큰이 없는 경우
-            if (existingToken == null) {
-                return handleNewLogin(loginDto, response);
-            }
-
-            // 기존 토큰이 유효한 경우
-            if (tokenProvider.validateToken(existingToken)) {
-                return handleExistingToken(existingToken);
-            }
-
-            // 기존 토큰이 유효하지 않은 경우
-            String refreshToken = getRefreshTokenFromRequest(request);
-            if (refreshToken != null && tokenProvider.validateToken(refreshToken)) {
-                String email = tokenProvider.getUsername(refreshToken);
-                // Redis에 저장된 Refresh Token과 비교
-                String storedRefreshToken = redisTemplate.opsForValue().get("refresh_token:" + email);
-                if (refreshToken.equals(storedRefreshToken)) {
-                    return handleValidRefreshToken(email, response);
-                }
-            }
-
-            // Refresh Token이 유효하지 않거나 Redis에 저장된 값과 일치하지 않는 경우
-            // 이메일과 비밀번호로 로그인 시도
-            return handleNewLogin(loginDto, response);
-
-        } catch (CustomException e) {
-            throw e;
-        } catch (Exception e) {
-            // 기타 예외 처리
-            log.error("Login error", e);
-            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    // 기존 유효한 AccessToken이 존재하는 경우
-    private LoginResDto handleExistingToken(String existingToken) {
-        String email = tokenProvider.getUsername(existingToken);
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        MemberDto memberDto = MemberDto.from(member);
-        return new LoginResDto(existingToken, memberDto);
-    }
-
-    // 새로운 로그인 처리 - 첫 로그인 시, 토큰 없을 시, 토큰이 만료된 경우
-    private LoginResDto handleNewLogin(EmailLoginReqDto loginDto, HttpServletResponse response) {
+        // 이메일로 회원 조회
         Member member = memberRepository.findByEmail(loginDto.getEmail())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
@@ -157,6 +113,32 @@ public class AuthService {
             throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
         }
 
+        // 기존 토큰 처리
+        String existingToken = tokenProvider.extractToken(request);
+        if (existingToken == null) {
+            return handleNewLogin(member, response);
+        }
+
+        if (tokenProvider.validateToken(existingToken)) {
+            return handleExistingToken(existingToken, member);
+        }
+
+        // Refresh Token 처리
+        String refreshToken = getRefreshTokenFromRequest(request);
+        if (refreshToken != null && tokenProvider.validateToken(refreshToken)) {
+            String email = tokenProvider.getUsername(refreshToken);
+            String storedRefreshToken = redisTemplate.opsForValue().get("refresh_token:" + email);
+            if (refreshToken.equals(storedRefreshToken)) {
+                return handleValidRefreshToken(email, response, member);
+            }
+        }
+
+        // 새로운 로그인 처리
+        return handleNewLogin(member, response);
+    }
+
+    // 새로운 로그인 처리 - 첫 로그인 시, 토큰 없을 시, 토큰이 만료된 경우
+    private LoginResDto handleNewLogin(Member member, HttpServletResponse response) {
         // 토큰 생성
         String accessToken = tokenProvider.createAccessToken(member.getEmail());
         String refreshToken = tokenProvider.createRefreshToken();
@@ -174,19 +156,38 @@ public class AuthService {
         String key = "refresh_token:" + member.getId();
         redisTemplate.opsForValue().set(key, refreshToken);
 
+        Long restaurantId = getRestaurantIdIfOwner(member); // 사장님일 경우 레스토랑 ID 조회
+
         MemberDto memberDto = MemberDto.from(member);
-        return new LoginResDto(accessToken, memberDto);
+
+        return new LoginResDto(accessToken, memberDto, restaurantId); // restaurantId 포함하여 반환
     }
 
-    public LoginResDto handleValidRefreshToken(String email, HttpServletResponse response) {
-        // 사용자 정보를 데이터베이스에서 가져오기
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    // 기존 유효한 AccessToken이 존재하는 경우
+    private LoginResDto handleExistingToken(String existingToken, Member member) {
+        MemberDto memberDto = MemberDto.from(member);
 
+        Long restaurantId = getRestaurantIdIfOwner(member); // 사장님일 경우 레스토랑 ID 조회
+
+        return new LoginResDto(existingToken, memberDto, restaurantId); // restaurantId 포함하여 반환
+    }
+
+    public LoginResDto handleValidRefreshToken(String email, HttpServletResponse response, Member member) {
         String newAccessToken = tokenProvider.createAccessToken(member.getEmail());
 
+        Long restaurantId = getRestaurantIdIfOwner(member); // 사장님일 경우 레스토랑 ID 조회
+
         MemberDto memberDto = MemberDto.from(member);
-        return new LoginResDto(newAccessToken, memberDto);
+
+        return new LoginResDto(newAccessToken, memberDto, restaurantId); // restaurantId 포함하여 반환
+    }
+
+    // 사장님일 경우 레스토랑 ID 조회 메서드
+    private Long getRestaurantIdIfOwner(Member member) {
+        if (member.getRole() == Role.OWNER) {
+            return restaurantRepository.findRestaurantIdByMemberId(member.getId());
+        }
+        return null; // 일반 회원일 경우 null 반환
     }
 
     // 요청에서 리프레시 토큰 추출
@@ -201,6 +202,7 @@ public class AuthService {
         }
         return null;
     }
+
 
     /**
      * TODO 사용자 로그아웃 처리

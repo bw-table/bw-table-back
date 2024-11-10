@@ -12,6 +12,7 @@ import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.oauth2.dto.KakaoUserInfoDto;
 import com.zero.bwtableback.member.repository.MemberRepository;
+import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import com.zero.bwtableback.security.jwt.TokenProvider;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -48,6 +49,7 @@ public class KakaoOAuth2Service {
 
     private final RestTemplate restTemplate;
     private final MemberRepository memberRepository;
+    private final RestaurantRepository restaurantRepository;
     private final TokenProvider tokenProvider;
     private final RedisTemplate<String, String> redisTemplate;
 
@@ -153,17 +155,22 @@ public class KakaoOAuth2Service {
      * 사용자 로그인을 처리하고 인증 토큰을 반환
      */
     public LoginResDto login(MemberDto memberDto, HttpServletRequest request, HttpServletResponse response) {
+        // 이메일로 회원 조회
+        Member member = memberRepository.findByEmail(memberDto.getEmail())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        Long restaurantId = getRestaurantIdIfOwner(member);
+
         try {
             String existingToken = tokenProvider.extractToken(request);
 
             // 토큰이 없는 경우
             if (existingToken == null) {
-                return handleNewLogin(memberDto, response);
+                return handleNewLogin(memberDto, response,restaurantId);
             }
 
             // 기존 토큰이 유효한 경우
             if (tokenProvider.validateToken(existingToken)) {
-                return handleExistingToken(existingToken);
+                return handleExistingToken(existingToken,restaurantId);
             }
 
             // 기존 토큰이 유효하지 않은 경우
@@ -173,7 +180,7 @@ public class KakaoOAuth2Service {
                 // Redis에 저장된 Refresh Token과 비교
                 String storedRefreshToken = redisTemplate.opsForValue().get("refresh_token:" + email);
                 if (refreshToken.equals(storedRefreshToken)) {
-                    return handleValidRefreshToken(email, response);
+                    return handleValidRefreshToken(email, response,restaurantId);
                 }
             }
 
@@ -188,19 +195,27 @@ public class KakaoOAuth2Service {
         }
     }
 
+    // 사장님일 경우 레스토랑 ID 조회 메서드
+    private Long getRestaurantIdIfOwner(Member member) {
+        if (member.getRole() == Role.OWNER) {
+            return restaurantRepository.findRestaurantIdByMemberId(member.getId());
+        }
+        return null; // 일반 회원일 경우 null 반환
+    }
+
     // 기존 유효한 AccessToken이 존재하는 경우
-    private LoginResDto handleExistingToken(String existingToken) {
+    private LoginResDto handleExistingToken(String existingToken,Long restaurantId) {
         String email = tokenProvider.getUsername(existingToken);
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         MemberDto memberDto = MemberDto.from(member);
 
-        return new LoginResDto(existingToken, memberDto);
+        return new LoginResDto(existingToken, memberDto,restaurantId);
     }
 
     // 새로운 로그인 처리 - 첫 로그인 시, 토큰 없을 시, 토큰이 만료된 경우
-    private LoginResDto handleNewLogin(MemberDto memberDto, HttpServletResponse response) {
+    private LoginResDto handleNewLogin(MemberDto memberDto, HttpServletResponse response, Long restaurantId) {
         Member member = memberRepository.findByEmail(memberDto.getEmail())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
@@ -221,12 +236,12 @@ public class KakaoOAuth2Service {
         String key = "refresh_token:" + member.getId();
         redisTemplate.opsForValue().set(key, refreshToken);
 
-        return new LoginResDto(accessToken, memberDto);
+        return new LoginResDto(accessToken, memberDto,restaurantId);
     }
 
     // 리프레시 토큰을 사용하여 새로운 액세스 토큰 발급
     // Accesstoken이 만료되거나 없는경우 Refresh 토큰이 유효한 경우
-    private LoginResDto handleValidRefreshToken(String email, HttpServletResponse response) {
+    private LoginResDto handleValidRefreshToken(String email, HttpServletResponse response, Long restaurantId) {
         // 사용자 정보를 데이터베이스에서 가져오기
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
@@ -235,7 +250,7 @@ public class KakaoOAuth2Service {
 
         MemberDto memberDto = MemberDto.from(member);
 
-        return new LoginResDto(newAccessToken, memberDto);
+        return new LoginResDto(newAccessToken, memberDto, restaurantId);
     }
 
     // 요청에서 리프레시 토큰 추출

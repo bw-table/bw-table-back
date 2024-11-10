@@ -85,7 +85,7 @@ public class AuthController {
      * 로그인
      */
     @PostMapping("/login")
-    public ResponseEntity<LoginResDto> login(@RequestBody EmailLoginReqDto loginReqDto,
+    public ResponseEntity<?> login(@RequestBody EmailLoginReqDto loginReqDto,
                                              HttpServletRequest request,
                                              HttpServletResponse response) {
         // 로그인 서비스 호출

@@ -153,7 +153,7 @@ public class ImageUploadService {
         member.setProfileImage(newFileUrl);
         memberRepository.save(member);
 
-        return newFileUrl; 
+        return newFileUrl;
     }
 
     // TODO 기존 프로필 이미지 URL을 가져오는 메서드

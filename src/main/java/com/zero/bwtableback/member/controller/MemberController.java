@@ -1,13 +1,10 @@
 package com.zero.bwtableback.member.controller;
 
-import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.zero.bwtableback.common.service.ImageUploadService;
 import com.zero.bwtableback.member.dto.MemberDto;
 import com.zero.bwtableback.member.service.MemberService;
 import com.zero.bwtableback.security.MemberDetails;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -17,7 +14,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -63,7 +62,7 @@ public class MemberController {
         String email = memberDetails.getUsername();
 
         try {
-            String fileUrl = imageUploadService.uploadProfileImage(file,email);
+            String fileUrl = imageUploadService.uploadProfileImage(file, email);
 
             Map<String, String> response = new HashMap<>();
             response.put("imageUrl", fileUrl);

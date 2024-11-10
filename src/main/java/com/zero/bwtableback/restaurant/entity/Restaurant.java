@@ -1,6 +1,7 @@
 package com.zero.bwtableback.restaurant.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.zero.bwtableback.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -81,4 +82,8 @@ public class Restaurant {
 
     @Column(nullable = false)
     private double averageRating; // 평균 평점
+
+    @OneToOne
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
 }
