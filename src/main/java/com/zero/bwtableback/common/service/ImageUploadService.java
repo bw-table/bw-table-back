@@ -150,10 +150,10 @@ public class ImageUploadService {
 
         // 새로운 이미지를 S3에 업로드
         String newFileUrl = uploadFile(newFile, "member/" + member.getId() + "/profile/");
-        member.setProfileImage(newFileUrl); // 새로운 URL 저장
+        member.setProfileImage(newFileUrl);
         memberRepository.save(member);
 
-        return newFileUrl; // 새로운 이미지 URL 반환
+        return newFileUrl; 
     }
 
     // TODO 기존 프로필 이미지 URL을 가져오는 메서드
