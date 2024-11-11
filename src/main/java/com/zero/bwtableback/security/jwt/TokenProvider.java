@@ -1,14 +1,18 @@
 package com.zero.bwtableback.security.jwt;
 
-import com.zero.bwtableback.common.exception.CustomException;
-import com.zero.bwtableback.common.exception.ErrorCode;
+import com.zero.bwtableback.member.entity.Role;
 import io.jsonwebtoken.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * JWT 토큰 생성 및 검증을 담당하는 클래스
@@ -31,9 +35,22 @@ public class TokenProvider {
         return refreshTokenValidityInMilliseconds * 1000;
     }
 
-    public String createAccessToken(String email) {
+    public String createAccessToken(String email, Role role) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds);
+
+        return Jwts.builder()
+                .setSubject(email)
+                .claim("role", role.name())
+                .setIssuedAt(now)
+                .setExpiration(validity)
+                .signWith(SignatureAlgorithm.HS512, jwtSecret)
+                .compact();
+    }
+
+    public String createRefreshToken(String email) {
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + refreshTokenValidityInMilliseconds);
 
         return Jwts.builder()
                 .setSubject(email)
@@ -43,15 +60,23 @@ public class TokenProvider {
                 .compact();
     }
 
-    public String createRefreshToken() {
-        Date now = new Date();
-        Date validity = new Date(now.getTime() + refreshTokenValidityInMilliseconds);
+    /**
+     * JWT 토큰으로부터 Authentication 객체 생성
+     */
+    public Authentication getAuthentication(String token) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(jwtSecret)
+                .parseClaimsJws(token)
+                .getBody();
 
-        return Jwts.builder()
-                .setIssuedAt(now)
-                .setExpiration(validity)
-                .signWith(SignatureAlgorithm.HS512, jwtSecret)
-                .compact();
+        String username = claims.getSubject();
+        Role role = Role.valueOf(claims.get("role", String.class));
+
+        List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+
+        User principal = new User(username, "", authorities);
+
+        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }
 
     /**
@@ -66,20 +91,31 @@ public class TokenProvider {
     }
 
     /**
-     * JWT 토큰의 유효성을 검증
+     * 액세스 토큰의 유효성을 검증
      */
-    public boolean validateToken(String token) {
+    public boolean validateAccessToken(String token) {
         try {
             Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token);
             return true;
-        } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
-            log.info("잘못된 JWT 서명입니다.");
         } catch (ExpiredJwtException e) {
-            log.info("만료된 JWT 토큰입니다.");
-        } catch (UnsupportedJwtException e) {
-            log.info("지원되지 않는 JWT 토큰입니다.");
-        } catch (IllegalArgumentException e) {
-            log.info("JWT 토큰이 잘못되었습니다.");
+            log.warn("만료된 액세스 토큰입니다.");
+        } catch (JwtException e) {
+            log.error("유효하지 않은 액세스 토큰입니다: {}", e.getMessage());
+        }
+        return false;
+    }
+
+    /**
+     * 리프레시 토큰의 유효성을 검증
+     */
+    public boolean validateRefreshToken(String token) {
+        try {
+            Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token);
+            return true;
+        } catch (ExpiredJwtException e) {
+            log.warn("만료된 리프레시 토큰입니다.");
+        } catch (JwtException e) {
+            log.error("유효하지 않은 리프레시 토큰입니다: {}", e.getMessage());
         }
         return false;
     }
@@ -93,5 +129,16 @@ public class TokenProvider {
                 .parseClaimsJws(token)
                 .getBody();
         return claims.getSubject();
+    }
+
+    /**
+     * JWT 토큰에서 역할 정보 추출
+     */
+    public Role getRole(String token) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(jwtSecret)
+                .parseClaimsJws(token)
+                .getBody();
+        return Role.valueOf(claims.get("role", String.class));
     }
 }

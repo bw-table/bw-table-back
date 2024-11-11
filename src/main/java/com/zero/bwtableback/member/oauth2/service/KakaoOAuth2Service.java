@@ -154,28 +154,28 @@ public class KakaoOAuth2Service {
      */
     public LoginResDto login(MemberDto memberDto, HttpServletRequest request, HttpServletResponse response) {
         try {
-            String existingToken = tokenProvider.extractToken(request);
-
-            // 토큰이 없는 경우
-            if (existingToken == null) {
-                return handleNewLogin(memberDto, response);
-            }
-
-            // 기존 토큰이 유효한 경우
-            if (tokenProvider.validateToken(existingToken)) {
-                return handleExistingToken(existingToken);
-            }
-
-            // 기존 토큰이 유효하지 않은 경우
-            String refreshToken = getRefreshTokenFromRequest(request);
-            if (refreshToken != null && tokenProvider.validateToken(refreshToken)) {
-                String email = tokenProvider.getUsername(refreshToken);
-                // Redis에 저장된 Refresh Token과 비교
-                String storedRefreshToken = redisTemplate.opsForValue().get("refresh_token:" + email);
-                if (refreshToken.equals(storedRefreshToken)) {
-                    return handleValidRefreshToken(email, response);
-                }
-            }
+//            String existingToken = tokenProvider.extractToken(request);
+//
+//            // 토큰이 없는 경우
+//            if (existingToken == null) {
+//                return handleNewLogin(memberDto, response);
+//            }
+//
+//            // 기존 토큰이 유효한 경우
+//            if (tokenProvider.validateToken(existingToken)) {
+//                return handleExistingToken(existingToken);
+//            }
+//
+//            // 기존 토큰이 유효하지 않은 경우
+//            String refreshToken = getRefreshTokenFromRequest(request);
+//            if (refreshToken != null && tokenProvider.validateToken(refreshToken)) {
+//                String email = tokenProvider.getUsername(refreshToken);
+//                // Redis에 저장된 Refresh Token과 비교
+//                String storedRefreshToken = redisTemplate.opsForValue().get("refresh_token:" + email);
+//                if (refreshToken.equals(storedRefreshToken)) {
+//                    return handleValidRefreshToken(email, response);
+//                }
+//            }
 
             // Refresh Token이 유효하지 않거나 Redis에 저장된 값과 일치하지 않는 경우
             throw new CustomException(ErrorCode.INVALID_TOKEN);
@@ -188,7 +188,7 @@ public class KakaoOAuth2Service {
         }
     }
 
-    // 기존 유효한 AccessToken이 존재하는 경우
+    // FIXME 기존 유효한 AccessToken이 존재하는 경우
     private LoginResDto handleExistingToken(String existingToken) {
         String email = tokenProvider.getUsername(existingToken);
         Member member = memberRepository.findByEmail(email)
@@ -196,46 +196,49 @@ public class KakaoOAuth2Service {
 
         MemberDto memberDto = MemberDto.from(member);
 
-        return new LoginResDto(existingToken, memberDto);
+//        return new LoginResDto(existingToken, memberDto);
+        return null;
     }
 
-    // 새로운 로그인 처리 - 첫 로그인 시, 토큰 없을 시, 토큰이 만료된 경우
+    // FIXME 새로운 로그인 처리 - 첫 로그인 시, 토큰 없을 시, 토큰이 만료된 경우
     private LoginResDto handleNewLogin(MemberDto memberDto, HttpServletResponse response) {
-        Member member = memberRepository.findByEmail(memberDto.getEmail())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+//        Member member = memberRepository.findByEmail(memberDto.getEmail())
+//                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+//
+//        // 토큰 생성
+//        String accessToken = tokenProvider.createAccessToken(member.getEmail());
+//        String refreshToken = tokenProvider.createRefreshToken();
+//
+//        // HttpOnly 쿠키에 리프레시 토큰 저장
+//        Cookie cookie = new Cookie("refreshToken", refreshToken);
+//        cookie.setHttpOnly(true);
+//        cookie.setSecure(true); // HTTPS 환경에서만 전송
+//        cookie.setPath("/");
+//        cookie.setMaxAge(86400); // 1일 (86400초)
+//
+//        response.addCookie(cookie);
+//
+//        // 리프레시 토큰을 레디스에 저장
+//        String key = "refresh_token:" + member.getId();
+//        redisTemplate.opsForValue().set(key, refreshToken);
 
-        // 토큰 생성
-        String accessToken = tokenProvider.createAccessToken(member.getEmail());
-        String refreshToken = tokenProvider.createRefreshToken();
-
-        // HttpOnly 쿠키에 리프레시 토큰 저장
-        Cookie cookie = new Cookie("refreshToken", refreshToken);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true); // HTTPS 환경에서만 전송
-        cookie.setPath("/");
-        cookie.setMaxAge(86400); // 1일 (86400초)
-
-        response.addCookie(cookie);
-
-        // 리프레시 토큰을 레디스에 저장
-        String key = "refresh_token:" + member.getId();
-        redisTemplate.opsForValue().set(key, refreshToken);
-
-        return new LoginResDto(accessToken, memberDto);
+//        return new LoginResDto(accessToken, memberDto);
+        return null;
     }
 
-    // 리프레시 토큰을 사용하여 새로운 액세스 토큰 발급
+    // FIXME 리프레시 토큰을 사용하여 새로운 액세스 토큰 발급
     // Accesstoken이 만료되거나 없는경우 Refresh 토큰이 유효한 경우
     private LoginResDto handleValidRefreshToken(String email, HttpServletResponse response) {
         // 사용자 정보를 데이터베이스에서 가져오기
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+//        Member member = memberRepository.findByEmail(email)
+//                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+//
+//        String newAccessToken = tokenProvider.createAccessToken(member.getEmail());
+//
+//        MemberDto memberDto = MemberDto.from(member);
 
-        String newAccessToken = tokenProvider.createAccessToken(member.getEmail());
-
-        MemberDto memberDto = MemberDto.from(member);
-
-        return new LoginResDto(newAccessToken, memberDto);
+//        return new LoginResDto(newAccessToken, memberDto);
+        return null;
     }
 
     // 요청에서 리프레시 토큰 추출

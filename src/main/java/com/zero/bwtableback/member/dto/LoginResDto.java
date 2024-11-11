@@ -8,4 +8,5 @@ import lombok.Getter;
 public class LoginResDto {
     String accessToken;
     MemberDto member;
+    Long restaurantId;
 }
