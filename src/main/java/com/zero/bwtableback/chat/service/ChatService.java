@@ -9,6 +9,7 @@ import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
+import com.zero.bwtableback.reservation.dto.PaymentCompleteDto;
 import com.zero.bwtableback.reservation.dto.ReservationResponseDto;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
@@ -37,7 +38,7 @@ public class ChatService {
      *
      * @return 예약 정보, 가게 정보
      */
-    public ChatRoomCreateResDto createChatRoom(ReservationResponseDto reservationResDto) {
+    public PaymentCompleteDto createChatRoom(ReservationResponseDto reservationResDto) {
         Restaurant restaurant = restaurantRepository.findById(reservationResDto.restaurantId())
                 .orElseThrow(() -> new RuntimeException("식당이 존재하지 않습니다."));
 
@@ -66,14 +67,7 @@ public class ChatService {
 
         chatRoomRepository.save(chatRoom);
 
-        return new ChatRoomCreateResDto(
-                chatRoom.getId(),
-                chatRoom.getRoomName(),
-                chatRoom.getStatus(),
-                chatRoom.getReservation(),
-                chatRoom.getMember(),
-                chatRoom.getRestaurant()
-        );
+        return PaymentCompleteDto.fromEntities(restaurant, reservation);
     }
 
     // 특정 회원의 모든 채팅방 조회

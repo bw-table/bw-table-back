@@ -2,6 +2,7 @@ package com.zero.bwtableback.reservation.controller;
 
 import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
 import com.zero.bwtableback.chat.service.ChatService;
+import com.zero.bwtableback.reservation.dto.PaymentCompleteDto;
 import com.zero.bwtableback.reservation.dto.PaymentDto;
 import com.zero.bwtableback.reservation.dto.ReservationResponseDto;
 import com.zero.bwtableback.reservation.entity.ReservationStatus;
@@ -63,7 +64,7 @@ public class ReservationController {
      * 예약 확정 및 결제 완료
      */
     @PostMapping("/complete-payment")
-    public ResponseEntity<ChatRoomCreateResDto> confirmReservation(
+    public ResponseEntity<PaymentCompleteDto> confirmReservation(
             @RequestBody PaymentDto paymentDto) {
         // FIXME 원래는 저장된 세션의 예약 정보를 가졍옴
         // TODO 결제 시 PAYMENT 정보 저장
@@ -93,9 +94,9 @@ public class ReservationController {
                 reservationStatus
         );
 
-        ChatRoomCreateResDto chatRoomCreateResDto = chatService.createChatRoom(reservationResponseDto);
+        PaymentCompleteDto paymentCompleteDto = chatService.createChatRoom(reservationResponseDto);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(chatRoomCreateResDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(paymentCompleteDto);
     }
 
     @PutMapping("/{reservationId}/cancel/customer")
