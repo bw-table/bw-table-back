@@ -72,7 +72,7 @@ public class ReservationController {
 
 //        ReservationResponseDto reservationResponseDto = reservationService.confirmReservation(reservationId);
 
-        // 임의의 예약 정보 생성
+        // FIXME 임의의 예약 정보 생성 - 세션으로 대체
         Long reservationId = 4L;
         Long restaurantId = 8L;  // 식당 ID
         Long memberId = 30L;      // 회원 ID

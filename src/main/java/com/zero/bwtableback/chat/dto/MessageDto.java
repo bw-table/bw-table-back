@@ -1,14 +1,16 @@
 package com.zero.bwtableback.chat.dto;
 
-import lombok.Data;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
 public class MessageDto {
     private Long id;
     private Long chatRoomId;
-    private String sender;
+    private Long senderId;
+    private String senderName;
+    private Long restaurantId;
     private String content;
     private LocalDateTime timestamp;
 }

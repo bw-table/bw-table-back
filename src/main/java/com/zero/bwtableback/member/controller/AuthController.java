@@ -16,6 +16,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/auth")
@@ -28,36 +31,36 @@ public class AuthController {
      * 이메일 중복 검사
      */
     @PostMapping("/check/email")
-    public ResponseEntity<Boolean> checkEmailDuplicate(@RequestBody String email) {
-        boolean isDuplicate = authService.isEmailDuplicate(email);
-        return ResponseEntity.ok(isDuplicate);
+    public ResponseEntity<Map<String, Boolean>>  checkEmailDuplicate(@RequestBody DuplicateCheckReqDto request) {
+        boolean isDuplicate = authService.isEmailDuplicate(request);
+        return ResponseEntity.ok(Collections.singletonMap("isDuplicate", isDuplicate));
     }
 
     /**
      * 닉네임 중복 검사
      */
     @PostMapping("/check/nickname")
-    public ResponseEntity<Boolean> checkNicknameDuplicate(@RequestBody String nickname) {
-        boolean isDuplicate = authService.isNicknameDuplicate(nickname);
-        return ResponseEntity.ok(isDuplicate);
+    public ResponseEntity<Map<String, Boolean>> checkNicknameDuplicate(@RequestBody DuplicateCheckReqDto request) {
+        boolean isDuplicate = authService.isNicknameDuplicate(request);
+        return ResponseEntity.ok(Collections.singletonMap("isDuplicate", isDuplicate));
     }
 
     /**
      * 전화번호 중복 검사
      */
     @PostMapping("/check/phone")
-    public ResponseEntity<Boolean> checkPhoneDuplicate(@RequestBody String phone) {
-        boolean isDuplicate = authService.isPhoneDuplicate(phone);
-        return ResponseEntity.ok(isDuplicate);
+    public ResponseEntity<Map<String, Boolean>> checkPhoneDuplicate(@RequestBody DuplicateCheckReqDto request) {
+        boolean isDuplicate = authService.isPhoneDuplicate(request);
+        return ResponseEntity.ok(Collections.singletonMap("isDuplicate", isDuplicate));
     }
 
     /**
      * 사업자등록번호 중복 검사
      */
     @PostMapping("/check/business-number")
-    public ResponseEntity<Boolean> checkBusinessNumberDuplicate(@RequestBody String businessNumber) {
-        boolean isDuplicate = authService.isBusinessNumberDuplicate(businessNumber);
-        return ResponseEntity.ok(isDuplicate);
+    public ResponseEntity<Map<String, Boolean>> checkBusinessNumberDuplicate(@RequestBody DuplicateCheckReqDto request) {
+        boolean isDuplicate = authService.isBusinessNumberDuplicate(request);
+        return ResponseEntity.ok(Collections.singletonMap("isDuplicate", isDuplicate));
     }
 
     /**

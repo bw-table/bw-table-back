@@ -49,8 +49,8 @@ public enum ErrorCode {
     INVALID_STATUS_VISITED(HttpStatus.CONFLICT, "방문 완료로 변경은 확정된 예약에 대해서만 가능합니다."),
     CUSTOMER_CANCEL_TOO_LATE(HttpStatus.FORBIDDEN, "예약일 3일 전까지만 취소할 수 있습니다."),
 
-  
-    EMPTY_TOKEN(HttpStatus.UNAUTHORIZED, "토큰이 비어있습니다."),
+    // 채팅 관련 오류
+    CHAT_ROOM_NOT_FOUND(HttpStatus.BAD_REQUEST, "해당 채팅방을 찾을 수 없습니다."),
 
     // 기타 오류
     UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
