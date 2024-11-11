@@ -122,13 +122,12 @@ public class ReservationService {
     }
 
     private void validateReservationAvailability(Long restaurantId, ReservationRequestDto reservationRequestDto) {
-        reservationRepository.findByRestaurantIdAndReservationDateAndReservationTime(
-                        restaurantId,
-                        reservationRequestDto.reservationDate(),
-                        reservationRequestDto.reservationTime())
-                .ifPresent(r -> {
-                    throw new CustomException(RESERVATION_FULL);
-                });
+//        reservationRepository.findByRestaurantIdAndReservationDateAndReservationTime(
+//                        restaurantId,
+//                        reservationRequestDto.reservationDate(),
+//                        reservationRequestDto.reservationTime())
+//                .ifPresent(r -> {
+//                    throw new CustomException(RESERVATION_FULL);
+//                });
     }
-
 }
