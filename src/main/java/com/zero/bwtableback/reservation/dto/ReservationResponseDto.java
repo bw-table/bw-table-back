@@ -2,6 +2,9 @@ package com.zero.bwtableback.reservation.dto;
 
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.entity.ReservationStatus;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -28,5 +31,4 @@ public record ReservationResponseDto(
                 reservation.getReservationStatus()
         );
     }
-
 }

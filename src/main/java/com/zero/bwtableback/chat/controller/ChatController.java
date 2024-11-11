@@ -1,9 +1,9 @@
 package com.zero.bwtableback.chat.controller;
 
+import com.zero.bwtableback.chat.dto.ChatRoomCreateReqDto;
 import com.zero.bwtableback.chat.dto.MessageDto;
 import com.zero.bwtableback.chat.entity.ChatRoom;
 import com.zero.bwtableback.chat.service.ChatService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,6 +19,15 @@ public class ChatController {
     private final ChatService chatService;
 
     // 채팅방 생성 엔드포인트는 예약 확정 시 자동으로 생성
+    // FIXME 예약 생성 가정 테스트
+    @PostMapping("/test")
+    public ResponseEntity<?> createChatRoom(
+            @RequestBody ChatRoomCreateReqDto request
+    ) {
+//        chatService.createChatRoom(request);
+
+        return ResponseEntity.ok(null);
+    }
 
     // 특정 회원의 모든 채팅방 조회
     @GetMapping("/user/{userId}/rooms")

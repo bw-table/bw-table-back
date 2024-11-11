@@ -10,7 +10,7 @@ import lombok.Getter;
 import java.util.List;
 
 @Getter
-public class ChatRoomCreateRequest {
+public class ChatRoomCreateReqDto {
     private String roomName;
     private ChatRoomStatus status;
     private Reservation reservation;

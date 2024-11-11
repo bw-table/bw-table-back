@@ -1,28 +1,79 @@
 package com.zero.bwtableback.chat.service;
 
-import com.zero.bwtableback.chat.dto.ChatRoomCreateRequest;
-import com.zero.bwtableback.chat.dto.ChatRoomCreateResponse;
+import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
 import com.zero.bwtableback.chat.dto.MessageDto;
 import com.zero.bwtableback.chat.entity.ChatRoom;
+import com.zero.bwtableback.chat.entity.ChatRoomStatus;
 import com.zero.bwtableback.chat.repository.ChatRoomRepository;
+import com.zero.bwtableback.common.exception.CustomException;
+import com.zero.bwtableback.common.exception.ErrorCode;
+import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.member.repository.MemberRepository;
+import com.zero.bwtableback.reservation.dto.ReservationResponseDto;
+import com.zero.bwtableback.reservation.entity.Reservation;
+import com.zero.bwtableback.reservation.repository.ReservationRepository;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+
 @Service
+@RequiredArgsConstructor
 public class ChatService {
 
-    private ChatRoomRepository chatRoomRepository;
-    private RestaurantRepository restaurantRepository;
+    private final ChatRoomRepository chatRoomRepository;
+    private final MemberRepository memberRepository;
+    private final RestaurantRepository restaurantRepository;
+    private final ReservationRepository reservationRepository;
 
-    // 예약 확정 시 자동으로 채팅방 생성
-    public ChatRoomCreateResponse createChatRoom(ChatRoomCreateRequest chatRoom) {
-        Restaurant restaurant = restaurantRepository.findById(chatRoom.getRestaurant().getId())
+    /**
+     * 예약 확정 시 자동으로 채팅방 생성
+     *
+     * @return 예약 정보, 가게 정보
+     */
+    public ChatRoomCreateResDto createChatRoom(ReservationResponseDto reservationResDto) {
+        Restaurant restaurant = restaurantRepository.findById(reservationResDto.restaurantId())
                 .orElseThrow(() -> new RuntimeException("식당이 존재하지 않습니다."));
 
-        return null;
+        String restaurantName = restaurant.getName();
+        LocalDate reservationDate = reservationResDto.reservationDate();
+        LocalTime reservationTime = reservationResDto.reservationTime();
+
+        String formattedTime = reservationTime.format(DateTimeFormatter.ofPattern("HH:mm"));
+
+        // 채팅방 이름 생성
+        String roomName = String.format("%s - %s %s", restaurantName, reservationDate, formattedTime);
+
+        // 새로운 채팅방 객체 생성
+        ChatRoom chatRoom = new ChatRoom();
+        chatRoom.setRoomName(roomName);
+        chatRoom.setStatus(ChatRoomStatus.ACTIVE);
+        chatRoom.setRestaurant(restaurant);
+
+        Reservation reservation = reservationRepository.findById(reservationResDto.reservationId())
+                .orElseThrow(() -> new CustomException(ErrorCode.RESERVATION_NOT_FOUND));
+        chatRoom.setReservation(reservation);
+
+        Member member = memberRepository.findById(reservationResDto.memberId())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        chatRoom.setMember(member);
+
+        chatRoomRepository.save(chatRoom);
+
+        return new ChatRoomCreateResDto(
+                chatRoom.getId(),
+                chatRoom.getRoomName(),
+                chatRoom.getStatus(),
+                chatRoom.getReservation(),
+                chatRoom.getMember(),
+                chatRoom.getRestaurant()
+        );
     }
 
     // 특정 회원의 모든 채팅방 조회
