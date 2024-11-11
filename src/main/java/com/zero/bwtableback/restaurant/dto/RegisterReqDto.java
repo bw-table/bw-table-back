@@ -38,9 +38,12 @@ public class RegisterReqDto {
     @NotNull(message = "Category must not be null")
     private String category;
 
-    private String notice;
+    private String info;
 
     private String link;
+
+    @NotNull(message = "Deposit must not be null")
+    private int deposit;
 
     @NotNull(message = "Menu must not be null")
     private List<MenuDto> menus;

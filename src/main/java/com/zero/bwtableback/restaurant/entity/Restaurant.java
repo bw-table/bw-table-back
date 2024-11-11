@@ -44,9 +44,11 @@ public class Restaurant {
     @Column(nullable = false)
     private List<OperatingHours> operatingHours;
 
-    private String notice; // 안내 및 유의사항
+    private String info; // 안내 및 유의사항
 
     private String link; // 홈페이지 링크
+
+    private int deposit; // 인당예약금
 
     @OneToMany(
             mappedBy = "restaurant", // 양방향 관계 설정
@@ -80,10 +82,16 @@ public class Restaurant {
     )
     private List<Hashtag> hashtags;
 
-    @Column(nullable = false)
+    @Column(nullable = false) // TODO: 평점 null 허용?
     private double averageRating; // 평균 평점
 
     @OneToOne
     @JoinColumn(name = "member_id", nullable = true)
     private Member member;
+
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
+    private List<Review> reviews;
+
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Announcement> announcements;
 }
