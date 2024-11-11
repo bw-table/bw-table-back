@@ -60,9 +60,9 @@ public class ReservationController {
 //    }
 
     /**
-     * 결제 완료 시 예약 확정
+     * 예약 확정 및 결제 완료
      */
-    @PostMapping("/confirm")
+    @PostMapping("/complete-payment")
     public ResponseEntity<ChatRoomCreateResDto> confirmReservation(
             @RequestBody PaymentDto paymentDto) {
         // FIXME 원래는 저장된 세션의 예약 정보를 가졍옴
