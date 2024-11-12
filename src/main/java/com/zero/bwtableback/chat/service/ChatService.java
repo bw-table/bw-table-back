@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 @Service
@@ -134,30 +135,27 @@ public class ChatService {
     /**
      * 특정 채팅방 메시지 전송
      */
-    public MessageDto sendMessage(Long chatRoomId, MessageDto messageDto) {
-        // 채팅방 조회
+    public MessageDto saveMessage(Long chatRoomId, MessageDto messageDto) {
+        // TODO ACTIVE인지 확인
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
-        Member member = memberRepository.findByEmail(messageDto.getSenderName())
+        Member member = memberRepository.findById(messageDto.getSenderId())
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-
-        Restaurant restaurant = restaurantRepository.findById(messageDto.getRestaurantId())
-                .orElseThrow(()->new CustomException(ErrorCode.RESTAURANT_NOT_FOUND));
-
-        // 새로운 메시지 객체 생성
         Message message = Message.builder()
                 .content(messageDto.getContent())
                 .sender(member)
                 .chatRoom(chatRoom)
-                .restaurant(restaurant)
+                .restaurant(chatRoom.getRestaurant())
                 .build();
 
-        // 메시지 저장
         messageRepository.save(message);
 
-        // 저장된 메시지를 DTO로 변환하여 반환
-        return MessageDto.from(message);
+        return MessageDto.builder()
+                .senderId(member.getId())
+                .content(message.getContent())
+                .timestamp(messageDto.getTimestamp())
+                .build();
     }
 }

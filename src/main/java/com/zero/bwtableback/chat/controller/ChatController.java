@@ -10,7 +10,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,7 +34,7 @@ public class ChatController {
     }
 
     // 특정 회원의 모든 채팅방 조회
-    @GetMapping("/user/{userId}/rooms")
+    @GetMapping("/members/{memberId}/rooms")
     public ResponseEntity<Page<ChatRoom>> getUserChatRooms(@PathVariable Long userId, Pageable pageable) {
         Page<ChatRoom> chatRooms = chatService.getChatRoomsByMemberId(userId, pageable);
         return ResponseEntity.ok(chatRooms);
@@ -77,10 +79,17 @@ public class ChatController {
         return ResponseEntity.ok(messages);
     }
 
-    // 메시지 전송
-    @MessageMapping("/send") // 클라이언트가 /app/send로 메시지 보낼 떄 호출
-    @SendTo("/topic/messages") // 구독자에게 메시지 전송
-    public String send(String message) {
-        return message; // 수신한 메시지를 그대로 반환 (브로드캐스트)
+    /**
+     * 메시지 전송
+     *
+     * TODO Redis에 캐싱 및 배치 작업 고려
+     * 임시로 DB에 저장
+     */
+    @MessageMapping("/send/{chatRoomId}")
+    @SendTo("/topic/chatrooms/{chatRoomId}") // 해당 채팅방의 구독자에게 메시지 전송
+    public MessageDto send(@DestinationVariable Long chatRoomId, @Payload MessageDto messageDto) {
+        messageDto = chatService.saveMessage(chatRoomId, messageDto);
+
+        return messageDto;
     }
 }

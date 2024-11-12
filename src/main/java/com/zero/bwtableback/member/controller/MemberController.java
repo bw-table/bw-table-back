@@ -61,6 +61,23 @@ public class MemberController {
         return ResponseEntity.ok(memberService.getMyReservations(pageable,email));
     }
 
+    /**'
+     * TODO 회원 정보 수정
+     */
+
+    /**
+     * TODO 회원 탈퇴
+     */
+
+    /**
+     * FIXME 회원 프로필 이미지 이름 엔드포인트 변경하기
+     */
+
+
+    /**
+     * 이메일 회원 비밀번호 변경
+     */
+
     /**
      * 나의 모든 리뷰 조회
      */
