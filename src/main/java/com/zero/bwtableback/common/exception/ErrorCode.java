@@ -51,6 +51,7 @@ public enum ErrorCode {
 
     // 채팅 관련 오류
     CHAT_ROOM_NOT_FOUND(HttpStatus.BAD_REQUEST, "해당 채팅방을 찾을 수 없습니다."),
+    CHAT_ROOM_INACTIVE(HttpStatus.BAD_REQUEST, "해당 채팅방은 비활성화 되었습니다."),
 
     // 기타 오류
     UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),

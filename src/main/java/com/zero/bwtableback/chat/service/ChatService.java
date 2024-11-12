@@ -158,4 +158,9 @@ public class ChatService {
                 .timestamp(messageDto.getTimestamp())
                 .build();
     }
+
+    public boolean isChatRoomActive(Long chatRoomId) {
+        ChatRoom chatRoom = getChatRoomById(chatRoomId);
+        return ChatRoomStatus.ACTIVE.equals(chatRoom.getStatus());
+    }
 }

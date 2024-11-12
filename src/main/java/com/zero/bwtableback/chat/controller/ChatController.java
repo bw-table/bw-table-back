@@ -4,6 +4,8 @@ import com.zero.bwtableback.chat.dto.ChatRoomCreateReqDto;
 import com.zero.bwtableback.chat.dto.MessageDto;
 import com.zero.bwtableback.chat.entity.ChatRoom;
 import com.zero.bwtableback.chat.service.ChatService;
+import com.zero.bwtableback.common.exception.CustomException;
+import com.zero.bwtableback.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -88,6 +90,10 @@ public class ChatController {
     @MessageMapping("/send/{chatRoomId}")
     @SendTo("/topic/chatrooms/{chatRoomId}") // 해당 채팅방의 구독자에게 메시지 전송
     public MessageDto send(@DestinationVariable Long chatRoomId, @Payload MessageDto messageDto) {
+        if (!chatService.isChatRoomActive(chatRoomId)) {
+            throw new CustomException(ErrorCode.CHAT_ROOM_INACTIVE);
+        }
+
         messageDto = chatService.saveMessage(chatRoomId, messageDto);
 
         return messageDto;
