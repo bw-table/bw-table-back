@@ -1,7 +1,9 @@
 package com.zero.bwtableback.restaurant.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 
+@Builder
 @Entity
 @Table(name = "weekday_setting")
 public class WeekdaySetting {

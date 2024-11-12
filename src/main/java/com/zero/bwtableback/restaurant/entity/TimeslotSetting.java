@@ -1,9 +1,11 @@
 package com.zero.bwtableback.restaurant.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 
 import java.time.LocalTime;
 
+@Builder
 @Entity
 @Table(name = "timeslot_setting")
 public class TimeslotSetting {
