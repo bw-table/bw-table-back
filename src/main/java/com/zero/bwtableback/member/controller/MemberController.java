@@ -1,11 +1,10 @@
 package com.zero.bwtableback.member.controller;
 
-import com.zero.bwtableback.chat.dto.ChatRoomCreateReqDto;
+import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
 import com.zero.bwtableback.member.dto.MemberDto;
 import com.zero.bwtableback.member.service.MemberService;
 import com.zero.bwtableback.reservation.dto.ReservationResponseDto;
 import com.zero.bwtableback.restaurant.dto.ReviewInfoDto;
-import com.zero.bwtableback.restaurant.dto.ReviewResDto;
 import com.zero.bwtableback.security.MemberDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -76,7 +75,7 @@ public class MemberController {
                                                                           @AuthenticationPrincipal MemberDetails memberDetails) {
         String email = memberDetails.getUsername();
 
-        return ResponseEntity.ok(memberService.getMyReservations(pageable,email));
+        return ResponseEntity.ok(memberService.getMyReservations(pageable, email));
     }
 
     /**
@@ -86,19 +85,19 @@ public class MemberController {
     public ResponseEntity<Page<ReviewInfoDto>> getMyReviews(Pageable pageable,
                                                             @AuthenticationPrincipal MemberDetails memberDetails) {
         String email = memberDetails.getUsername();
-        return ResponseEntity.ok(memberService.getMyReviews(pageable,email));
+        return ResponseEntity.ok(memberService.getMyReviews(pageable, email));
     }
 
     /**
-     * 나의 모든 채팅 조회
-     */
-    /**
-     * 나의 모든 예약 조회
+     * 나의 모든 채팅방 조회
      */
     @GetMapping("/me/chats")
-    public ResponseEntity<Page<>> getMyChats(Pageable pageable,
+    public ResponseEntity<Page<ChatRoomCreateResDto>> getMyChats(Pageable pageable,
                                                                  @AuthenticationPrincipal MemberDetails memberDetails) {
         String email = memberDetails.getUsername();
-        return ResponseEntity.ok(memberService.getMyReviews(pageable,email));
+
+        Page<ChatRoomCreateResDto> rooms = memberService.getMyChats(pageable, email);
+
+        return ResponseEntity.ok(rooms);
     }
 }
