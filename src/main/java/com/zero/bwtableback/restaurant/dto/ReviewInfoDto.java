@@ -1,11 +1,14 @@
 package com.zero.bwtableback.restaurant.dto;
 
+import com.zero.bwtableback.restaurant.entity.Review;
+import com.zero.bwtableback.restaurant.entity.ReviewImage;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 리뷰 목록 조회 시 응답
@@ -23,4 +26,18 @@ public class ReviewInfoDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Long restaurantId;
+
+    public static ReviewInfoDto fromEntity(Review review) {
+        return ReviewInfoDto.builder()
+                .id(review.getId())
+                .content(review.getContent())
+                .rating(review.getRating())
+                .images(review.getImages().stream()
+                        .map(ReviewImage::getImageUrl)
+                        .collect(Collectors.toList()))
+                .createdAt(review.getCreatedAt())
+                .updatedAt(review.getUpdatedAt())
+                .restaurantId(review.getRestaurant().getId())
+                .build();
+    }
 }

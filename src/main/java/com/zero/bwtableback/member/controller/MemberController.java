@@ -3,6 +3,7 @@ package com.zero.bwtableback.member.controller;
 import com.zero.bwtableback.member.dto.MemberDto;
 import com.zero.bwtableback.member.service.MemberService;
 import com.zero.bwtableback.reservation.dto.ReservationResponseDto;
+import com.zero.bwtableback.restaurant.dto.ReviewInfoDto;
 import com.zero.bwtableback.restaurant.dto.ReviewResDto;
 import com.zero.bwtableback.security.MemberDetails;
 import lombok.RequiredArgsConstructor;
@@ -57,16 +58,16 @@ public class MemberController {
                                                                           @AuthenticationPrincipal MemberDetails memberDetails) {
         String email = memberDetails.getUsername();
 
-        return null;
-//        return ResponseEntity.ok(memberService.getMembers(pageable));
+        return ResponseEntity.ok(memberService.getMyReservations(pageable,email));
     }
 
     /**
      * 나의 모든 리뷰 조회
      */
     @GetMapping("me/reviews")
-    public ResponseEntity<Page<ReviewResDto>> getMyReviews(Pageable pageable) {
-//        return ResponseEntity.ok(memberService.getMembers(pageable));
-        return null;
+    public ResponseEntity<Page<ReviewInfoDto>> getMyReviews(Pageable pageable,
+                                                            @AuthenticationPrincipal MemberDetails memberDetails) {
+        String email = memberDetails.getUsername();
+        return ResponseEntity.ok(memberService.getMyReviews(pageable,email));
     }
 }
