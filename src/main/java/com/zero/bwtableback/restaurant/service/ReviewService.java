@@ -133,7 +133,6 @@ public class ReviewService {
     // 리뷰 삭제
     @Transactional
     public void deleteReview(Long reviewId, Long restaurantId) {
-        findRestaurantAndReview(reviewId, restaurantId);
         Review review = findRestaurantAndReview(reviewId, restaurantId);
 
         reviewRepository.delete(review);

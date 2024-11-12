@@ -45,6 +45,9 @@ public class RegisterReqDto {
     @NotNull(message = "Deposit must not be null")
     private int deposit;
 
+    @NotNull(message = "ImpCode must not be null")
+    private String impCode;
+
     @NotNull(message = "Menu must not be null")
     private List<MenuDto> menus;
 
@@ -59,6 +62,7 @@ public class RegisterReqDto {
     private List<String> hashtags;
 
     // null을 허용하는 편의시설과 해시태그 필드 null 체크 및 초기화
+    // TODO: 입력하지 않을 경우 어떤 식으로 응답 들어오는지 확인 후 삭제
     public void validate() {
         if (facilities == null) {
             facilities = new ArrayList<>();
