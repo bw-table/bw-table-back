@@ -1,9 +1,10 @@
 package com.zero.bwtableback.chat.repository;
 
 import com.zero.bwtableback.chat.entity.ChatRoom;
+import com.zero.bwtableback.chat.entity.Message;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface MessageRepository extends JpaRepository<ChatRoom, Long> {
+public interface MessageRepository extends JpaRepository<Message, Long> {
 }

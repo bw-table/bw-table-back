@@ -10,6 +10,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -76,9 +78,9 @@ public class ChatController {
     }
 
     // 메시지 전송
-    @PostMapping("/{chatRommId}/message")
-    public ResponseEntity<MessageDto> sendMessage(@PathVariable Long chatRoomId, MessageDto messageDto) {
-        MessageDto message = chatService.sendMessage(chatRoomId, messageDto);
-        return ResponseEntity.ok(message);
+    @MessageMapping("/send") // 클라이언트가 /app/send로 메시지 보낼 떄 호출
+    @SendTo("/topic/messages") // 구독자에게 메시지 전송
+    public String send(String message) {
+        return message; // 수신한 메시지를 그대로 반환 (브로드캐스트)
     }
 }

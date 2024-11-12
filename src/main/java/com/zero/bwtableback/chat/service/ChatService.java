@@ -60,7 +60,7 @@ public class ChatService {
         chatRoom.setReservation(reservation);
         chatRoom.setMember(member);
 
-        // TODO 예약 하나에 채팅방 하나라는 걸 기억하기
+        // TODO 예약은 하나에 채팅방 하나
         chatRoomRepository.save(chatRoom);
 
         return PaymentCompleteDto.fromEntities(restaurant, reservation);
@@ -155,10 +155,9 @@ public class ChatService {
                 .build();
 
         // 메시지 저장
-//        Message savedMessage = messageRepository.save(message);
+        messageRepository.save(message);
 
         // 저장된 메시지를 DTO로 변환하여 반환
-//        return new MessageDto(savedMessage.getId(), savedMessage.getContent(), savedMessage.getSenderId(), savedMessage.getTimestamp());
-    return null;
+        return MessageDto.from(message);
     }
 }

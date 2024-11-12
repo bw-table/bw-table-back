@@ -4,11 +4,14 @@ import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import jakarta.persistence.*;
 import lombok.Builder;
-import lombok.RequiredArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Getter
+@NoArgsConstructor
 @Table(name = "message")
 public class Message {
 
@@ -38,11 +41,6 @@ public class Message {
         this.sender = sender;
         this.chatRoom = chatRoom;
         this.restaurant = restaurant;
-        this.timestamp = LocalDateTime.now();
-    }
-
-    @PrePersist
-    protected void onCreate() {
         this.timestamp = LocalDateTime.now();
     }
 }
