@@ -1,7 +1,7 @@
 package com.zero.bwtableback.chat.service;
 
-import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
-import com.zero.bwtableback.chat.dto.MessageDto;
+import com.zero.bwtableback.chat.dto.MessageReqDto;
+import com.zero.bwtableback.chat.dto.MessageResDto;
 import com.zero.bwtableback.chat.entity.ChatRoom;
 import com.zero.bwtableback.chat.entity.ChatRoomStatus;
 import com.zero.bwtableback.chat.entity.Message;
@@ -17,17 +17,13 @@ import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
-import com.zero.bwtableback.security.MemberDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 @Service
@@ -61,7 +57,6 @@ public class ChatService {
         chatRoom.setReservation(reservation);
         chatRoom.setMember(member);
 
-        // TODO 예약은 하나에 채팅방 하나
         chatRoomRepository.save(chatRoom);
 
         return PaymentCompleteDto.fromEntities(restaurant, reservation);
@@ -127,7 +122,7 @@ public class ChatService {
     /**
      * 특정 채팅방 전체 메시지 조회
      */
-    public Page<MessageDto> getMessages(Long chatRoomId, Pageable pageable) {
+    public Page<MessageReqDto> getMessages(Long chatRoomId, Pageable pageable) {
 
         return null;
     }
@@ -135,16 +130,15 @@ public class ChatService {
     /**
      * 특정 채팅방 메시지 전송
      */
-    public MessageDto saveMessage(Long chatRoomId, MessageDto messageDto) {
-        // TODO ACTIVE인지 확인
+    public MessageResDto saveMessage(Long chatRoomId, String email, MessageReqDto messageReqDto) {
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
-        Member member = memberRepository.findById(messageDto.getSenderId())
+        Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         Message message = Message.builder()
-                .content(messageDto.getContent())
+                .content(messageReqDto.getContent())
                 .sender(member)
                 .chatRoom(chatRoom)
                 .restaurant(chatRoom.getRestaurant())
@@ -152,11 +146,7 @@ public class ChatService {
 
         messageRepository.save(message);
 
-        return MessageDto.builder()
-                .senderId(member.getId())
-                .content(message.getContent())
-                .timestamp(messageDto.getTimestamp())
-                .build();
+        return new MessageResDto(member.getNickname(), messageReqDto.getContent(), messageReqDto.getTimestamp());
     }
 
     public boolean isChatRoomActive(Long chatRoomId) {
