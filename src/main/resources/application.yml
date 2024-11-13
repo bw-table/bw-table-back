@@ -17,7 +17,7 @@ spring:
       ddl-auto: update
     show-sql: true
 #  sql:  // data.sql 을 위한 설정
-#    init:
+#    init: create
 #      mode: always
   data:
     redis:
