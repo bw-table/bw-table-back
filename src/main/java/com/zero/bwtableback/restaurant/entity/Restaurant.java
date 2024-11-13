@@ -48,7 +48,11 @@ public class Restaurant {
 
     private String link; // 홈페이지 링크
 
+    @Column(nullable = false)
     private int deposit; // 인당예약금
+
+    @Column(nullable = false)
+    private String impCode; // 가맹점 식별코드
 
     @OneToMany(
             mappedBy = "restaurant", // 양방향 관계 설정

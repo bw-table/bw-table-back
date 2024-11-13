@@ -152,16 +152,19 @@ public class RestaurantService {
 
         Category category = assignCategory(reqDto.getCategory());
 
-        //        // 레스토랑 객체 생성
+        // 레스토랑 객체 생성
         Restaurant restaurant = Restaurant.builder()
                 .name(reqDto.getName())
                 .description(reqDto.getDescription())
                 .address(reqDto.getAddress())
+                .latitude(reqDto.getLatitude())
+                .longitude(reqDto.getLongitude())
                 .contact(reqDto.getContact())
                 .closedDay(reqDto.getClosedDay())
                 .link(reqDto.getLink())
                 .info(reqDto.getInfo())
                 .deposit(reqDto.getDeposit())
+                .impCode(reqDto.getImpCode())
                 .category(category)
                 .images(new HashSet<>())
                 .operatingHours(new ArrayList<>())
@@ -200,6 +203,100 @@ public class RestaurantService {
         }
 
         return savedRestaurant;
+    }
+
+    // 식당 정보 수정
+    // FIXME: 현재 확인용으로 Restaurant 객체 반환하도록 작성 -> 추후 응답객체 변경
+    @Transactional
+    public Restaurant updateRestaurant(Long id, UpdateReqDto reqDto) {
+        Restaurant restaurant = restaurantRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
+
+        if (reqDto.getName() != null) {
+            restaurant.setName(reqDto.getName());
+        }
+        if (reqDto.getDescription() != null) {
+            restaurant.setDescription(reqDto.getDescription());
+        }
+        if (reqDto.getAddress() != null && !restaurant.getAddress().equals(reqDto.getAddress())) {
+            if (restaurantRepository.existsByAddress(reqDto.getAddress())) {
+                throw new RestaurantException("Restaurant with this address already exists");
+            }
+            restaurant.setAddress(reqDto.getAddress());
+        }
+
+        if (reqDto.getLatitude() != null) {
+            restaurant.setLatitude(reqDto.getLatitude());
+        }
+
+        if (reqDto.getLongitude() != null) {
+            restaurant.setLongitude(reqDto.getLongitude());
+        }
+
+        if (reqDto.getContact() != null && !restaurant.getContact().equals(reqDto.getContact())) {
+            if (restaurantRepository.existsByContact(reqDto.getContact())) {
+                throw new RestaurantException("Restaurant with this contact already exists");
+            }
+            restaurant.setContact(reqDto.getContact());
+        }
+
+        if (reqDto.getClosedDay() != null) {
+            restaurant.setClosedDay(reqDto.getClosedDay());
+        }
+
+        if (reqDto.getLink() != null) {
+            restaurant.setLink(reqDto.getLink());
+        }
+
+        if (reqDto.getInfo() != null) {
+            restaurant.setInfo(reqDto.getInfo());
+        }
+
+        if (reqDto.getDeposit() != null) {
+            restaurant.setDeposit(reqDto.getDeposit());
+        }
+
+        if (reqDto.getImpCode() != null) {
+            restaurant.setImpCode(reqDto.getImpCode());
+        }
+
+        if (reqDto.getCategory() != null) {
+            Category category = assignCategory(reqDto.getCategory());
+            restaurant.setCategory(category);
+        }
+
+        if (reqDto.getFacilities() != null) {
+            List<Facility> facilities = assignFacilities(reqDto.getFacilities());
+            restaurant.setFacilities(facilities);
+        }
+
+        if (reqDto.getHashtags() != null) {
+            List<Hashtag> hashtags = assignHashtags(reqDto.getHashtags());
+            restaurant.setHashtags(hashtags);
+        }
+
+        if (reqDto.getMenus() != null) {
+            List<Menu> menus = assignMenu(reqDto.getMenus(), restaurant);
+            restaurant.setMenus(menus);
+        }
+
+        if (reqDto.getOperatingHours() != null) {
+            List<OperatingHours> operatingHours = assignOperatingHours(reqDto.getOperatingHours(), restaurant);
+            restaurant.setOperatingHours(operatingHours);
+        }
+
+        if (reqDto.getImages() != null && !reqDto.getImages().isEmpty()) {
+            Set<RestaurantImage> images = reqDto.getImages().stream()
+                    .map(imageUrl -> RestaurantImage.builder()
+                            .imageUrl(imageUrl)
+                            .restaurant(restaurant)
+                            .build())
+                    .collect(Collectors.toSet());
+            restaurant.setImages(images);
+            restaurantImageRepository.saveAll(images);
+        }
+
+        return restaurantRepository.save(restaurant);
     }
 
     // 카테고리 설정
@@ -263,12 +360,6 @@ public class RestaurantService {
                 .collect(Collectors.toList());
     }
 
-    // 식당 정보 수정
-//    @Transactional
-//    public Restaurant updateRestaurant(Long id, RegisterReqDto reqDto) {
-//
-//    }
-
     // 모든 식당 리스트 검색
 
     public List<RestaurantListDto> getRestaurants(Pageable pageable) {
@@ -319,7 +410,7 @@ public class RestaurantService {
 
     // 해시태그 자동완성
     public List<String> getHashtagSuggestions(String hashtag) {
-        List<Hashtag> hashtags = hashtagRepository.findTop10ByNameContainingIgnoreCase(hashtag);
+        List<Hashtag> hashtags = hashtagRepository.findTop10ByNameStartingWithIgnoreCase(hashtag);
 
         return hashtags.stream()
                 .map(Hashtag::getName)
@@ -426,6 +517,8 @@ public class RestaurantService {
                 .name(restaurant.getName())
                 .description(restaurant.getDescription())
                 .address(restaurant.getAddress())
+                .latitude(restaurant.getLatitude())
+                .longitude(restaurant.getLongitude())
                 .contact(restaurant.getContact())
                 .closedDay(restaurant.getClosedDay())
                 .category(category)
