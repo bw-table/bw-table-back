@@ -96,7 +96,7 @@ public class MemberController {
                                                                  @AuthenticationPrincipal MemberDetails memberDetails) {
         String email = memberDetails.getUsername();
 
-        Page<ChatRoomCreateResDto> rooms = memberService.getMyChats(pageable, email);
+        Page<ChatRoomCreateResDto> rooms = memberService.getMyChatRooms(pageable, email);
 
         return ResponseEntity.ok(rooms);
     }

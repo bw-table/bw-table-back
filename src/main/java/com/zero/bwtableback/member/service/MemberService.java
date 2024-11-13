@@ -96,7 +96,7 @@ public class MemberService {
                 .map(ReviewInfoDto::fromEntity);
     }
 
-    public Page<ChatRoomCreateResDto> getMyChats(Pageable pageable, String email) {
+    public Page<ChatRoomCreateResDto> getMyChatRooms(Pageable pageable, String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 

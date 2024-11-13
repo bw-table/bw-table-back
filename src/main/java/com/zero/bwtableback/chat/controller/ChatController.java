@@ -28,13 +28,6 @@ public class ChatController {
 
     // 채팅방 생성 엔드포인트는 예약 확정 시 자동으로 생성
 
-    // FIXME 특정 식당의 모든 채팅방 조회 : 레스토랑에서 구현
-    @GetMapping("/restaurant/{restaurantId}")
-    public ResponseEntity<Page<ChatRoom>> getAllChatRooms(@PathVariable Long restaurantId, Pageable pageable) {
-        Page<ChatRoom> chatRooms = chatService.getAllChatRoomsByRestaurantId(restaurantId, pageable);
-        return ResponseEntity.ok(chatRooms);
-    }
-
     // FIXME 특정 채팅방 조회 (필요 여부 판단)
     @GetMapping("/{chatRoomId}")
     public ResponseEntity<ChatRoom> getChatRoomById(@PathVariable Long chatRoomId) {

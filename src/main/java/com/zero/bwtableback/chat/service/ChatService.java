@@ -87,13 +87,6 @@ public class ChatService {
     }
 
     /**
-     * FIXME 특정 식당의 모든 채팅방 조회 : 레스토랑에서 구현
-     */
-    public Page<ChatRoom> getAllChatRoomsByRestaurantId(Long restaurantId, Pageable pageable) {
-        return chatRoomRepository.findByRestaurant_Id(restaurantId, pageable);
-    }
-
-    /**
      * 특정 채팅방 조회
      */
     public ChatRoom getChatRoomById(Long chatRoomId) {

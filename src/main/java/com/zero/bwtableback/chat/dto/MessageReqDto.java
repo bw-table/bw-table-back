@@ -9,5 +9,5 @@ import java.time.LocalDateTime;
 @Builder
 public class MessageReqDto {
     private String content;
-    private long timestamp;
+    private LocalDateTime timestamp;
 }

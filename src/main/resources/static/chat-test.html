@@ -41,7 +41,7 @@
     let stompClient = null;
     const chatRoomId = '5'; // 이미 존재하는 채팅방 ID
     // 임시 토큰 나중에는 헤더의 개인의 토큰 반환
-    const jwtToken = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJndWVzdEBleGFtcGxlLmNvbSIsInJvbGUiOiJHVUVTVCIsImlhdCI6MTczMTQ1ODA2NywiZXhwIjoxNzMxNDU5ODY3fQ.5XqvKmhtQvMgF-hzcoTJvQWQPzQDOT3TCZud7gFIqJGUJqfc6H5YKp41tpH5mJYr-ea5mZJ4GePa0pj7LQkXmg'; // JWT 토큰
+    const jwtToken = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJndWVzdEBleGFtcGxlLmNvbSIsInJvbGUiOiJHVUVTVCIsImlhdCI6MTczMTQ2MDk0OSwiZXhwIjoxNzMxNDYyNzQ5fQ.WREQ1jYNQmuYzbvCahkpDWvEI-VrJqDTkXe-D8yE4ULH-M0d9StPvga3EePd4bE5wYvQROVNIib9Y5EGOk-svQ'; // JWT 토큰
 
     function connect() {
         const socket = new SockJS('/ws'); // WebSocket 엔드포인트
@@ -71,7 +71,8 @@
         const message = messageInput.value;
 
         if (message && stompClient) {
-            const timestamp = Date.now(); // 현재 시간을 Unix timestamp로 가져오기
+            const now = new Date();
+            const timestamp = now.toISOString();
 
             // JSON 형식으로 메시지 전송
             stompClient.send(`/app/send/${chatRoomId}`, {

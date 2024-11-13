@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 public class MessageResDto {
     private String nickname;
     private String content;
-    private long timestamp;
+    private LocalDateTime timestamp;
 
     public static MessageResDto fromEntity(Message message){
         return MessageResDto.builder()
