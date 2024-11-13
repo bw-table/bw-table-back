@@ -1,6 +1,7 @@
 package com.zero.bwtableback.member.oauth2.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.member.dto.LoginResDto;
 import com.zero.bwtableback.member.dto.MemberDto;
 import com.zero.bwtableback.member.oauth2.service.KakaoOAuth2Service;
@@ -37,7 +38,7 @@ public class KakaoOAuth2Controller {
      */
     @PostMapping("/callback")
     @Operation(summary = "카카오 로그인 및 회원가입", description = "카카오 회원가입 및 로그인 후 사용자 정보를 반환합니다.")
-    public ResponseEntity<LoginResDto> kakaoLogin(@RequestParam(required = false) String code,
+    public ResponseEntity<?> kakaoLogin(@RequestParam(required = false) String code,
                                                   HttpServletRequest request,
                                                   HttpServletResponse response) throws JsonProcessingException {
         // 요청 헤더에서 액세스 토큰 추출
@@ -59,9 +60,8 @@ public class KakaoOAuth2Controller {
                 return ResponseEntity.ok(loginResDto);
             }
             // 토큰이 없거나 유효하지 않은 경우 401 응답을 던짐
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized. Please refresh your token.");
-//            LoginResDto loginResDto = kakaoService.login(email, request, response);
-//            return ResponseEntity.ok(loginResDto);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Unauthorized. 토큰이 유효하지 않습니다.");
         }
     }
 
