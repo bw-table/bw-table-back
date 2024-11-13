@@ -58,6 +58,7 @@ public class KakaoOAuth2Controller {
             if (StringUtils.hasText(accessToken) && tokenProvider.validateAccessToken(accessToken)) {
                 // 기존의 액세스 토큰과 사용자 정보를 반환
                 LoginResDto loginResDto = authService.handleExistingToken(accessToken);
+
                 return ResponseEntity.ok(loginResDto);
             }
             // 토큰이 없거나 유효하지 않은 경우 401 응답을 던짐

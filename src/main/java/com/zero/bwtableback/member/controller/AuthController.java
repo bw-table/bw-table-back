@@ -15,6 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Collections;
 import java.util.Map;
@@ -31,7 +32,7 @@ public class AuthController {
      * 이메일 중복 검사
      */
     @PostMapping("/check/email")
-    public ResponseEntity<Map<String, Boolean>>  checkEmailDuplicate(@RequestBody DuplicateCheckReqDto request) {
+    public ResponseEntity<Map<String, Boolean>> checkEmailDuplicate(@RequestBody DuplicateCheckReqDto request) {
         boolean isDuplicate = authService.isEmailDuplicate(request);
         return ResponseEntity.ok(Collections.singletonMap("isDuplicate", isDuplicate));
     }
@@ -67,7 +68,10 @@ public class AuthController {
      * 회원가입
      */
     @PostMapping("/signup")
-    public ResponseEntity<SignUpResDto> signUp(@Valid @RequestBody SignUpReqDto signUpReqDto, BindingResult bindingResult) {
+    public ResponseEntity<LoginResDto> signUp(@Valid @RequestBody SignUpReqDto signUpReqDto,
+                                              HttpServletRequest request,
+                                              HttpServletResponse response,
+                                              BindingResult bindingResult) {
         // 유효성 검사 결과 확인
         if (bindingResult.hasErrors()) {
             StringBuilder errorMessage = new StringBuilder();
@@ -75,8 +79,12 @@ public class AuthController {
                     errorMessage.append(error.getDefaultMessage()).append(" ")
             );
         }
-        SignUpResDto signUpResDto = authService.signUp(signUpReqDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(signUpResDto);
+        MemberDto memberDto = authService.signUp(signUpReqDto);
+
+        // 회원가입 후 자동 로그인
+        LoginResDto loginResDto = authService.signUpLogin(memberDto, request, response);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(loginResDto);
     }
 
     /**
@@ -84,8 +92,8 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody EmailLoginReqDto loginReqDto,
-                                             HttpServletRequest request,
-                                             HttpServletResponse response) {
+                                   HttpServletRequest request,
+                                   HttpServletResponse response) {
         // 요청 헤더에서 액세스 토큰 추출
         String accessToken = getJwtFromRequest(request);
 
@@ -96,8 +104,9 @@ public class AuthController {
             return ResponseEntity.ok(loginResDto);
         }
 
-        LoginResDto loginResDto = authService.login(loginReqDto, request, response);
-        return ResponseEntity.ok(loginResDto);
+        // 엑세스 토큰이 없거나 유효하지 않은 경우
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body("Unauthorized: Access token is missing or invalid.");
     }
 
     private String getJwtFromRequest(HttpServletRequest request) {
@@ -107,12 +116,16 @@ public class AuthController {
         }
         return null; // 토큰이 없으면 null 반환
     }
+
     /**
      * 리프레시 토큰을 사용하여 액세스 토큰 발급
      */
-    @PostMapping("/refresh")
+    @GetMapping("/refresh")
     public ResponseEntity<LoginResDto> refresh(HttpServletRequest request) {
         String refreshToken = getRefreshTokenFromCookies(request); // 쿠키에서 리프레시 토큰 추출
+        if (refreshToken == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized. 토큰이 존재하지 않습니다..");
+        }
         LoginResDto loginResDto = authService.renewAccessTokenWithRefreshToken(refreshToken);
         return ResponseEntity.ok(loginResDto);
     }

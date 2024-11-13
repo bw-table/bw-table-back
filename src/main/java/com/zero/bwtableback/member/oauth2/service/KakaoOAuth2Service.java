@@ -168,57 +168,6 @@ public class KakaoOAuth2Service {
         return new LoginResDto(accessToken, MemberDto.from(member), null);
     }
 
-//    // FIXME 기존 유효한 AccessToken이 존재하는 경우
-//    private LoginResDto handleExistingToken(String existingToken) {
-//    // 사장님일 경우 레스토랑 ID 조회 메서드
-//    private Long getRestaurantIdIfOwner(Member member) {
-//        if (member.getRole() == Role.OWNER) {
-//            return restaurantRepository.findRestaurantIdByMemberId(member.getId());
-//        }
-//        return null; // 일반 회원일 경우 null 반환
-//    }
-//
-//    // 기존 유효한 AccessToken이 존재하는 경우
-//    private LoginResDto handleExistingToken(String existingToken,Long restaurantId) {
-//
-//        String email = tokenProvider.getUsername(existingToken);
-//        Member member = memberRepository.findByEmail(email)
-//                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-//
-//        MemberDto memberDto = MemberDto.from(member);
-//
-////        return new LoginResDto(existingToken, memberDto);
-//        return null;
-//    }
-//
-//    // FIXME 새로운 로그인 처리 - 첫 로그인 시, 토큰 없을 시, 토큰이 만료된 경우
-//    private LoginResDto handleNewLogin(MemberDto memberDto, HttpServletResponse response) {
-////        Member member = memberRepository.findByEmail(memberDto.getEmail())
-////                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-////
-////        // 토큰 생성
-////        String accessToken = tokenProvider.createAccessToken(member.getEmail());
-////        String refreshToken = tokenProvider.createRefreshToken();
-////
-////        // HttpOnly 쿠키에 리프레시 토큰 저장
-////        Cookie cookie = new Cookie("refreshToken", refreshToken);
-////        cookie.setHttpOnly(true);
-////        cookie.setSecure(true); // HTTPS 환경에서만 전송
-////        cookie.setPath("/");
-////        cookie.setMaxAge(86400); // 1일 (86400초)
-////
-////        response.addCookie(cookie);
-////
-////        // 리프레시 토큰을 레디스에 저장
-////        String key = "refresh_token:" + member.getId();
-////        redisTemplate.opsForValue().set(key, refreshToken);
-//
-////        return new LoginResDto(accessToken, memberDto);
-//        return null;
-////        return new LoginResDto(existingToken, memberDto,restaurantId);
-//    }
-//
-//
 //    // FIXME 리프레시 토큰을 사용하여 새로운 액세스 토큰 발급
 //    // Accesstoken이 만료되거나 없는경우 Refresh 토큰이 유효한 경우
 //    private LoginResDto handleValidRefreshToken(String email, HttpServletResponse response, Long restaurantId) {

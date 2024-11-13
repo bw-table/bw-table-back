@@ -67,16 +67,31 @@ public class AuthService {
     /**
      * 새로운 사용자 이메일 회원가입
      */
-    public SignUpResDto signUp(SignUpReqDto form) {
-
-        // 비밀번호 암호화
+    public MemberDto signUp(SignUpReqDto form) {
         String encodedPassword = passwordEncoder.encode(form.getPassword());
 
         Member member = Member.from(form, encodedPassword);
 
-        Member savedMember = memberRepository.save(member);
+        memberRepository.save(member);
 
-        return SignUpResDto.from(savedMember);
+        return MemberDto.from(member);
+    }
+
+    /**
+     * 회원가입 시 로그인
+     */
+    public LoginResDto signUpLogin(MemberDto memberDto, HttpServletRequest request, HttpServletResponse response) {
+
+        String accessToken = tokenProvider.createAccessToken(memberDto.getEmail(), memberDto.getRole());
+        String refreshToken = tokenProvider.createRefreshToken(memberDto.getId().toString());
+
+        // HttpOnly 쿠키에 리프레시 토큰 저장
+        saveRefreshTokenToCookie(refreshToken, response);
+
+        // Redis에 리프레시 토큰 저장
+        saveRefreshTokenToRedis(memberDto.getId(), refreshToken);
+
+        return new LoginResDto(accessToken, memberDto, null);
     }
 
     /**
@@ -102,6 +117,18 @@ public class AuthService {
         return new LoginResDto(accessToken, memberDto, restaurantId);
     }
 
+    // 회원 인증
+    private MemberDto authenticateMember(EmailLoginReqDto loginReqDto) {
+        Member member = memberRepository.findByEmail(loginReqDto.getEmail())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (!passwordEncoder.matches(loginReqDto.getPassword(), member.getPassword())) {
+            throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
+        }
+
+        return MemberDto.from(member);
+    }
+
     // 리프레시 토큰으로 액세스 토큰 갱신
     public LoginResDto renewAccessTokenWithRefreshToken(String refreshToken) {
         // 새로운 액세스 토큰 생성
@@ -118,18 +145,6 @@ public class AuthService {
         Long restaurantId = getRestaurantIdIfOwner(memberDto);
 
         return new LoginResDto(newAccessToken, memberDto, restaurantId);
-    }
-
-    // 회원 인증
-    private MemberDto authenticateMember(EmailLoginReqDto loginReqDto) {
-        Member member = memberRepository.findByEmail(loginReqDto.getEmail())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        if (!passwordEncoder.matches(loginReqDto.getPassword(), member.getPassword())) {
-            throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
-        }
-
-        return MemberDto.from(member);
     }
 
     // 리프레시 토큰 검증
