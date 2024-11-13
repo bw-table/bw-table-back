@@ -7,5 +7,6 @@ import lombok.Getter;
 @AllArgsConstructor
 public class LoginResDto {
     String accessToken;
-    MemberDto memberDto;
+    MemberDto member;
+    Long restaurantId;
 }
