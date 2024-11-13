@@ -1,6 +1,7 @@
 package com.zero.bwtableback.restaurant.entity;
 
 import com.zero.bwtableback.common.BaseEntity;
+import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -38,4 +39,8 @@ public class Review extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "restaurant_id", nullable = false)
     private Restaurant restaurant;
+
+    @ManyToOne
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
 }

@@ -1,12 +1,13 @@
 package com.zero.bwtableback.restaurant.service;
 
+import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
+import com.zero.bwtableback.chat.repository.ChatRoomRepository;
 import com.zero.bwtableback.restaurant.dto.*;
 import com.zero.bwtableback.restaurant.entity.*;
 import com.zero.bwtableback.restaurant.exception.RestaurantException;
 import com.zero.bwtableback.restaurant.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ public class RestaurantService {
     private final HashtagRepository hashtagRepository;
     private final RestaurantImageRepository restaurantImageRepository;
     private final AnnouncementRepository announcementRepository;
+    private final ChatRoomRepository chatRoomRepository;
 
     // 등록
 //    @Transactional
@@ -456,22 +458,22 @@ public class RestaurantService {
         // 메뉴
         List<MenuDto> menus = restaurant.getMenus().stream()
                 .map(menu -> new MenuDto(
-                                    menu.getId(),
-                                    menu.getName(),
-                                    menu.getPrice(),
-                                    menu.getDescription(),
-                                    menu.getImageUrl(),
-                                    menu.getRestaurant().getId()))
+                        menu.getId(),
+                        menu.getName(),
+                        menu.getPrice(),
+                        menu.getDescription(),
+                        menu.getImageUrl(),
+                        menu.getRestaurant().getId()))
                 .collect(Collectors.toList());
 
         // 영업시간
         List<OperatingHoursDto> operatingHours = restaurant.getOperatingHours().stream()
                 .map(hours -> new OperatingHoursDto(
-                                    hours.getId(),
-                                    hours.getDayOfWeek(),
-                                    hours.getOpeningTime(),
-                                    hours.getClosingTime(),
-                                    hours.getRestaurant().getId()))
+                        hours.getId(),
+                        hours.getDayOfWeek(),
+                        hours.getOpeningTime(),
+                        hours.getClosingTime(),
+                        hours.getRestaurant().getId()))
                 .collect(Collectors.toList());
 
         // 편의시설
@@ -535,7 +537,11 @@ public class RestaurantService {
     }
 
 
-
-
-
+    /**
+     * 특정 식당의 모든 채팅방 조회
+     */
+    public Page<ChatRoomCreateResDto> getChatRoomsByRestaurantId(Long restaurantId, Pageable pageable) {
+        return chatRoomRepository.findByRestaurantId(restaurantId, pageable)
+                .map(ChatRoomCreateResDto::fromEntity);
+    }
 }

@@ -23,5 +23,4 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     // 사장님(OWNER)의 회원 아이디로 레스토랑 아이디 조회
     @Query("SELECT r.id FROM Restaurant r WHERE r.member.id = :memberId")
     Long findRestaurantIdByMemberId(@Param("memberId") Long memberId);
-
 }

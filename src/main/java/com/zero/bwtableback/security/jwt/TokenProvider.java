@@ -3,16 +3,15 @@ package com.zero.bwtableback.security.jwt;
 import com.zero.bwtableback.member.entity.Role;
 import io.jsonwebtoken.*;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.List;
 
 /**
  * JWT 토큰 생성 및 검증을 담당하는 클래스
@@ -21,6 +20,7 @@ import java.util.List;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class TokenProvider {
     @Value("${JWT.SECRET}")
     private String jwtSecret;
@@ -34,6 +34,8 @@ public class TokenProvider {
     public long getRefreshTokenValidityInMilliseconds() {
         return refreshTokenValidityInMilliseconds * 1000;
     }
+
+    private final MemberDetailsService memberDetailsService;
 
     public String createAccessToken(String email, Role role) {
         Date now = new Date();
@@ -70,13 +72,10 @@ public class TokenProvider {
                 .getBody();
 
         String username = claims.getSubject();
-        Role role = Role.valueOf(claims.get("role", String.class));
 
-        List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+        UserDetails userDetails = memberDetailsService.loadUserByUsername(username);
 
-        User principal = new User(username, "", authorities);
-
-        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+        return new UsernamePasswordAuthenticationToken(userDetails, token, userDetails.getAuthorities());//        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }
 
     /**

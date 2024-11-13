@@ -10,8 +10,7 @@ import lombok.Getter;
 import java.util.List;
 
 @Getter
-public class ChatRoomCreateResponse {
-    private Long id;
+public class ChatRoomCreateReqDto {
     private String roomName;
     private ChatRoomStatus status;
     private Reservation reservation;

@@ -23,13 +23,13 @@ public class MemberDetails implements UserDetails {
     }
 
     @Override
-    public String getPassword() {
-        return member.getPassword(); // 비밀번호 반환
+    public String getUsername() {
+        return member.getEmail(); // 이메일을 사용자 이름으로 사용
     }
 
     @Override
-    public String getUsername() {
-        return member.getEmail(); // 이메일을 사용자 이름으로 사용
+    public String getPassword() {
+        return member.getPassword(); // 비밀번호 반환
     }
 
     @Override

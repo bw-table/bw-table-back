@@ -1,8 +1,11 @@
 package com.zero.bwtableback.member.controller;
 
+import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
 import com.zero.bwtableback.common.service.ImageUploadService;
 import com.zero.bwtableback.member.dto.MemberDto;
 import com.zero.bwtableback.member.service.MemberService;
+import com.zero.bwtableback.reservation.dto.ReservationResponseDto;
+import com.zero.bwtableback.restaurant.dto.ReviewInfoDto;
 import com.zero.bwtableback.security.MemberDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -51,6 +54,57 @@ public class MemberController {
     public MemberDto getMyInfo(@AuthenticationPrincipal MemberDetails memberDetails) {
         String email = memberDetails.getUsername();
         return memberService.getMyInfo(email);
+    }
+
+    /**'
+     * TODO 회원 정보 수정
+     */
+
+    /**
+     * TODO 회원 탈퇴
+     */
+
+    /**
+     * FIXME 회원 프로필 이미지 이름 엔드포인트 변경하기
+     */
+
+
+    /**
+     * 이메일 회원 비밀번호 변경
+     */
+
+    /**
+     * 나의 모든 예약 조회
+     */
+    @GetMapping("/me/reservations")
+    public ResponseEntity<Page<ReservationResponseDto>> getMyReservations(Pageable pageable,
+                                                                          @AuthenticationPrincipal MemberDetails memberDetails) {
+        String email = memberDetails.getUsername();
+
+        return ResponseEntity.ok(memberService.getMyReservations(pageable, email));
+    }
+
+    /**
+     * 나의 모든 리뷰 조회
+     */
+    @GetMapping("me/reviews")
+    public ResponseEntity<Page<ReviewInfoDto>> getMyReviews(Pageable pageable,
+                                                            @AuthenticationPrincipal MemberDetails memberDetails) {
+        String email = memberDetails.getUsername();
+        return ResponseEntity.ok(memberService.getMyReviews(pageable, email));
+    }
+
+    /**
+     * 나의 모든 채팅방 조회
+     */
+    @GetMapping("/me/chats")
+    public ResponseEntity<Page<ChatRoomCreateResDto>> getMyChats(Pageable pageable,
+                                                                 @AuthenticationPrincipal MemberDetails memberDetails) {
+        String email = memberDetails.getUsername();
+
+        Page<ChatRoomCreateResDto> rooms = memberService.getMyChatRooms(pageable, email);
+
+        return ResponseEntity.ok(rooms);
     }
 
     /**

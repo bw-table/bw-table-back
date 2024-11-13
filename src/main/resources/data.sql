@@ -27,3 +27,37 @@
 --         1, -- 카테고리 ID (예: 1번 카테고리)
 --         4.5, -- 평균 평점
 --         31); -- 회원 ID울특별시 서초구 양재동 1213', 0245678931, NULL);
+
+-- INSERT INTO reservation (
+--     restaurant_id,
+--     member_id,
+--     reservation_date,
+--     reservation_time,
+--     number_of_people,
+--     special_request,
+--     reservation_status,
+--     created_at,
+--     updated_at
+-- ) VALUES (
+--              8, -- restaurant_id (존재하는 레스토랑의 ID)
+--              30, -- member_id (존재하는 회원의 ID)
+--              '2023-11-20', -- reservation_date (예약 날짜)
+--              '19:30:00', -- reservation_time (예약 시간)
+--              4, -- number_of_people (예약 인원 수)
+--              '창가 자리 요청합니다.', -- special_request (특별 요청 사항)
+--              'CONFIRMED', -- reservation_status (예약 상태)
+--              CURRENT_TIMESTAMP, -- created_at (생성 시간)
+--              CURRENT_TIMESTAMP -- updated_at (수정 시간)
+--          );
+
+-- INSERT INTO review (content, rating, restaurant_id, member_id, created_at, updated_at)
+-- VALUES ('맛있고 분위기도 좋았어요. 직원분들도 친절하셔서 즐거운 식사였습니다.', 5, 8, 30, NOW(), NOW());
+-- VALUES ('음식은 맛있었지만 가격이 조금 비싼 편이에요. 특별한 날에 가기 좋을 것 같아요.', 4, 8, 30, NOW(), NOW());
+--
+-- INSERT INTO review_image (image_url, review_id)
+-- VALUES
+--     ('http://example.com/images/review1_image1.jpg', 1),
+--     ('http://example.com/images/review1_image2.jpg', 1),
+--     ('http://example.com/images/review1_image3.jpg', 1),
+--     ('http://example.com/images/review2_image1.jpg', 2),
+--     ('http://example.com/images/review2_image2.jpg', 2);
