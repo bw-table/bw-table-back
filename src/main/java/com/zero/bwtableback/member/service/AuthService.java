@@ -133,7 +133,7 @@ public class AuthService {
     }
 
     // 리프레시 토큰 검증
-    private void validateRefreshToken(String refreshToken, Long memberId) {
+    public void validateRefreshToken(String refreshToken, Long memberId) {
         String key = "refresh_token:" + memberId;
         String storedRefreshToken = redisTemplate.opsForValue().get(key);
 
@@ -143,7 +143,7 @@ public class AuthService {
     }
 
     // 쿠키에 리프레시 토큰 저장
-    private void saveRefreshTokenToCookie(String refreshToken, HttpServletResponse response) {
+    public void saveRefreshTokenToCookie(String refreshToken, HttpServletResponse response) {
         Cookie cookie = new Cookie("refreshToken", refreshToken);
         cookie.setHttpOnly(true);
         cookie.setSecure(true); // HTTPS 환경에서만 전송
@@ -153,7 +153,7 @@ public class AuthService {
     }
 
     // Redis에 리프레시 토큰 저장
-    private void saveRefreshTokenToRedis(Long memberId, String refreshToken) {
+    public void saveRefreshTokenToRedis(Long memberId, String refreshToken) {
         String key = "refresh_token:" + memberId;
         redisTemplate.opsForValue().set(key, refreshToken);
     }
