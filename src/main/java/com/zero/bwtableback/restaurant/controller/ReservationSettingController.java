@@ -12,12 +12,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/restaurants/reservation-setting")
+@RequestMapping("/api/restaurants")
 public class ReservationSettingController {
 
     private final ReservationSettingService reservationSettingService;
 
-    @PostMapping
+    @PostMapping("/{restaurantId}/reservation-setting") // TODO 엔드포인트 수정
     public ResponseEntity<ReservationSettingResDto> createReservationSetting(
             @RequestBody ReservationSettingReqDto reqDto) {
 
