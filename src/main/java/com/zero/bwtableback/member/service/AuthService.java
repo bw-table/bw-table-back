@@ -130,8 +130,7 @@ public class AuthService {
 
     // 리프레시 토큰으로 액세스 토큰 갱신
     public LoginResDto renewAccessTokenWithRefreshToken(String refreshToken) {
-        // 새로운 액세스 토큰 생성
-        String email = tokenProvider.getUsername(refreshToken); // 리프레시 토큰에서 이메일 추출
+        String email = tokenProvider.getUsername(refreshToken);
 
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
@@ -141,9 +140,8 @@ public class AuthService {
         String newAccessToken = tokenProvider.createAccessToken(email, member.getRole());
 
         MemberDto memberDto = MemberDto.from(member);
-        Long restaurantId = getRestaurantIdIfOwner(memberDto);
 
-        return new LoginResDto(newAccessToken, memberDto, restaurantId);
+        return new LoginResDto(newAccessToken, memberDto, getRestaurantIdIfOwner(memberDto));
     }
 
     // 리프레시 토큰 검증

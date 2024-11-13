@@ -96,8 +96,6 @@ public class AuthController {
                                    HttpServletResponse response) {
             MemberDto memberDto = authService.authenticateMember(loginReqDto);
         try {
-
-            // 요청 헤더에서 액세스 토큰 추출
             String accessToken = getJwtFromRequest(request);
 
             // 액세스 토큰이 유효한 경우
@@ -128,10 +126,10 @@ public class AuthController {
      */
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(HttpServletRequest request) {
-        String refreshToken = getRefreshTokenFromCookies(request); // 쿠키에서 리프레시 토큰 추출
+        String refreshToken = getRefreshTokenFromCookies(request);
         if (refreshToken == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Unauthorized. 토큰이 존재하지 않습니다.");
+                    .body("Unauthorized. 토큰이 유효하지 않습니다.");
         }
         LoginResDto loginResDto = authService.renewAccessTokenWithRefreshToken(refreshToken);
         return ResponseEntity.ok(loginResDto);
