@@ -90,7 +90,7 @@ public class Restaurant {
     private double averageRating; // 평균 평점
 
     @OneToOne
-    @JoinColumn(name = "member_id", nullable = false)
+    @JoinColumn(name = "member_id", nullable = true)
     private Member member;
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
