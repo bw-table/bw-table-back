@@ -78,7 +78,7 @@ public class AuthService {
     }
 
     /**
-     * 회원가입 시 로그인
+     * 회원가입 및 자동 로그인
      */
     public LoginResDto signUpLogin(MemberDto memberDto, HttpServletRequest request, HttpServletResponse response) {
 
@@ -95,12 +95,11 @@ public class AuthService {
     }
 
     /**
-     * 사용자 로그인: 기존 AccessToken이 없거나 유효하지 않은 경우
+     * FIXME 사용자 로그인: 필요없다면 삭제
      *
      * @return accessToken, MemberDto, restaurantId(nullable)
      */
-    public LoginResDto login(EmailLoginReqDto loginReqDto, HttpServletRequest request, HttpServletResponse response) {
-        MemberDto memberDto = authenticateMember(loginReqDto);
+    public LoginResDto login(MemberDto memberDto, HttpServletRequest request, HttpServletResponse response) {
 
         String accessToken = tokenProvider.createAccessToken(memberDto.getEmail(), memberDto.getRole());
         String refreshToken = tokenProvider.createRefreshToken(memberDto.getId().toString());
@@ -118,9 +117,9 @@ public class AuthService {
     }
 
     // 회원 인증
-    private MemberDto authenticateMember(EmailLoginReqDto loginReqDto) {
+    public MemberDto authenticateMember(EmailLoginReqDto loginReqDto) {
         Member member = memberRepository.findByEmail(loginReqDto.getEmail())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_CREDENTIALS));
 
         if (!passwordEncoder.matches(loginReqDto.getPassword(), member.getPassword())) {
             throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
@@ -173,14 +172,6 @@ public class AuthService {
         redisTemplate.opsForValue().set(key, refreshToken);
     }
 
-    // 사장님일 경우 레스토랑 ID 조회 메서드
-    private Long getRestaurantIdIfOwner(MemberDto member) {
-        if (member.getRole() == Role.OWNER) {
-            return restaurantRepository.findRestaurantIdByMemberId(member.getId());
-        }
-        return null; // 일반 회원일 경우 null 반환
-    }
-
     // 기존 유효한 Access Token이 존재하는 경우 처리
     public LoginResDto handleExistingToken(String existingToken) {
         String email = tokenProvider.getUsername(existingToken);
@@ -195,12 +186,29 @@ public class AuthService {
         return new LoginResDto(existingToken, memberDto, restaurantId);
     }
 
-    /**
-     * TODO 사용자 로그아웃 처리
-     */
-    public void logout(String email) {
-//        Member member = memberRepository.findById()
-//                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    // 사장님일 경우 레스토랑 ID 조회 메서드
+    private Long getRestaurantIdIfOwner(MemberDto member) {
+        if (member.getRole() == Role.OWNER) {
+            return restaurantRepository.findRestaurantIdByMemberId(member.getId());
+        }
+        return null;
+    }
 
+    /**
+     * 사용자 로그아웃 처리
+     */
+    public void logout(String email, HttpServletRequest request, HttpServletResponse response) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        String key = "refresh_token:" + member.getId();
+        redisTemplate.delete(key);
+
+        Cookie cookie = new Cookie("refreshToken", null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
     }
 }

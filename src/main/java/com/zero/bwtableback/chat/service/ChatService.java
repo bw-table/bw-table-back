@@ -113,7 +113,7 @@ public class ChatService {
         chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
-        return messageRepository.findByChatRoomIdOrderByTimestampAsc(chatRoomId, pageable)
+        return messageRepository.findByChatRoomIdOrderByTimestampDesc(chatRoomId, pageable)
                 .map(MessageResDto::fromEntity);
     }
 

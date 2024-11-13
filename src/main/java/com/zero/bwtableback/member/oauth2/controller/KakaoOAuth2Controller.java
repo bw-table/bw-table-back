@@ -14,10 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
@@ -38,7 +35,7 @@ public class KakaoOAuth2Controller {
     /**
      * 카카오 로그인 및 회원가입 처리
      */
-    @GetMapping("/callback")
+    @PostMapping("/callback")
     @Operation(summary = "카카오 로그인 및 회원가입", description = "카카오 회원가입 및 로그인 후 사용자 정보를 반환합니다.")
     public ResponseEntity<LoginResDto> kakaoLogin(@RequestParam(required = false) String code,
                                                   HttpServletRequest request,
@@ -75,25 +72,4 @@ public class KakaoOAuth2Controller {
         }
         return null; // 토큰이 없으면 null 반환
     }
-
-    /**
-     * 회원 등록된 카카오 로그인
-     */
-//    @GetMapping("/login")
-//    @Operation(summary = "카카오 로그인", description = "카카오 로그인 후 사용자 정보를 반환합니다.")
-//    public ResponseEntity<LoginResDto> kakaoLogin(@RequestParam(required = false) String code,
-//       return ResponseEntity.ok(loginResDto);
-//}
-
-    /**
-     * 회원으로 등록된 카카오 로그인
-     */
-//    @DeleteMapping("/logout")
-//    @Operation(summary = "카카오 로그아웃", description = "사용자를 카카오에서 로그아웃 처리합니다.")
-//    public ResponseEntity<?> kakaoLogout(@RequestHeader("Authorization")
-//                                         String accessToken,
-//                                         HttpServletResponse response) {
-//        kakaoService.kakaoLogout(accessToken, response);
-//        return ResponseEntity.noContent().build();
-//    }
 }

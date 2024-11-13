@@ -1,5 +1,6 @@
 package com.zero.bwtableback.member.controller;
 
+import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.member.dto.*;
 import com.zero.bwtableback.member.service.AuthService;
 import com.zero.bwtableback.security.MemberDetails;
@@ -65,7 +66,7 @@ public class AuthController {
     }
 
     /**
-     * 회원가입
+     * 회원가입 및 자동 로그인
      */
     @PostMapping("/signup")
     public ResponseEntity<LoginResDto> signUp(@Valid @RequestBody SignUpReqDto signUpReqDto,
@@ -81,7 +82,6 @@ public class AuthController {
         }
         MemberDto memberDto = authService.signUp(signUpReqDto);
 
-        // 회원가입 후 자동 로그인
         LoginResDto loginResDto = authService.signUpLogin(memberDto, request, response);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(loginResDto);
@@ -90,23 +90,29 @@ public class AuthController {
     /**
      * 로그인
      */
-    @PostMapping("/login")
+    @PostMapping("/login") // TODO 이메일 먼저 보고 토큰을 봐야함
     public ResponseEntity<?> login(@RequestBody EmailLoginReqDto loginReqDto,
                                    HttpServletRequest request,
                                    HttpServletResponse response) {
-        // 요청 헤더에서 액세스 토큰 추출
-        String accessToken = getJwtFromRequest(request);
+            MemberDto memberDto = authService.authenticateMember(loginReqDto);
+        try {
 
-        // 액세스 토큰이 유효한 경우
-        if (StringUtils.hasText(accessToken) && tokenProvider.validateAccessToken(accessToken)) {
-            // 기존의 액세스 토큰과 사용자 정보를 반환
-            LoginResDto loginResDto = authService.handleExistingToken(accessToken);
+            // 요청 헤더에서 액세스 토큰 추출
+            String accessToken = getJwtFromRequest(request);
+
+            // 액세스 토큰이 유효한 경우
+            if (StringUtils.hasText(accessToken) && tokenProvider.validateAccessToken(accessToken)) {
+                // 기존의 액세스 토큰과 사용자 정보를 반환
+                return ResponseEntity.ok(authService.handleExistingToken(accessToken));
+            }
+            // 액세스 토큰이 없거나 유효하지 않은 경우, 새로운 로그인 처리
+            LoginResDto loginResDto = authService.login(memberDto, request, response);
             return ResponseEntity.ok(loginResDto);
-        }
 
-        // 엑세스 토큰이 없거나 유효하지 않은 경우
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body("Unauthorized: Access token is missing or invalid.");
+        } catch (CustomException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Unauthorized: " + e.getMessage());
+        }
     }
 
     private String getJwtFromRequest(HttpServletRequest request) {
@@ -120,11 +126,12 @@ public class AuthController {
     /**
      * 리프레시 토큰을 사용하여 액세스 토큰 발급
      */
-    @GetMapping("/refresh")
-    public ResponseEntity<LoginResDto> refresh(HttpServletRequest request) {
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(HttpServletRequest request) {
         String refreshToken = getRefreshTokenFromCookies(request); // 쿠키에서 리프레시 토큰 추출
         if (refreshToken == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized. 토큰이 존재하지 않습니다..");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Unauthorized. 토큰이 존재하지 않습니다.");
         }
         LoginResDto loginResDto = authService.renewAccessTokenWithRefreshToken(refreshToken);
         return ResponseEntity.ok(loginResDto);
@@ -139,16 +146,19 @@ public class AuthController {
                 }
             }
         }
-        return null; // 쿠키가 없으면 null 반환
+        return null;
     }
 
     /**
      * 로그아웃 처리
      */
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@AuthenticationPrincipal MemberDetails memberDetails) {
+    public ResponseEntity<?> logout(@AuthenticationPrincipal MemberDetails memberDetails,
+                                    HttpServletRequest request, HttpServletResponse response) {
         String email = memberDetails.getUsername();
-        authService.logout(email);
-        return ResponseEntity.noContent().build();
+
+        authService.logout(email, request, response);
+
+        return ResponseEntity.ok("로그아웃이 완료되었습니다.");
     }
 }
