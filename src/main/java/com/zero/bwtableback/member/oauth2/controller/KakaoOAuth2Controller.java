@@ -39,8 +39,8 @@ public class KakaoOAuth2Controller {
     @PostMapping("/callback")
     @Operation(summary = "카카오 로그인 및 회원가입", description = "카카오 회원가입 및 로그인 후 사용자 정보를 반환합니다.")
     public ResponseEntity<?> kakaoLogin(@RequestParam(required = false) String code,
-                                                  HttpServletRequest request,
-                                                  HttpServletResponse response) throws JsonProcessingException {
+                                        HttpServletRequest request,
+                                        HttpServletResponse response) throws JsonProcessingException {
         // 요청 헤더에서 액세스 토큰 추출
         String accessToken = getJwtFromRequest(request);
 
