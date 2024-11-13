@@ -8,7 +8,6 @@ import java.time.LocalTime;
 
 public record ReservationCreateReqDto(
         Long restaurantId,
-        Long memberId,
         LocalDate reservationDate,
         LocalTime reservationTime,
         int numberOfPeople,

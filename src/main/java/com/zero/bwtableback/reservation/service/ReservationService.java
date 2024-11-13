@@ -36,8 +36,8 @@ public class ReservationService {
     }
 
     // 고객이 생성한 예약 정보를 저장
-    public ReservationResDto createReservation(ReservationCreateReqDto reservationCreateReqDto, Long restaurantId, Long memberId) {
-        Restaurant restaurant = findRestaurantById(restaurantId);
+    public ReservationResDto createReservation(ReservationCreateReqDto reservationCreateReqDto, Long memberId) {
+        Restaurant restaurant = findRestaurantById(reservationCreateReqDto.restaurantId());
         Member member = findMemberById(memberId);
 
         Reservation reservation = ReservationCreateReqDto.toEntity(reservationCreateReqDto, restaurant, member);
@@ -46,11 +46,18 @@ public class ReservationService {
     }
 
     // CONFIRMED 상태 업데이트
-    public PaymentCompleteResDto confirmReservation(Long reservationId, Long restaurantId) {
+    public PaymentCompleteResDto confirmReservation(Long reservationId, Long restaurantId, Long memberId) {
         Reservation reservation = findReservationById(reservationId);
+        Member member = findMemberById(memberId);
+
+        if (!member.getId().equals(reservation.getMember().getId())) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED_ACCESS);
+        }
+
         if (reservation.getReservationStatus() == ReservationStatus.CONFIRMED) {
             throw new CustomException(ErrorCode.INVALID_STATUS_CONFIRM);
         }
+
         reservation.setReservationStatus(ReservationStatus.CONFIRMED);
 
         // 예약 확정 알림 전송 및 스케줄링
@@ -62,8 +69,20 @@ public class ReservationService {
     }
 
     // CONFIRMED 제외한 나머지 상태 업데이트
-    public ReservationResDto updateReservationStatus(Long reservationId, ReservationUpdateReqDto statusUpdateDto) {
+    public ReservationResDto updateReservationStatus(ReservationUpdateReqDto statusUpdateDto,
+                                                     Long reservationId,
+                                                     Long memberId) {
         Reservation reservation = findReservationById(reservationId);
+        Member member = findMemberById(memberId);
+
+        if (!member.getId().equals(reservation.getMember().getId())) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED_ACCESS);
+        }
+
+        if (statusUpdateDto.reservationStatus() == null) {
+            throw new CustomException(ErrorCode.INVALID_RESERVATION_STATUS);
+        }
+
         ReservationStatus newStatus = statusUpdateDto.reservationStatus();
 
         return switch (newStatus) {

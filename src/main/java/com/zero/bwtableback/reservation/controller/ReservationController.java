@@ -48,10 +48,8 @@ public class ReservationController {
     @PostMapping
     public ReservationResDto createReservation(
             @RequestBody ReservationCreateReqDto reservationCreateReqDto,
-            @RequestParam Long restaurantId,
             @AuthenticationPrincipal MemberDetails memberDetails) {
-        Long memberId = memberDetails.getMember().getId();
-        return reservationService.createReservation(reservationCreateReqDto, restaurantId, memberId);
+        return reservationService.createReservation(reservationCreateReqDto, memberDetails.getMember().getId());
     }
 
     /**
@@ -94,15 +92,17 @@ public class ReservationController {
     @PutMapping("/{reservationId}/confirm")
     public PaymentCompleteResDto confirmReservation(
             @PathVariable Long reservationId,
-            @RequestParam Long restaurantId) {
-        return reservationService.confirmReservation(reservationId, restaurantId);
+            @RequestParam Long restaurantId,
+            @AuthenticationPrincipal MemberDetails memberDetails) {
+        return reservationService.confirmReservation(reservationId, restaurantId, memberDetails.getMember().getId());
     }
 
     @PutMapping("/{reservationId}/status")
     public ReservationResDto updateReservationStatus(
             @PathVariable Long reservationId,
-            @RequestBody ReservationUpdateReqDto statusUpdateDto) {
-        return reservationService.updateReservationStatus(reservationId, statusUpdateDto);
+            @RequestBody ReservationUpdateReqDto statusUpdateDto,
+            @AuthenticationPrincipal MemberDetails memberDetails) {
+        return reservationService.updateReservationStatus(statusUpdateDto, reservationId, memberDetails.getMember().getId());
     }
 
 }
