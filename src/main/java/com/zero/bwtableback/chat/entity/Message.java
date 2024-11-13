@@ -3,15 +3,18 @@ package com.zero.bwtableback.chat.entity;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Table(name = "message")
 public class Message {
 
@@ -25,7 +28,7 @@ public class Message {
 
     private String content;
 
-    private LocalDateTime timestamp;
+    private long timestamp;
 
     @ManyToOne
     @JoinColumn(name = "chat_room_id", nullable = false)
@@ -34,13 +37,4 @@ public class Message {
     @ManyToOne
     @JoinColumn(name = "restaurant_id", nullable = false)
     private Restaurant restaurant;
-
-    @Builder
-    public Message(String content, Member sender, ChatRoom chatRoom, Restaurant restaurant) {
-        this.content = content;
-        this.sender = sender;
-        this.chatRoom = chatRoom;
-        this.restaurant = restaurant;
-        this.timestamp = LocalDateTime.now();
-    }
 }

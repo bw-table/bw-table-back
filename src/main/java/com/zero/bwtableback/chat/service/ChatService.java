@@ -87,14 +87,7 @@ public class ChatService {
     }
 
     /**
-     * 특정 회원의 모든 채팅방 조회
-      */
-    public Page<ChatRoom> getChatRoomsByMemberId(Long memberId, Pageable pageable) {
-        return null;
-    }
-
-    /**
-     * 특정 식당의 모든 채팅방 조회
+     * FIXME 특정 식당의 모든 채팅방 조회 : 레스토랑에서 구현
      */
     public Page<ChatRoom> getAllChatRoomsByRestaurantId(Long restaurantId, Pageable pageable) {
         return chatRoomRepository.findByRestaurant_Id(restaurantId, pageable);
@@ -108,23 +101,27 @@ public class ChatService {
                 .orElseThrow(() -> new RuntimeException("채팅방을 찾을 수 없습니다."));
     }
 
-    // FIXME 특정 채팅방 삭제 (비활성으로 처리 예정)
-    public void deleteChatRoom(Long chatRoomId) {
-        chatRoomRepository.deleteById(chatRoomId); // 채팅방 삭제
-    }
-
     /**
      * 특정 채팅방 비활성화
      */
-    public void deactivateChatRoom(Long chatRoomId) {
+    public void inactivateChatRoom(Long chatRoomId) {
+        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        chatRoom.setStatus(ChatRoomStatus.INACTIVE);
+
+        chatRoomRepository.save(chatRoom);
     }
 
     /**
      * 특정 채팅방 전체 메시지 조회
      */
-    public Page<MessageReqDto> getMessages(Long chatRoomId, Pageable pageable) {
+    public Page<MessageResDto> getMessages(Long chatRoomId, Pageable pageable) {
+        chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
-        return null;
+        return messageRepository.findByChatRoomIdOrderByTimestampAsc(chatRoomId, pageable)
+                .map(MessageResDto::fromEntity);
     }
 
     /**
@@ -142,6 +139,7 @@ public class ChatService {
                 .sender(member)
                 .chatRoom(chatRoom)
                 .restaurant(chatRoom.getRestaurant())
+                .timestamp(messageReqDto.getTimestamp())
                 .build();
 
         messageRepository.save(message);

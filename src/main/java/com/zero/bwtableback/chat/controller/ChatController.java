@@ -28,42 +28,30 @@ public class ChatController {
 
     // 채팅방 생성 엔드포인트는 예약 확정 시 자동으로 생성
 
-    // 특정 회원의 모든 채팅방 조회
-    @GetMapping("/members/{memberId}/rooms")
-    public ResponseEntity<Page<ChatRoom>> getUserChatRooms(@PathVariable Long userId, Pageable pageable) {
-        Page<ChatRoom> chatRooms = chatService.getChatRoomsByMemberId(userId, pageable);
-        return ResponseEntity.ok(chatRooms);
-    }
-
-    // 특정 식당의 모든 채팅방 조회
+    // FIXME 특정 식당의 모든 채팅방 조회 : 레스토랑에서 구현
     @GetMapping("/restaurant/{restaurantId}")
     public ResponseEntity<Page<ChatRoom>> getAllChatRooms(@PathVariable Long restaurantId, Pageable pageable) {
         Page<ChatRoom> chatRooms = chatService.getAllChatRoomsByRestaurantId(restaurantId, pageable);
         return ResponseEntity.ok(chatRooms);
     }
 
-    // FIXME 특정 채팅방 조회 (필요한가?)
+    // FIXME 특정 채팅방 조회 (필요 여부 판단)
     @GetMapping("/{chatRoomId}")
     public ResponseEntity<ChatRoom> getChatRoomById(@PathVariable Long chatRoomId) {
         ChatRoom chatRoom = chatService.getChatRoomById(chatRoomId);
         return ResponseEntity.ok(chatRoom);
     }
 
-    // FIXME 특정 채팅방 비활성화 (엔드포인트가 필요한가?)
-    @PatchMapping("/{chatRoomId}/deactivate")
-    public ResponseEntity<Void> deactivateChatRoom(@PathVariable Long chatRoomId) {
-        chatService.deactivateChatRoom(chatRoomId);
-        return ResponseEntity.noContent().build();
-    }
-
-    // 특정 채팅방의 전체 메시지 조회
+    /**
+     * 특정 채팅방의 전체 메시지 조회
+     */
     @GetMapping("/{chatRoomId}/messages")
-    public ResponseEntity<Page<MessageReqDto>> getMessages(@PathVariable Long chatRoomId,
+    public ResponseEntity<Page<MessageResDto>> getMessages(@PathVariable Long chatRoomId,
                                                            @RequestParam(defaultValue = "0") int page, // TODO 기본값 변경
                                                            @RequestParam(defaultValue = "20") int size,
                                                            @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, "timestamp"));
-        Page<MessageReqDto> messages = chatService.getMessages(chatRoomId, pageable);
+        Page<MessageResDto> messages = chatService.getMessages(chatRoomId, pageable);
         return ResponseEntity.ok(messages);
     }
 
