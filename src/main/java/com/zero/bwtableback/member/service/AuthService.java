@@ -39,55 +39,35 @@ public class AuthService {
     /**
      * 이메일 중복 확인
      */
-    public boolean isEmailDuplicate(String email) {
-        return memberRepository.existsByEmail(email);
+    public boolean isEmailDuplicate(DuplicateCheckReqDto request) {
+        return memberRepository.existsByEmail(request.getEmail());
     }
 
     /**
      * 닉네임 중복 확인
      */
-    public boolean isNicknameDuplicate(String nickname) {
-        return memberRepository.existsByNickname(nickname);
+    public boolean isNicknameDuplicate(DuplicateCheckReqDto request) {
+        return memberRepository.existsByNickname(request.getNickname());
     }
 
     /**
      * 전화번호 중복 확인
      */
-    public boolean isPhoneDuplicate(String phone) {
-        return memberRepository.existsByPhone(phone);
+    public boolean isPhoneDuplicate(DuplicateCheckReqDto request) {
+        return memberRepository.existsByPhone(request.getPhone());
     }
 
     /**
      * 사업자등록번호 중복 확인 (사장님만)
      */
-    public boolean isBusinessNumberDuplicate(String businessNumber) {
-        return memberRepository.existsByBusinessNumber(businessNumber);
+    public boolean isBusinessNumberDuplicate(DuplicateCheckReqDto request) {
+        return memberRepository.existsByBusinessNumber(request.getBusinessNumber());
     }
 
     /**
      * 새로운 사용자 이메일 회원가입
      */
     public SignUpResDto signUp(SignUpReqDto form) {
-        // 이메일 중복 체크
-        if (isEmailDuplicate(form.getEmail())) {
-            throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
-        }
-        // 닉네임 중복 체크
-        if (isNicknameDuplicate(form.getNickname())) {
-            throw new CustomException(ErrorCode.NICKNAME_ALREADY_EXISTS);
-        }
-        // 전화번호 중복 체크
-        if (isPhoneDuplicate(form.getPhone())) {
-            throw new CustomException(ErrorCode.PHONE_ALREADY_EXISTS);
-        }
-        // 사업자등록번호 유효성 검사(사장님 회원가입 시)
-        if ("OWNER".equals(form.getRole())) {
-
-            // 사업자등록번호 중복 체크
-            if (isBusinessNumberDuplicate(form.getBusinessNumber())) {
-                throw new CustomException(ErrorCode.MISSING_BUSINESS_NUMBER);
-            }
-        }
 
         // 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(form.getPassword());

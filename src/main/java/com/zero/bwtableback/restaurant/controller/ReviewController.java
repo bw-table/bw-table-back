@@ -31,20 +31,20 @@ public class ReviewController {
     }
 
     // 리뷰 수정
-    @PutMapping("/review/{id}")
-    public ResponseEntity<ReviewResDto> updateReview(@PathVariable Long id,
-                                                     @RequestParam Long restaurantId,
+    @PutMapping("/{restaurantId}/reviews/{reviewId}")
+    public ResponseEntity<ReviewResDto> updateReview(@PathVariable Long restaurantId,
+                                                     @PathVariable Long reviewId,
                                                      @RequestBody ReviewUpdateReqDto reqDto) {
-        ReviewResDto response = reviewService.updateReview(id, restaurantId, reqDto);
+        ReviewResDto response = reviewService.updateReview(reviewId, restaurantId, reqDto);
 
         return ResponseEntity.ok(response);
     }
 
     // 리뷰 삭제
-    @DeleteMapping("/review/{id}")
-    public ResponseEntity<String> deleteReview(@PathVariable Long id,
-                                               @RequestParam Long restaurantId) {
-        reviewService.deleteReview(id, restaurantId);
+    @DeleteMapping("/{restaurantId}/reviews/{reviewId}")
+    public ResponseEntity<String> deleteReview(@PathVariable Long restaurantId,
+                                               @PathVariable Long reviewId) {
+        reviewService.deleteReview(reviewId, restaurantId);
 
         return ResponseEntity.ok("Review deleted successfully");
     }

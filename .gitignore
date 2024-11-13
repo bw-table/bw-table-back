@@ -64,4 +64,5 @@ out/
 >>>>>>> 0065717 (Initial commit)
 
 # Kakao 테스트 HTML 파일
-/src/main/resources/static/kakao-test.html
+!**/src/main/resources/static
+!**/src/main/resources/data.sql

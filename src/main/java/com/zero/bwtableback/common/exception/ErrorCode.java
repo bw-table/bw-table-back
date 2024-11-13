@@ -49,6 +49,11 @@ public enum ErrorCode {
     INVALID_STATUS_VISITED(HttpStatus.CONFLICT, "방문 완료로 변경은 확정된 예약에 대해서만 가능합니다."),
     CUSTOMER_CANCEL_TOO_LATE(HttpStatus.FORBIDDEN, "예약일 3일 전까지만 취소할 수 있습니다."),
 
+    // 예약 알림 관련 오류
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "알림을 찾을 수 없습니다."),
+    NOTIFICATION_ALREADY_SENT(HttpStatus.BAD_REQUEST, "이미 전송된 알림입니다."),
+    NOTIFICATION_SCHEDULED_TIME_NOT_REACHED(HttpStatus.BAD_REQUEST, "예정된 전송 시간이 아닙니다."),
+
   
     EMPTY_TOKEN(HttpStatus.UNAUTHORIZED, "토큰이 비어있습니다."),
 

@@ -77,8 +77,14 @@ public class RestaurantController {
         }
     }
 
-    // TODO: 식당 정보 수정
+    // 식당 정보 수정
+    @PutMapping("/{id}")
+    public ResponseEntity<Restaurant> updateRestaurant(@PathVariable("id") Long restaurantId,
+                                                       @RequestBody UpdateReqDto reqDto) {
+        Restaurant updatedRestaurant = restaurantService.updateRestaurant(restaurantId, reqDto);
 
+        return ResponseEntity.ok(updatedRestaurant);
+    }
 
     // 모든 식당 조회
     @GetMapping
