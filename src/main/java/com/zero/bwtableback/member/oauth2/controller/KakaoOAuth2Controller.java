@@ -36,7 +36,7 @@ public class KakaoOAuth2Controller {
     /**
      * 카카오 로그인 및 회원가입 처리
      */
-    @PostMapping("/callback")
+    @GetMapping("/callback")
     @Operation(summary = "카카오 로그인 및 회원가입", description = "카카오 회원가입 및 로그인 후 사용자 정보를 반환합니다.")
     public ResponseEntity<?> kakaoLogin(@RequestParam(required = false) String code,
                                         HttpServletRequest request,
