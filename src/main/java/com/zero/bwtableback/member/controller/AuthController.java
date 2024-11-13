@@ -83,7 +83,7 @@ public class AuthController {
      * 로그인
      */
     @PostMapping("/login")
-    public ResponseEntity<LoginResDto> login(@RequestBody EmailLoginReqDto loginReqDto,
+    public ResponseEntity<?> login(@RequestBody EmailLoginReqDto loginReqDto,
                                              HttpServletRequest request,
                                              HttpServletResponse response) {
         // 요청 헤더에서 액세스 토큰 추출
