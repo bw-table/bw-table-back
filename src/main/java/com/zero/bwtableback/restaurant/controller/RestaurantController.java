@@ -1,10 +1,9 @@
 package com.zero.bwtableback.restaurant.controller;
 
-import com.zero.bwtableback.restaurant.dto.RegisterReqDto;
-import com.zero.bwtableback.restaurant.dto.RestaurantInfoDto;
-import com.zero.bwtableback.restaurant.dto.RestaurantListDto;
+import com.zero.bwtableback.restaurant.dto.*;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.exception.RestaurantException;
+import com.zero.bwtableback.restaurant.service.AnnouncementService;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +24,7 @@ import java.util.Map;
 public class RestaurantController {
 
     private final RestaurantService restaurantService;
+    private final AnnouncementService announcementService;
 
     // 식당 등록
     // TODO: 식당 등록 후 응답형식 결정 필요
@@ -75,6 +75,15 @@ public class RestaurantController {
 
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
+    }
+
+    // 식당 정보 수정
+    @PutMapping("/{id}")
+    public ResponseEntity<Restaurant> updateRestaurant(@PathVariable("id") Long restaurantId,
+                                                       @RequestBody UpdateReqDto reqDto) {
+        Restaurant updatedRestaurant = restaurantService.updateRestaurant(restaurantId, reqDto);
+
+        return ResponseEntity.ok(updatedRestaurant);
     }
 
     // 모든 식당 조회
@@ -133,4 +142,30 @@ public class RestaurantController {
         RestaurantInfoDto infoDto = restaurantService.getRestaurantById(id);
         return ResponseEntity.ok(infoDto);
     }
+
+    // 공지 생성
+    @PostMapping("/{restaurantId}/announcements")
+    public ResponseEntity<AnnouncementResDto> createAnnouncement(@PathVariable Long restaurantId,
+                                                                 @RequestBody AnnouncementReqDto reqDto) {
+        AnnouncementReqDto updatedReqDto = AnnouncementReqDto.builder()
+                .restaurantId(restaurantId)
+                .title(reqDto.getTitle())
+                .content(reqDto.getContent())
+                .event(reqDto.isEvent())
+                .build();
+
+        AnnouncementResDto resDto = announcementService.createAnnouncement(updatedReqDto);
+
+        return ResponseEntity.ok(resDto);
+    }
+
+    // 식당 공지 목록 조회
+    @GetMapping("/{restaurantId}/announcements")
+    public ResponseEntity<List<AnnouncementDetailDto>> getAnnouncementsByRestaurantId(
+                                                        @PathVariable Long restaurantId, Pageable pageable) {
+        List<AnnouncementDetailDto> announcements = announcementService.getAnnouncementsByRestaurantId(restaurantId, pageable);
+
+        return ResponseEntity.ok(announcements);
+    }
+
 }
