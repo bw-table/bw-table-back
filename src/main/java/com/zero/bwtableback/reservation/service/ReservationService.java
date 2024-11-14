@@ -45,6 +45,12 @@ public class ReservationService {
         return ReservationResDto.fromEntity(savedReservation);
     }
 
+    public boolean checkReservationAvailability(ReservationCreateReqDto request){
+
+        return true;
+    }
+
+
     // CONFIRMED 상태 업데이트
     public PaymentCompleteResDto confirmReservation(Long reservationId, Long restaurantId, Long memberId) {
         Reservation reservation = findReservationById(reservationId);
@@ -162,5 +168,4 @@ public class ReservationService {
     private boolean canCancelReservation(LocalDate reservationDate, LocalDate currentDate) {
         return !reservationDate.minusDays(3).isBefore(currentDate);
     }
-
 }
