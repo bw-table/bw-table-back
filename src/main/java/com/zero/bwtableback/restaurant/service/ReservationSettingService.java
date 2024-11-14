@@ -27,8 +27,8 @@ public class ReservationSettingService {
     public ReservationSettingResDto createReservationSetting(ReservationSettingReqDto reqDto) {
 
         // 기간 겹치는지 체크
-        boolean isOverlap = reservationSettingRepository.existsByRestaurantIdAndStartDateBeforeAndEndDateAfter(
-                reqDto.getRestaurantId(), reqDto.getEndDate(), reqDto.getStartDate());
+        boolean isOverlap = reservationSettingRepository.existsByRestaurantIdAndOverlappingDates(
+                reqDto.getRestaurantId(), reqDto.getStartDate(), reqDto.getEndDate());
 
         if (isOverlap) {
             throw new IllegalArgumentException("Reservation setting period must not be overlapped");
