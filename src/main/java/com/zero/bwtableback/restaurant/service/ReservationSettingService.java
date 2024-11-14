@@ -1,6 +1,5 @@
 package com.zero.bwtableback.restaurant.service;
 
-import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.restaurant.dto.*;
 import com.zero.bwtableback.restaurant.entity.ReservationSetting;
 import com.zero.bwtableback.restaurant.entity.TimeslotSetting;

@@ -1,7 +1,6 @@
 package com.zero.bwtableback.restaurant.repository;
 
 import com.zero.bwtableback.restaurant.entity.ReservationSetting;
-import org.springframework.cglib.core.Local;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,11 +11,6 @@ import java.util.List;
 
 @Repository
 public interface ReservationSettingRepository extends JpaRepository<ReservationSetting, Long> {
-
-    boolean existsByRestaurantIdAndStartDateBeforeAndEndDateAfter(
-            Long restaurantId,
-            LocalDate startDate,
-            LocalDate endDate);
 
     @Query("SELECT COUNT(rs) > 0 FROM ReservationSetting rs " +
             "WHERE rs.restaurantId = :restaurantId " +

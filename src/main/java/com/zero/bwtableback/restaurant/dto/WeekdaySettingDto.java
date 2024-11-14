@@ -1,7 +1,6 @@
 package com.zero.bwtableback.restaurant.dto;
 
 import com.zero.bwtableback.restaurant.entity.DayOfWeek;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
