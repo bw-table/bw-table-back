@@ -37,6 +37,7 @@ public class Restaurant {
     @Column(nullable = false)
     private String contact;
 
+    // TODO: operatingHours에서 추출
     private String closedDay; // 정기휴무일(요일)
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
