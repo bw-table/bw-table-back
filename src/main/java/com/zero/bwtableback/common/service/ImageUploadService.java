@@ -6,6 +6,9 @@ import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
+import com.zero.bwtableback.restaurant.entity.Restaurant;
+import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -13,7 +16,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +26,7 @@ public class ImageUploadService {
 
     private final AmazonS3 amazonS3Client;
     private final MemberRepository memberRepository;
+    private final RestaurantRepository restaurantRepository;
 
     @Value("${cloud.aws.s3.bucket}")
     private String BUCKET_NAME;
@@ -49,16 +55,32 @@ public class ImageUploadService {
      * TODO 가게 아이디로 받을 수 있게 설정
      * TODO 순서는 어떻게 보장할지 생각해보기
      */
-    public List<String> uploadRestaurantImages(MultipartFile[] files) throws IOException {
-        validateImageFiles(files, 5);
-        List<String> fileUrls = new ArrayList<>();
+    public Set<String> uploadRestaurantImages(Long restaurantId, MultipartFile[] files) throws IOException {
 
-//        for (MultipartFile file : files) {
-//            String fileUrl = uploadFile(file,RESTAURANT_BUCKET_NAME,filepath);
-//            fileUrls.add(fileUrl);
-//        }
-//        return fileUrls;
-        return null;
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
+
+        validateImageFiles(files, 5);
+
+        Set<String> fileUrls = new HashSet<>();
+
+        for (MultipartFile file: files) {
+            String fileUrl = uploadFile(file, "restaurant/" + restaurant.getId() + "/main/");
+            fileUrls.add(fileUrl);
+        }
+        return fileUrls;
+    }
+
+    /**
+     * 메뉴 이미지
+     * - 최대 1장
+     *  TODO 가게 아이디로 받을 수 있게 설정
+     *  TODO 메뉴 아이디 받아야하는지 생각
+     */
+    public String uploadMenuImage(Long restaurantId, Long menuId, MultipartFile file) throws IOException {
+        validateSingleImageFile(file);
+
+        return uploadFile(file, "restaurant/" + restaurantId + "/menu/" + menuId + "/");
     }
 
     /**
@@ -77,18 +99,6 @@ public class ImageUploadService {
 //            fileUrls.add(fileUrl);
 //        }
 //        return fileUrls;
-        return null;
-    }
-
-    /**
-     * 메뉴 이미지
-     * - 최대 1장
-     *  TODO 가게 아이디로 받을 수 있게 설정
-     *  TODO 메뉴 아이디 받아야하는지 생각
-     */
-    public String uploadMenuImage(MultipartFile file) throws IOException {
-//        validateSingleImageFile(file);
-//        return uploadFile(file,RESTAURANT_BUCKET_NAME);
         return null;
     }
 
