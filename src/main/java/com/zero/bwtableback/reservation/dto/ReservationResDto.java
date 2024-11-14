@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-public record ReservationResponseDto(
+public record ReservationResDto(
         Long reservationId,
         Long restaurantId,
         Long memberId,
@@ -19,8 +19,8 @@ public record ReservationResponseDto(
         ReservationStatus reservationStatus
 ) {
 
-    public static ReservationResponseDto fromEntity(Reservation reservation) {
-        return new ReservationResponseDto(
+    public static ReservationResDto fromEntity(Reservation reservation) {
+        return new ReservationResDto(
                 reservation.getId(),
                 reservation.getRestaurant().getId(),
                 reservation.getMember().getId(),

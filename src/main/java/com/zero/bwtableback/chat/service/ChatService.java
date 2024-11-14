@@ -11,20 +11,21 @@ import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
-import com.zero.bwtableback.reservation.dto.PaymentCompleteDto;
-import com.zero.bwtableback.reservation.dto.ReservationResponseDto;
+import com.zero.bwtableback.reservation.dto.PaymentCompleteResDto;
+import com.zero.bwtableback.reservation.dto.ReservationResDto;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
+import com.zero.bwtableback.restaurant.dto.RestaurantInfoDto;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
+import com.zero.bwtableback.restaurant.service.RestaurantService;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 
 @Service
 @RequiredArgsConstructor
@@ -35,13 +36,14 @@ public class ChatService {
     private final MemberRepository memberRepository;
     private final RestaurantRepository restaurantRepository;
     private final ReservationRepository reservationRepository;
+    private final RestaurantService restaurantService;
 
     /**
      * 예약 확정 시 자동으로 채팅방 생성
      *
      * @return 예약 정보, 가게 정보
      */
-    public PaymentCompleteDto createChatRoom(ReservationResponseDto reservationResDto) {
+    public PaymentCompleteResDto createChatRoom(ReservationResDto reservationResDto) {
         // 식당 및 예약 정보 조회
         Restaurant restaurant = getRestaurant(reservationResDto.restaurantId());
         Reservation reservation = getReservation(reservationResDto.reservationId());
@@ -59,7 +61,8 @@ public class ChatService {
 
         chatRoomRepository.save(chatRoom);
 
-        return PaymentCompleteDto.fromEntities(restaurant, reservation);
+        RestaurantInfoDto restaurantInfoDto = restaurantService.getRestaurantById(restaurant.getId());
+        return PaymentCompleteResDto.fromEntities(restaurantInfoDto, reservation);
     }
 
     // 식당 조회

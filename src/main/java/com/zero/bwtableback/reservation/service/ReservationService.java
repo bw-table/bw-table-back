@@ -1,29 +1,24 @@
 package com.zero.bwtableback.reservation.service;
 
-import static com.zero.bwtableback.common.exception.ErrorCode.MEMBER_NOT_FOUND;
-import static com.zero.bwtableback.common.exception.ErrorCode.RESERVATION_FULL;
-import static com.zero.bwtableback.common.exception.ErrorCode.RESERVATION_NOT_FOUND;
-import static com.zero.bwtableback.common.exception.ErrorCode.RESTAURANT_NOT_FOUND;
-
 import com.zero.bwtableback.common.exception.CustomException;
+import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
-import com.zero.bwtableback.reservation.dto.ReservationRequestDto;
-import com.zero.bwtableback.reservation.dto.ReservationResponseDto;
+import com.zero.bwtableback.reservation.dto.PaymentCompleteResDto;
+import com.zero.bwtableback.reservation.dto.ReservationCreateReqDto;
+import com.zero.bwtableback.reservation.dto.ReservationResDto;
+import com.zero.bwtableback.reservation.dto.ReservationUpdateReqDto;
+import com.zero.bwtableback.reservation.entity.NotificationType;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.entity.ReservationStatus;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
-import com.zero.bwtableback.reservation.repository.ReservationSpecifications;
+import com.zero.bwtableback.restaurant.dto.RestaurantInfoDto;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
+import com.zero.bwtableback.restaurant.service.RestaurantService;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -32,102 +27,139 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final RestaurantRepository restaurantRepository;
     private final MemberRepository memberRepository;
+    private final NotificationScheduleService notificationScheduleService;
+    private final RestaurantService restaurantService;
 
-    @Transactional(readOnly = true)
-    public Page<ReservationResponseDto> findReservationsWithFilters(Long restaurantId, 
-                                                                    Long memberId,
-                                                                    ReservationStatus reservationStatus,
-                                                                    LocalDate reservationDate,
-                                                                    LocalTime reservationTime, 
-                                                                    Pageable pageable) {
-
-        Specification<Reservation> spec = Specification.where(ReservationSpecifications.hasRestaurantId(restaurantId))
-                .and(ReservationSpecifications.hasMemberId(memberId))
-                .and(ReservationSpecifications.hasReservationStatus(reservationStatus))
-                .and(ReservationSpecifications.hasReservationDate(reservationDate))
-                .and(ReservationSpecifications.hasReservationTime(reservationTime));
-
-        Page<Reservation> reservationPage = reservationRepository.findAll(spec, pageable);
-
-        return reservationPage.map(ReservationResponseDto::fromEntity);
-    }
-
-    @Transactional(readOnly = true)
-    public ReservationResponseDto getReservationById(Long reservationId) {
+    public ReservationResDto getReservationById(Long reservationId) {
         Reservation reservation = findReservationById(reservationId);
-        return ReservationResponseDto.fromEntity(reservation);
+        return ReservationResDto.fromEntity(reservation);
     }
 
-    @Transactional
-    public ReservationResponseDto createReservation(ReservationRequestDto reservationRequestDto,
-                                                    Long restaurantId,
-                                                    Long memberId) {
-        validateReservationAvailability(restaurantId, reservationRequestDto);
-        Restaurant restaurant = findRestaurantById(restaurantId);
+    // 고객이 생성한 예약 정보를 저장
+    public ReservationResDto createReservation(ReservationCreateReqDto reservationCreateReqDto, Long memberId) {
+        Restaurant restaurant = findRestaurantById(reservationCreateReqDto.restaurantId());
         Member member = findMemberById(memberId);
 
-        Reservation reservation = ReservationRequestDto.toEntity(reservationRequestDto, restaurant, member);
+        Reservation reservation = ReservationCreateReqDto.toEntity(reservationCreateReqDto, restaurant, member);
         Reservation savedReservation = reservationRepository.save(reservation);
-        return ReservationResponseDto.fromEntity(savedReservation);
+        return ReservationResDto.fromEntity(savedReservation);
     }
 
-    @Transactional
-    public ReservationResponseDto confirmReservation(Long reservationId) {
+    // CONFIRMED 상태 업데이트
+    public PaymentCompleteResDto confirmReservation(Long reservationId, Long restaurantId, Long memberId) {
         Reservation reservation = findReservationById(reservationId);
-        reservation.confirmReservation();
-        return ReservationResponseDto.fromEntity(reservation);
+        Member member = findMemberById(memberId);
+
+        if (!member.getId().equals(reservation.getMember().getId())) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED_ACCESS);
+        }
+
+        if (reservation.getReservationStatus() == ReservationStatus.CONFIRMED) {
+            throw new CustomException(ErrorCode.INVALID_STATUS_CONFIRM);
+        }
+
+        reservation.setReservationStatus(ReservationStatus.CONFIRMED);
+
+        // 예약 확정 알림 전송 및 스케줄링
+        notificationScheduleService.scheduleImmediateNotification(reservation, NotificationType.CONFIRMATION);
+        notificationScheduleService.schedule24HoursBeforeNotification(reservation);
+
+        RestaurantInfoDto restaurantInfoDto = restaurantService.getRestaurantById(restaurantId);
+        return PaymentCompleteResDto.fromEntities(restaurantInfoDto, reservation);
     }
 
-    @Transactional
-    public ReservationResponseDto cancelReservationByCustomer(Long reservationId) {
+    // CONFIRMED 제외한 나머지 상태 업데이트
+    public ReservationResDto updateReservationStatus(ReservationUpdateReqDto statusUpdateDto,
+                                                     Long reservationId,
+                                                     Long memberId) {
         Reservation reservation = findReservationById(reservationId);
-        reservation.cancelByCustomer();
-        return ReservationResponseDto.fromEntity(reservation);
+        Member member = findMemberById(memberId);
+
+        if (!member.getId().equals(reservation.getMember().getId())) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED_ACCESS);
+        }
+
+        if (statusUpdateDto.reservationStatus() == null) {
+            throw new CustomException(ErrorCode.INVALID_RESERVATION_STATUS);
+        }
+
+        ReservationStatus newStatus = statusUpdateDto.reservationStatus();
+
+        return switch (newStatus) {
+            case CUSTOMER_CANCELED -> handleCustomerCanceledStatus(reservation);
+            case OWNER_CANCELED -> handleOwnerCanceledStatus(reservation);
+            case NO_SHOW -> handleNoShowStatus(reservation);
+            case VISITED -> handleVisitedStatus(reservation);
+            default -> throw new CustomException(ErrorCode.INVALID_RESERVATION_STATUS);
+        };
     }
 
-    @Transactional
-    public ReservationResponseDto cancelReservationByOwner(Long reservationId) {
-        Reservation reservation = findReservationById(reservationId);
-        reservation.cancelByOwner();
-        return ReservationResponseDto.fromEntity(reservation);
+    // CUSTOMER_CANCELED 상태 처리
+    private ReservationResDto handleCustomerCanceledStatus(Reservation reservation) {
+        if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED) {
+            throw new CustomException(ErrorCode.INVALID_STATUS_CUSTOMER_CANCEL);
+        }
+
+        LocalDate today = LocalDate.now();
+        if (!canCancelReservation(reservation.getReservationDate(), today)) {
+            throw new CustomException(ErrorCode.CUSTOMER_CANCEL_TOO_LATE);
+        }
+
+        reservation.setReservationStatus(ReservationStatus.CUSTOMER_CANCELED);
+        notificationScheduleService.scheduleImmediateNotification(reservation, NotificationType.CANCELLATION);
+
+        return ReservationResDto.fromEntity(reservation);
     }
 
-    @Transactional
-    public ReservationResponseDto markReservationAsNoShow(Long reservationId) {
-        Reservation reservation = findReservationById(reservationId);
-        reservation.markAsNoShow();
-        return ReservationResponseDto.fromEntity(reservation);
+    // OWNER_CANCELED 상태 처리
+    private ReservationResDto handleOwnerCanceledStatus(Reservation reservation) {
+        if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED) {
+            throw new CustomException(ErrorCode.INVALID_STATUS_OWNER_CANCEL);
+        }
+        reservation.setReservationStatus(ReservationStatus.OWNER_CANCELED);
+        notificationScheduleService.scheduleImmediateNotification(reservation, NotificationType.CANCELLATION);
+
+        return ReservationResDto.fromEntity(reservation);
     }
 
-    @Transactional
-    public ReservationResponseDto markReservationAsVisited(Long reservationId) {
-        Reservation reservation = findReservationById(reservationId);
-        reservation.markAsVisited();
-        return ReservationResponseDto.fromEntity(reservation);
+    // NO_SHOW 상태 처리
+    private ReservationResDto handleNoShowStatus(Reservation reservation) {
+        if (reservation.getReservationStatus() == ReservationStatus.CUSTOMER_CANCELED ||
+                reservation.getReservationStatus() == ReservationStatus.OWNER_CANCELED) {
+            throw new CustomException(ErrorCode.INVALID_STATUS_NO_SHOW);
+        }
+        reservation.setReservationStatus(ReservationStatus.NO_SHOW);
+
+        return ReservationResDto.fromEntity(reservation);
     }
 
-    private Reservation findReservationById(Long reservationId) {
+    // VISITED 상태 처리
+    private ReservationResDto handleVisitedStatus(Reservation reservation) {
+        if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED) {
+            throw new CustomException(ErrorCode.INVALID_STATUS_VISITED);
+        }
+        reservation.setReservationStatus(ReservationStatus.VISITED);
+
+        return ReservationResDto.fromEntity(reservation);
+    }
+
+    public Reservation findReservationById(Long reservationId) {
         return reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new CustomException(RESERVATION_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.RESERVATION_NOT_FOUND));
     }
 
     private Restaurant findRestaurantById(Long restaurantId) {
         return restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.RESTAURANT_NOT_FOUND));
     }
 
     private Member findMemberById(Long memberId) {
         return memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
     }
 
-    private void validateReservationAvailability(Long restaurantId, ReservationRequestDto reservationRequestDto) {
-//        reservationRepository.findByRestaurantIdAndReservationDateAndReservationTime(
-//                        restaurantId,
-//                        reservationRequestDto.reservationDate(),
-//                        reservationRequestDto.reservationTime())
-//                .ifPresent(r -> {
-//                    throw new CustomException(RESERVATION_FULL);
-//                });
+    private boolean canCancelReservation(LocalDate reservationDate, LocalDate currentDate) {
+        return !reservationDate.minusDays(3).isBefore(currentDate);
     }
+
 }

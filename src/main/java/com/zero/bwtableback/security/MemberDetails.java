@@ -16,6 +16,10 @@ public class MemberDetails implements UserDetails {
     // Member 객체 반환
     private final Member member;
 
+    public Long getMemberId() {
+        return member.getId();
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         // 사용자의 역할을 권한으로 변환하여 반환
