@@ -1,6 +1,6 @@
 package com.zero.bwtableback.reservation.controller;
 
-import com.zero.bwtableback.reservation.dto.NotificationResDto;
+//import com.zero.bwtableback.reservation.dto.NotificationResDto;
 import com.zero.bwtableback.reservation.entity.Notification;
 import com.zero.bwtableback.reservation.entity.NotificationType;
 import com.zero.bwtableback.reservation.entity.Reservation;
@@ -28,16 +28,18 @@ public class NotificationController {
 
     // 고객 회원에게 전송된 알림 목록 조회
     @GetMapping("/customers/{userId}")
-    public Page<NotificationResDto> getCustomerNotifications(@PathVariable Long userId, Pageable pageable) {
+    public Page<?> getCustomerNotifications(@PathVariable Long userId, Pageable pageable) {
         Page<Notification> notifications = notificationSearchService.getNotificationsSentToCustomer(userId, pageable);
-        return notifications.map(NotificationResDto::fromEntity);
+//        return notifications.map(NotificationResDto::fromEntity);
+        return null;
     }
 
     // 가게 주인 회원에게 전송된 알림 목록 조회
     @GetMapping("/owners/{ownerId}")
-    public Page<NotificationResDto> getOwnerNotifications(@PathVariable Long ownerId, Pageable pageable) {
+    public Page<?> getOwnerNotifications(@PathVariable Long ownerId, Pageable pageable) {
         Page<Notification> notifications = notificationSearchService.getNotificationsSentToOwner(ownerId, pageable);
-        return notifications.map(NotificationResDto::fromEntity);
+//        return notifications.map(NotificationResDto::fromEntity);
+        return null;
     }
 
     // 메시지 생성에 사용할 수 있는 알림 정보 반환

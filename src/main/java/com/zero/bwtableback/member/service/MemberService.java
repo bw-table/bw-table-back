@@ -1,7 +1,6 @@
 package com.zero.bwtableback.member.service;
 
 import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
-import com.zero.bwtableback.chat.entity.ChatRoom;
 import com.zero.bwtableback.chat.repository.ChatRoomRepository;
 import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
@@ -9,10 +8,9 @@ import com.zero.bwtableback.member.dto.MemberDto;
 import com.zero.bwtableback.member.dto.MemberPrivateDto;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
-import com.zero.bwtableback.reservation.dto.ReservationResponseDto;
+import com.zero.bwtableback.reservation.dto.ReservationResDto;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
 import com.zero.bwtableback.restaurant.dto.ReviewInfoDto;
-import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import com.zero.bwtableback.restaurant.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -80,12 +78,12 @@ public class MemberService {
                 member.getLoginType());
     }
 
-    public Page<ReservationResponseDto> getMyReservations(Pageable pageable, String email) {
+    public Page<ReservationResDto> getMyReservations(Pageable pageable, String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         return reservationRepository.findByMemberId(member.getId(), pageable)
-                .map(ReservationResponseDto::fromEntity);
+                .map(ReservationResDto::fromEntity);
     }
 
     public Page<ReviewInfoDto> getMyReviews(Pageable pageable, String email) {

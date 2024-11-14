@@ -26,7 +26,7 @@ public class NotificationScheduleService {
 
     private final NotificationRepository notificationRepository;
     private final TaskScheduler taskScheduler;
-    private final NotificationEmitterService notificationEmitterService;
+//    private final NotificationEmitterService notificationEmitterService;
     private final ReservationRepository reservationRepository;
 
     // 예약 확정 및 취소 시 즉시 알림 생성
@@ -39,7 +39,7 @@ public class NotificationScheduleService {
     public void sendNotification(Notification notification) {
         Long customerId = notification.getReservation().getMember().getId();
         Long ownerId = notification.getReservation().getRestaurant().getMember().getId();
-        notificationEmitterService.sendNotificationToCustomerAndOwner(customerId, ownerId, notification);
+//        notificationEmitterService.sendNotificationToCustomerAndOwner(customerId, ownerId, notification);
         markAsSent(notification);
         notification.setSentTime(LocalDateTime.now());
     }
@@ -59,12 +59,13 @@ public class NotificationScheduleService {
 
         // 스케줄링된 시간에 전송 상태로 변경하고 알림 전송
         taskScheduler.schedule(() -> {
-            if (reservation.getReservationStatus() != ReservationStatus.OWNER_CANCELED &&
-                    reservation.getReservationStatus() != ReservationStatus.CUSTOMER_CANCELED) {
-                notificationEmitterService.sendNotificationToCustomerAndOwner(customerId, ownerId, notification);
-                markAsSent(notification);
-                notification.setSentTime(LocalDateTime.now());
-            }
+            // FIXME
+//            if (reservation.getReservationStatus() != ReservationStatus.OWNER_CANCELED &&
+//                    reservation.getReservationStatus() != ReservationStatus.CUSTOMER_CANCELED) {
+//                notificationEmitterService.sendNotificationToCustomerAndOwner(customerId, ownerId, notification);
+//                markAsSent(notification);
+//                notification.setSentTime(LocalDateTime.now());
+//            }
         }, scheduledTime.atZone(ZoneId.systemDefault()).toInstant());
     }
 

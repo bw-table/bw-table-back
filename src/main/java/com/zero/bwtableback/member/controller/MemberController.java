@@ -4,7 +4,7 @@ import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
 import com.zero.bwtableback.common.service.ImageUploadService;
 import com.zero.bwtableback.member.dto.MemberDto;
 import com.zero.bwtableback.member.service.MemberService;
-import com.zero.bwtableback.reservation.dto.ReservationResponseDto;
+import com.zero.bwtableback.reservation.dto.ReservationResDto;
 import com.zero.bwtableback.restaurant.dto.ReviewInfoDto;
 import com.zero.bwtableback.security.MemberDetails;
 import lombok.RequiredArgsConstructor;
@@ -77,8 +77,8 @@ public class MemberController {
      * 나의 모든 예약 조회
      */
     @GetMapping("/me/reservations")
-    public ResponseEntity<Page<ReservationResponseDto>> getMyReservations(Pageable pageable,
-                                                                          @AuthenticationPrincipal MemberDetails memberDetails) {
+    public ResponseEntity<Page<ReservationResDto>> getMyReservations(Pageable pageable,
+                                                                     @AuthenticationPrincipal MemberDetails memberDetails) {
         String email = memberDetails.getUsername();
 
         return ResponseEntity.ok(memberService.getMyReservations(pageable, email));

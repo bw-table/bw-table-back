@@ -80,7 +80,7 @@ public class ReservationService {
         }
 
         if (statusUpdateDto.reservationStatus() == null) {
-            throw new CustomException(ErrorCode.INVALID_RESERVATION_STATUS);
+//          FIXME  throw new CustomException(ErrorCode.INVALID_RESERVATION_STATUS);
         }
 
         ReservationStatus newStatus = statusUpdateDto.reservationStatus();
@@ -90,7 +90,8 @@ public class ReservationService {
             case OWNER_CANCELED -> handleOwnerCanceledStatus(reservation);
             case NO_SHOW -> handleNoShowStatus(reservation);
             case VISITED -> handleVisitedStatus(reservation);
-            default -> throw new CustomException(ErrorCode.INVALID_RESERVATION_STATUS);
+//          FIXME  default -> throw new CustomException(ErrorCode.INVALID_RESERVATION_STATUS);
+            default -> throw new RuntimeException("INVALID_RESERVATION_STATUS");
         };
     }
 
