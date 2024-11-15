@@ -1,8 +1,12 @@
 spring:
   profiles:
     active: dev
+  multipart:
+    max-file-size: 5MB // 파일의 용량 제한
+    max-request-size: 10MB // 전체 최대 크기 용량 제한
 ---
 spring:
+  servlet:
   config:
     activate:
       on-profile: dev
@@ -47,6 +51,18 @@ spring:
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
+cloud:
+  aws:
+    s3:
+      bucket: ${S3_BUCKET_NAME}
+    credentials:
+      access-key: ${AWS_ACCESS_KEY_ID}
+      secret-key: ${AWS_SECRET_ACCESS_KEY}
+    region:
+      static: ap-northeast-2
+      auto: false
+    stack:
+      auto: false
 ---
 spring:
   config:

@@ -4,10 +4,14 @@ import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
 @Entity
+@Getter
+@Setter
 @Table(name = "chat_room")
 public class ChatRoom {
 

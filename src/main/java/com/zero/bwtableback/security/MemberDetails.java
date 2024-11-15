@@ -1,7 +1,8 @@
 package com.zero.bwtableback.security;
 
 import com.zero.bwtableback.member.entity.Member;
-import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -10,9 +11,14 @@ import java.util.Collection;
 /**
  * Spring Security와 통합된 사용자 인증 및 권한 부여 시스템
  */
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class MemberDetails implements UserDetails {
+    // Member 객체 반환
     private final Member member;
+
+    public Long getMemberId() {
+        return member.getId();
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -21,13 +27,13 @@ public class MemberDetails implements UserDetails {
     }
 
     @Override
-    public String getPassword() {
-        return member.getPassword(); // 비밀번호 반환
+    public String getUsername() {
+        return member.getEmail(); // 이메일을 사용자 이름으로 사용
     }
 
     @Override
-    public String getUsername() {
-        return member.getEmail(); // 이메일을 사용자 이름으로 사용
+    public String getPassword() {
+        return member.getPassword(); // 비밀번호 반환
     }
 
     @Override
@@ -50,7 +56,4 @@ public class MemberDetails implements UserDetails {
         return true; // 계정 활성화 여부
     }
 
-    public Member getMember() {
-        return member; // Member 객체 반환
-    }
 }

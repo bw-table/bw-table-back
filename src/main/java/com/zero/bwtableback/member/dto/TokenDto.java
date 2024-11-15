@@ -12,4 +12,10 @@ import lombok.Setter;
 public class TokenDto {
     private String accessToken;
     private String refreshToken;
+
+    // 기본 생성자 추가 (선택 사항)
+    public TokenDto(String accessToken) {
+        this.accessToken = accessToken;
+        this.refreshToken = null; // 기본값 설정
+    }
 }

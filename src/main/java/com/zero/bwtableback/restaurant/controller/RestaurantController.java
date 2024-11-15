@@ -1,5 +1,7 @@
 package com.zero.bwtableback.restaurant.controller;
 
+import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
+import com.zero.bwtableback.chat.service.ChatService;
 import com.zero.bwtableback.restaurant.dto.*;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.exception.RestaurantException;
@@ -8,6 +10,7 @@ import com.zero.bwtableback.restaurant.service.RestaurantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -96,8 +99,8 @@ public class RestaurantController {
     // 이름으로 식당 검색
     @GetMapping("/search")
     public ResponseEntity<List<RestaurantListDto>> getRestaurantByName(
-                                                        @RequestParam String name,
-                                                        Pageable pageable) {
+            @RequestParam String name,
+            Pageable pageable) {
         List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByName(name, pageable);
         return ResponseEntity.ok(restaurants);
     }
@@ -105,8 +108,8 @@ public class RestaurantController {
     // 업종으로 식당 검색
     @GetMapping("/search/categories")
     public ResponseEntity<List<RestaurantListDto>> getRestaurantsByCategory(
-                                                        @RequestParam String category,
-                                                        Pageable pageable) {
+            @RequestParam String category,
+            Pageable pageable) {
         List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByCategory(category, pageable);
         return ResponseEntity.ok(restaurants);
     }
@@ -123,8 +126,8 @@ public class RestaurantController {
     // 해시태그로 식당 검색
     @GetMapping("/search/hashtags")
     public ResponseEntity<List<RestaurantListDto>> getRestaurantsByHashtag(
-                                                        @RequestParam String hashtag,
-                                                        Pageable pageable) {
+            @RequestParam String hashtag,
+            Pageable pageable) {
         List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByHashtag(hashtag, pageable);
         return ResponseEntity.ok(restaurants);
     }
@@ -162,10 +165,16 @@ public class RestaurantController {
     // 식당 공지 목록 조회
     @GetMapping("/{restaurantId}/announcements")
     public ResponseEntity<List<AnnouncementDetailDto>> getAnnouncementsByRestaurantId(
-                                                        @PathVariable Long restaurantId, Pageable pageable) {
+            @PathVariable Long restaurantId, Pageable pageable) {
         List<AnnouncementDetailDto> announcements = announcementService.getAnnouncementsByRestaurantId(restaurantId, pageable);
 
         return ResponseEntity.ok(announcements);
     }
 
+    // 특정 식당의 모든 채팅방 조회
+    @GetMapping("/{restaurantId}/chats")
+    public ResponseEntity<Page<ChatRoomCreateResDto>> getAllChatRooms(@PathVariable Long restaurantId, Pageable pageable) {
+        Page<ChatRoomCreateResDto> chatRooms = restaurantService.getChatRoomsByRestaurantId(restaurantId, pageable);
+        return ResponseEntity.ok(chatRooms);
+    }
 }

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>채팅방 메시지 전송</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #messages {
+            border: 1px solid #ccc;
+            height: 300px;
+            overflow-y: scroll;
+            margin-bottom: 10px;
+            padding: 10px;
+        }
+        #messageInput {
+            width: calc(100% - 120px);
+        }
+        #sendButton {
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>채팅방 테스트</h1>
+
+<!-- 메시지 전송 -->
+<h2>채팅방 ID: 5</h2>
+<div id="messages"></div>
+
+<input type="text" id="messageInput" placeholder="메시지를 입력하세요..." />
+<button id="sendButton">전송</button>
+
+<script>
+    let stompClient = null;
+    const chatRoomId = '5'; // 이미 존재하는 채팅방 ID
+    // 임시 토큰 나중에는 헤더의 개인의 토큰 반환
+    const jwtToken = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJndWVzdEBleGFtcGxlLmNvbSIsInJvbGUiOiJHVUVTVCIsImlhdCI6MTczMTQ2MDk0OSwiZXhwIjoxNzMxNDYyNzQ5fQ.WREQ1jYNQmuYzbvCahkpDWvEI-VrJqDTkXe-D8yE4ULH-M0d9StPvga3EePd4bE5wYvQROVNIib9Y5EGOk-svQ'; // JWT 토큰
+
+    function connect() {
+        const socket = new SockJS('/ws'); // WebSocket 엔드포인트
+        stompClient = Stomp.over(socket);
+
+        // Authorization 헤더에 JWT 토큰 추가
+        const headers = {
+            'Authorization': 'Bearer ' + jwtToken // JWT 토큰 추가
+        };
+
+        stompClient.connect(headers, function (frame) {
+            console.log('Connected: ' + frame);
+
+            // 채팅방 구독
+            stompClient.subscribe(`/topic/chatrooms/${chatRoomId}`, function (message) {
+                const msg = JSON.parse(message.body); // JSON 문자열을 객체로 변환
+                console.log("Received message:", msg); // 응답값 콘솔에 출력
+                showMessage(msg); // 화면에 메시지 표시
+            });
+        }, function (error) {
+            console.error('Connection error:', error);
+        });
+    }
+
+    function sendMessage() {
+        const messageInput = document.getElementById('messageInput');
+        const message = messageInput.value;
+
+        if (message && stompClient) {
+            const now = new Date();
+            const timestamp = now.toISOString();
+
+            // JSON 형식으로 메시지 전송
+            stompClient.send(`/app/send/${chatRoomId}`, {
+                'content-type': 'application/json' // Specify content type
+            }, JSON.stringify({
+                content: message,
+                timestamp: timestamp
+            }));
+
+            messageInput.value = ''; // 메시지 전송 후 입력 필드 비우기
+        }
+    }
+
+    function showMessage(message) {
+        const messagesDiv = document.getElementById('messages');
+        messagesDiv.innerHTML += `<div><strong>${message.nickname}:</strong> ${message.content}</div>`;
+        messagesDiv.scrollTop = messagesDiv.scrollHeight; // 스크롤을 가장 아래로 이동
+    }
+
+    document.getElementById('sendButton').addEventListener('click', sendMessage);
+
+    // 페이지 로드 시 WebSocket 연결
+    window.onload = connect;
+</script>
+
+</body>
+</html>

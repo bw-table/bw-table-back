@@ -2,87 +2,72 @@ package com.zero.bwtableback.member.service;
 
 import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
-import com.zero.bwtableback.member.dto.EmailLoginReqDto;
-import com.zero.bwtableback.member.dto.SignUpReqDto;
-import com.zero.bwtableback.member.dto.SignUpResDto;
-import com.zero.bwtableback.member.dto.TokenDto;
+import com.zero.bwtableback.member.dto.*;
 import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.repository.MemberRepository;
+import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import com.zero.bwtableback.security.jwt.TokenProvider;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * 사용자 인증 및 권한 부여를 처리하는 서비스 클래스
  *
  * 로그인, 회원가입, 토큰 갱신 등 인증 관련 비즈니스 로직 포함
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
     private final MemberRepository memberRepository;
+    private final RestaurantRepository restaurantRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenProvider tokenProvider;
 
     private final RedisTemplate<String, String> redisTemplate;
 
-    private static final int REFRESH_TOKEN_TTL = 86400;
-
     /**
      * 이메일 중복 확인
      */
-    public boolean isEmailDuplicate(String email) {
-        return memberRepository.existsByEmail(email);
+    public boolean isEmailDuplicate(DuplicateCheckReqDto request) {
+        return memberRepository.existsByEmail(request.getEmail());
     }
 
     /**
      * 닉네임 중복 확인
      */
-    public boolean isNicknameDuplicate(String nickname) {
-        return memberRepository.existsByNickname(nickname);
+    public boolean isNicknameDuplicate(DuplicateCheckReqDto request) {
+        return memberRepository.existsByNickname(request.getNickname());
     }
 
     /**
      * 전화번호 중복 확인
      */
-    public boolean isPhoneDuplicate(String phone) {
-        return memberRepository.existsByPhone(phone);
+    public boolean isPhoneDuplicate(DuplicateCheckReqDto request) {
+        return memberRepository.existsByPhone(request.getPhone());
     }
 
     /**
      * 사업자등록번호 중복 확인 (사장님만)
      */
-    public boolean isBusinessNumberDuplicate(String businessNumber) {
-        return memberRepository.existsByBusinessNumber(businessNumber);
+    public boolean isBusinessNumberDuplicate(DuplicateCheckReqDto request) {
+        return memberRepository.existsByBusinessNumber(request.getBusinessNumber());
     }
 
     /**
      * 새로운 사용자 이메일 회원가입
      */
     public SignUpResDto signUp(SignUpReqDto form) {
-        // 이메일 중복 체크
-        if (isEmailDuplicate(form.getEmail())) {
-            throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
-        }
-        // 닉네임 중복 체크
-        if (isNicknameDuplicate(form.getNickname())) {
-            throw new CustomException(ErrorCode.NICKNAME_ALREADY_EXISTS);
-        }
-        // 전화번호 중복 체크
-        if (isPhoneDuplicate(form.getPhone())) {
-            throw new CustomException(ErrorCode.PHONE_ALREADY_EXISTS);
-        }
-        // 사업자등록번호 유효성 검사(사장님 회원가입 시)
-        if ("OWNER".equals(form.getRole())) {
-            // 사업자등록번호 중복 체크
-            if (isBusinessNumberDuplicate(form.getBusinessNumber())) {
-                throw new CustomException(ErrorCode.MISSING_BUSINESS_NUMBER);
-            }
-        }
 
         // 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(form.getPassword());
@@ -94,61 +79,105 @@ public class AuthService {
         return SignUpResDto.from(savedMember);
     }
 
-    // TODO util로 이동 및 사용 여부 결정
-    // 전화번호 하이픈 제거
-    private String cleanPhoneNumber(String phone) {
-        return phone.replaceAll("-", "").trim();
-    }
-
-    // 사업자등록번호 하이픈 제거
-    private String cleanBusinessNumber(String businessNumber) {
-        return businessNumber.replaceAll("-", "").trim();
-    }
-
     /**
-     * 사용자 로그인을 처리하고 인증 토큰을 반환
+     * 사용자 로그인: 기존 AccessToken이 없거나 유효하지 않은 경우
+     *
+     * @return accessToken, MemberDto, restaurantId(nullable)
      */
-    public TokenDto login(EmailLoginReqDto loginDto) {
-        Member member = memberRepository.findByEmail(loginDto.getEmail())
-                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_CREDENTIALS));
+    public LoginResDto login(EmailLoginReqDto loginReqDto, HttpServletRequest request, HttpServletResponse response) {
+        MemberDto memberDto = authenticateMember(loginReqDto);
 
-        // 비밀번호 확인
-        if (!passwordEncoder.matches(loginDto.getPassword(), member.getPassword())) {
+        String accessToken = tokenProvider.createAccessToken(memberDto.getEmail(), memberDto.getRole());
+        String refreshToken = tokenProvider.createRefreshToken(memberDto.getId().toString());
+
+        // HttpOnly 쿠키에 리프레시 토큰 저장
+        saveRefreshTokenToCookie(refreshToken, response);
+
+        // Redis에 리프레시 토큰 저장
+        saveRefreshTokenToRedis(memberDto.getId(), refreshToken);
+
+        // 레스토랑 ID 조회 (사장님일 경우)
+        Long restaurantId = getRestaurantIdIfOwner(memberDto);
+
+        return new LoginResDto(accessToken, memberDto, restaurantId);
+    }
+
+    // 리프레시 토큰으로 액세스 토큰 갱신
+    public LoginResDto renewAccessTokenWithRefreshToken(String refreshToken) {
+        // 새로운 액세스 토큰 생성
+        String email = tokenProvider.getUsername(refreshToken); // 리프레시 토큰에서 이메일 추출
+
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        validateRefreshToken(refreshToken, member.getId());
+
+        String newAccessToken = tokenProvider.createAccessToken(email, member.getRole());
+
+        MemberDto memberDto = MemberDto.from(member);
+        Long restaurantId = getRestaurantIdIfOwner(memberDto);
+
+        return new LoginResDto(newAccessToken, memberDto, restaurantId);
+    }
+
+    // 회원 인증
+    private MemberDto authenticateMember(EmailLoginReqDto loginReqDto) {
+        Member member = memberRepository.findByEmail(loginReqDto.getEmail())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (!passwordEncoder.matches(loginReqDto.getPassword(), member.getPassword())) {
             throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
         }
 
-        // 토큰 생성
-        String accessToken = tokenProvider.createAccessToken(member.getEmail());
-        String refreshToken = tokenProvider.createRefreshToken();
-
-        // 리프레시 토큰 레디스에 저장
-        saveRefreshTokenAndCreateCookie(member.getId(), refreshToken);
-
-        return new TokenDto(accessToken, refreshToken);
+        return MemberDto.from(member);
     }
 
-    /**
-     * 자체 리프레시 토큰을 레디스에 저장하고 HttpOnly Cookie에 저장
-     */
-    public void saveRefreshTokenAndCreateCookie(Long memberId, String refreshToken) {
-        // Redis에 저장
+    // 리프레시 토큰 검증
+    private void validateRefreshToken(String refreshToken, Long memberId) {
         String key = "refresh_token:" + memberId;
-        redisTemplate.opsForValue().set(key, refreshToken);
+        String storedRefreshToken = redisTemplate.opsForValue().get(key);
 
-        // HttpOnly 쿠키 생성
+        if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다.");
+        }
+    }
+
+    // 쿠키에 리프레시 토큰 저장
+    private void saveRefreshTokenToCookie(String refreshToken, HttpServletResponse response) {
         Cookie cookie = new Cookie("refreshToken", refreshToken);
         cookie.setHttpOnly(true);
-        cookie.setSecure(true);
+        cookie.setSecure(true); // HTTPS 환경에서만 전송
         cookie.setPath("/");
-        cookie.setMaxAge(REFRESH_TOKEN_TTL); // 1일 동안 유효
+        cookie.setMaxAge(86400); // 1일 (86400초)
+        response.addCookie(cookie);
     }
 
-    /**
-     * 리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급
-     */
-    public TokenDto refreshToken(String refreshToken) {
+    // Redis에 리프레시 토큰 저장
+    private void saveRefreshTokenToRedis(Long memberId, String refreshToken) {
+        String key = "refresh_token:" + memberId;
+        redisTemplate.opsForValue().set(key, refreshToken);
+    }
 
-        return null;
+    // 사장님일 경우 레스토랑 ID 조회 메서드
+    private Long getRestaurantIdIfOwner(MemberDto member) {
+        if (member.getRole() == Role.OWNER) {
+            return restaurantRepository.findRestaurantIdByMemberId(member.getId());
+        }
+        return null; // 일반 회원일 경우 null 반환
+    }
+
+    // 기존 유효한 Access Token이 존재하는 경우 처리
+    public LoginResDto handleExistingToken(String existingToken) {
+        String email = tokenProvider.getUsername(existingToken);
+
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        MemberDto memberDto = MemberDto.from(member);
+
+        Long restaurantId = getRestaurantIdIfOwner(memberDto);
+
+        return new LoginResDto(existingToken, memberDto, restaurantId);
     }
 
     /**

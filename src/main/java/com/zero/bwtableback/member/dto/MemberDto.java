@@ -15,9 +15,9 @@ public class MemberDto {
     private String phone;
     private Role role;
     private String profileImage;
-    private String businessNumber; // OWNER 역할일 경우에만
+    private String businessNumber; 
 
-    // OWNER가 아닌 경우를 위한 생성자
+    // 손님(GUEST)인 경우를 위한 생성자
     public MemberDto(Long id, String email, String name, String nickname, String phone, Role role, String profileImage) {
         this(id, email, name, nickname, phone, role, profileImage, null);
     }

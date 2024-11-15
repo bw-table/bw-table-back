@@ -14,15 +14,50 @@
 --         '사장님닉네임', '01099990000', 'OWNER', '1234567890', NULL, NULL,
 --         NULL);
 --
--- -- 레스토랑 데이터
--- INSERT INTO restaurant (name, description, address, contact, closed_day)
--- VALUES ('고급 레스토랑', '고급 요리를 제공하는 레스토랑입니다.',
---         '서울특별시 강남구 테헤란로 123', '0212345678', '월요일'),
---        ('매운 주방', '전 세계의 정통 매운 요리를 제공합니다.',
---         '서울특별시 종로구 인사동 456', '0223456789', '화요일'),
---        ('초밥 천국', '매일 신선한 초밥과 사시미를 제공합니다.',
---         '서울특별시 마포구 홍대 789', '0234567890', NULL),
---        ('비건 맛집', '모두를 위한 맛있는 식물 기반 식사를 제공합니다.',
---         '서울특별시 용산구 이태원 1011', '0245678901', NULL),
---        ('버거 천국', '육즙 가득한 버거와 바삭한 감자튀김을 제공합니다.',
---         '서울특별시 서초구 양재동 1213', 0245678931, NULL);
+-- INSERT INTO restaurant (name, description, address, latitude, longitude, contact, closed_day, notice, link, category_id, average_rating, member_id)
+-- VALUES ('트렌디 카페',
+--         '편안한 분위기의 카페로 다양한 음료와 디저트를 제공합니다.',
+--         '서울특별시 강남구 역삼동 123-45',
+--         37.4979, -- 위도
+--         127.0276, -- 경도
+--         '0212345678',
+--         '일요일',
+--         '매주 일요일은 정기휴무입니다.',
+--         'http://example.com/trendy-cafe',
+--         1, -- 카테고리 ID (예: 1번 카테고리)
+--         4.5, -- 평균 평점
+--         31); -- 회원 ID울특별시 서초구 양재동 1213', 0245678931, NULL);
+
+-- INSERT INTO reservation (
+--     restaurant_id,
+--     member_id,
+--     reservation_date,
+--     reservation_time,
+--     number_of_people,
+--     special_request,
+--     reservation_status,
+--     created_at,
+--     updated_at
+-- ) VALUES (
+--              8, -- restaurant_id (존재하는 레스토랑의 ID)
+--              30, -- member_id (존재하는 회원의 ID)
+--              '2023-11-20', -- reservation_date (예약 날짜)
+--              '19:30:00', -- reservation_time (예약 시간)
+--              4, -- number_of_people (예약 인원 수)
+--              '창가 자리 요청합니다.', -- special_request (특별 요청 사항)
+--              'CONFIRMED', -- reservation_status (예약 상태)
+--              CURRENT_TIMESTAMP, -- created_at (생성 시간)
+--              CURRENT_TIMESTAMP -- updated_at (수정 시간)
+--          );
+
+-- INSERT INTO review (content, rating, restaurant_id, member_id, created_at, updated_at)
+-- VALUES ('맛있고 분위기도 좋았어요. 직원분들도 친절하셔서 즐거운 식사였습니다.', 5, 8, 30, NOW(), NOW());
+-- VALUES ('음식은 맛있었지만 가격이 조금 비싼 편이에요. 특별한 날에 가기 좋을 것 같아요.', 4, 8, 30, NOW(), NOW());
+--
+-- INSERT INTO review_image (image_url, review_id)
+-- VALUES
+--     ('http://example.com/images/review1_image1.jpg', 1),
+--     ('http://example.com/images/review1_image2.jpg', 1),
+--     ('http://example.com/images/review1_image3.jpg', 1),
+--     ('http://example.com/images/review2_image1.jpg', 2),
+--     ('http://example.com/images/review2_image2.jpg', 2);

@@ -2,13 +2,17 @@ package com.zero.bwtableback.member.entity;
 
 import com.zero.bwtableback.common.BaseEntity;
 import com.zero.bwtableback.member.dto.SignUpReqDto;
+import com.zero.bwtableback.reservation.entity.Reservation;
+import com.zero.bwtableback.restaurant.entity.Restaurant;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
 import java.util.Locale;
 
 @Entity
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -52,6 +56,12 @@ public class Member extends BaseEntity {
     private String provider; // 소셜 로그인 제공자 (예: "Kakao", "Google")
 
     private String providerId; // 소셜 로그인 제공자의 고유 ID
+
+    @OneToOne(mappedBy = "member", cascade = CascadeType.ALL)
+    private Restaurant restaurant;
+
+    @OneToMany(mappedBy = "member")
+    private List<Reservation> reservations;
 
     public static Member from(SignUpReqDto form, String encodedPassword) {
         Role role = Role.valueOf(form.getRole().toUpperCase());
