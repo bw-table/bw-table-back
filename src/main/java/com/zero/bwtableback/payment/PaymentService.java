@@ -5,7 +5,7 @@ import com.siot.IamportRestClient.response.IamportResponse;
 import com.siot.IamportRestClient.response.Payment;
 import com.zero.bwtableback.payment.entity.PaymentEntity;
 import com.zero.bwtableback.payment.entity.PaymentStatus;
-import com.zero.bwtableback.reservation.dto.PaymentDto;
+import com.zero.bwtableback.reservation.dto.PaymentResDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,14 +23,14 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
 
-    public boolean verifyPaymentAndSave(PaymentDto paymentDto) {
+    public boolean verifyPaymentAndSave(PaymentResDto paymentResDto) {
         try {
             // FIXME 테스트 true 반환
-            if (paymentDto.getImpUid() != null) {
+            if (paymentResDto.getImpUid() != null) {
                 return true;
             }
             // 아임포트 API를 통해 결제 정보 조회
-            IamportResponse<Payment> iamportResponse = iamportClient.paymentByImpUid(paymentDto.getImpUid());
+            IamportResponse<Payment> iamportResponse = iamportClient.paymentByImpUid(paymentResDto.getImpUid());
 
             // 응답에서 결제 정보가 있는지 확인
             if (iamportResponse.getResponse() != null) {

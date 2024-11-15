@@ -17,6 +17,7 @@ import com.zero.bwtableback.restaurant.service.RestaurantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -58,9 +59,13 @@ public class ReservationService {
          * - 현재 예약 가능 인원수와 요청 예약 인원수 비교
          * - DB에 예약 가능 설정에서 차감된 수 저장
          */
-
         Restaurant restaurant = restaurantRepository.findById(request.restaurantId())
                 .orElseThrow(() -> new CustomException(ErrorCode.RESTAURANT_NOT_FOUND));
+
+        // 최대 수용 인원을 초과
+//        if (currentReservedCount + request.getNumberOfPeople() > MAX_CAPACITY) {
+//            return false;
+//        }
 
         return true;
     }
@@ -68,12 +73,12 @@ public class ReservationService {
     /**
      * 결제 성공 시 예약 정보 저장
      */
-    public ReservationCompleteResDto saveReservation(PaymentDto paymentDto, String email) {
+    public ReservationCompleteResDto saveReservation(PaymentResDto paymentResDto, String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // Redis에서 임시 예약 정보 조회 TODO ReservationCreateDto ReservationInfoDto로 통합
-        Object redisValue = redisTemplate.opsForValue().get("reservation:token:" + paymentDto.getReservationToken());
+        Object redisValue = redisTemplate.opsForValue().get("reservation:token:" + paymentResDto.getReservationToken());
         if (redisValue == null) {
             throw new RuntimeException("예약 토큰이 존재하지 않습니다.");
         }

@@ -81,15 +81,15 @@ public class ReservationController {
      * @return 결제 완료 페이지에 보여질 정보 반환
      */
     @PostMapping("/complete")
-    public ResponseEntity<?> completeReservation(@RequestBody PaymentDto paymentDto,
+    public ResponseEntity<?> completeReservation(@RequestBody PaymentResDto paymentResDto,
                                                  @AuthenticationPrincipal MemberDetails memberDetails
     ) {
         String email = memberDetails.getUsername();
 
-        if (paymentService.verifyPaymentAndSave(paymentDto)) { // 아임포트 결제 검증 및 결제 정보 저장
-            ReservationCompleteResDto response = reservationService.saveReservation(paymentDto, email);
+        if (paymentService.verifyPaymentAndSave(paymentResDto)) { // 아임포트 결제 검증 및 결제 정보 저장
+            ReservationCompleteResDto response = reservationService.saveReservation(paymentResDto, email);
 
-            redisTemplate.delete("reservation:token:" + paymentDto.getReservationToken());
+            redisTemplate.delete("reservation:token:" + paymentResDto.getReservationToken());
 
             chatService.createChatRoom(response.getReservation());
 
@@ -98,6 +98,7 @@ public class ReservationController {
             return ResponseEntity.ok(response);
         } else {
             // TODO 결제 실패 시 처리
+            // TODO 임시 예약 시 인원수 복구
             return ResponseEntity.badRequest().body("결제 확인에 실패했습니다.");
         }
     }
@@ -114,7 +115,8 @@ public class ReservationController {
 
             if (isCanceled) {
                 chatService.inactivateChatRoom(reservationId);
-
+                // TODO 환불 규정에 따른 환불
+                // TODO 예약 취소 알림
                 return ResponseEntity.ok("예약이 성공적으로 취소되었습니다.");
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 예약을 찾을 수 없습니다.");
