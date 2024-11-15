@@ -41,38 +41,44 @@ public class ReservationController {
      * 3. 가능한 경우, 임시 예약 정보를 Redis에 저장
      *
      * TODO 예외 처리
-     * TODO 예약 취소
-     * TODO 결제 실패 처리
      */
     @PostMapping()
     public ResponseEntity<?> requestReservation(@RequestBody ReservationCreateReqDto request) {
-        String lockKey = "lock:reservation:" + request.restaurantId() + ":" + request.reservationDate() + ":" + request.reservationTime();
-        RLock lock = redissonClient.getLock(lockKey);
-
-        try {
-            // 락 획득 시도
-            if (lock.tryLock(5, TimeUnit.SECONDS)) {
-                try {
-                    // 현재 예약 상태 확인
-                    boolean isAvailable = reservationService.checkReservationAvailability(request);
-                    if (isAvailable) {
-                        // 임시 예약 정보 Redis에 저장
-                        String reservationToken = UUID.randomUUID().toString(); // 임시 예약에 대한 고유 아이디 생성
-                        redisTemplate.opsForValue().set("reservation:token:" + reservationToken, request, 5, TimeUnit.MINUTES);
-                        return ResponseEntity.ok(reservationToken);
-                    } else {
-                        return ResponseEntity.status(HttpStatus.CONFLICT).body("해당 시간대는 이미 예약이 가득 찼습니다.");
-                    }
-                } finally {
-                    lock.unlock();
-                }
-            } else {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("다른 예약 처리 중입니다. 잠시 후 다시 시도해주세요.");
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("예약 처리 중 오류가 발생했습니다.");
+        boolean isAvailable = reservationService.checkReservationAvailability(request);
+        if (isAvailable) {
+            String reservationToken = UUID.randomUUID().toString();
+            redisTemplate.opsForValue().set("reservation:token:" + reservationToken, request, 5, TimeUnit.MINUTES);
+            return ResponseEntity.ok(reservationToken);
+        } else {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("해당 시간대는 이미 예약이 가득 찼습니다.");
         }
+//        String lockKey = "lock:reservation:" + request.restaurantId() + ":" + request.reservationDate() + ":" + request.reservationTime();
+//        RLock lock = redissonClient.getLock(lockKey);
+
+//        try {
+//            // 락 획득 시도
+//            if (lock.tryLock(5, TimeUnit.SECONDS)) {
+//                try {
+//                    // 현재 예약 상태 확인
+//                    boolean isAvailable = reservationService.checkReservationAvailability(request);
+//                    if (isAvailable) {
+//                        // 임시 예약 정보 Redis에 저장
+//                        String reservationToken = UUID.randomUUID().toString(); // 임시 예약에 대한 고유 아이디 생성
+//                        redisTemplate.opsForValue().set("reservation:token:" + reservationToken, request, 5, TimeUnit.MINUTES);
+//                        return ResponseEntity.ok(reservationToken);
+//                    } else {
+//                        return ResponseEntity.status(HttpStatus.CONFLICT).body("해당 시간대는 이미 예약이 가득 찼습니다.");
+//                    }
+//                } finally {
+//                    lock.unlock();
+//                }
+//            } else {
+//                return ResponseEntity.status(HttpStatus.CONFLICT).body("다른 예약 처리 중입니다. 잠시 후 다시 시도해주세요.");
+//            }
+//        } catch (InterruptedException e) {
+//            Thread.currentThread().interrupt();
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("예약 처리 중 오류가 발생했습니다.");
+//        }
     }
 
     /**
@@ -84,24 +90,57 @@ public class ReservationController {
     public ResponseEntity<?> completeReservation(@RequestBody PaymentResDto paymentResDto,
                                                  @AuthenticationPrincipal MemberDetails memberDetails
     ) {
-        String email = memberDetails.getUsername();
+        String reservationKey = "reservation:token:" + paymentResDto.getReservationToken();
+        ReservationCreateReqDto reservationInfo = (ReservationCreateReqDto) redisTemplate.opsForValue().get(reservationKey);
 
-        if (paymentService.verifyPaymentAndSave(paymentResDto)) { // 아임포트 결제 검증 및 결제 정보 저장
-            ReservationCompleteResDto response = reservationService.saveReservation(paymentResDto, email);
+        if (paymentService.verifyPaymentAndSave(paymentResDto)) {
+            String lockKey = "lock:reservation:" + reservationInfo.restaurantId() + ":" + reservationInfo.reservationDate() + ":" + reservationInfo.reservationTime();
+            RLock lock = redissonClient.getLock(lockKey);
 
-            redisTemplate.delete("reservation:token:" + paymentResDto.getReservationToken());
+            try {
+                if (lock.tryLock(5, TimeUnit.SECONDS)) {
+                    try {
+                        // DB 예약 가능 인원 수 차감
+                        reservationService.reduceReservedCount(reservationInfo);
+                        // DB 예약 정보 저장
 
-            chatService.createChatRoom(response.getReservation());
+                        // 채팅방 생성
+//                        chatService.createChatRoom();
 
-            // TODO 예약 확정 알림 연결
+                        // 예약 확정 알림 전송
 
-            return ResponseEntity.ok(response);
+                        // Redis에서 임시 예약 정보 삭제
+                        redisTemplate.delete("reservation:token:" + paymentResDto.getReservationToken());
+
+                        return ResponseEntity.ok("예약이 완료되었습니다.");
+                    } finally {
+                        lock.unlock(); // 락 해제
+                    }
+                } else {
+                    return ResponseEntity.status(HttpStatus.CONFLICT).body("다른 예약 처리 중입니다. 잠시 후 다시 시도해주세요.");
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("예약 처리 중 오류가 발생했습니다.");
+            }
         } else {
-            // TODO 결제 실패 시 처리
-            // TODO 임시 예약 시 인원수 복구
             return ResponseEntity.badRequest().body("결제 확인에 실패했습니다.");
         }
     }
+//
+//            redisTemplate.delete("reservation:token:" + paymentResDto.getReservationToken());
+//
+//            chatService.createChatRoom(response.getReservation());
+//
+//            // TODO 예약 확정 알림 연결
+//
+//            return ResponseEntity.ok(response);
+//        } else {
+//            // TODO 결제 실패 시 처리
+//            // TODO 임시 예약 시 인원수 복구
+//            return ResponseEntity.badRequest().body("결제 확인에 실패했습니다.");
+//        }
+//}
 
     /**
      * 예약 취소

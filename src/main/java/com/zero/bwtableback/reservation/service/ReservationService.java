@@ -17,7 +17,6 @@ import com.zero.bwtableback.restaurant.service.RestaurantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -68,6 +67,31 @@ public class ReservationService {
 //        }
 
         return true;
+    }
+
+    public void reduceReservedCount(ReservationCreateReqDto reservationInfo) {
+//        TimeslotSetting timeslotSetting = reservationRepository.findTimeslotSetting(
+//                reservationInfo.getRestaurantId(),
+//                reservationInfo.getReservationDate(),
+//                reservationInfo.getReservationTime()
+//        );
+//
+//        if (timeslotSetting != null) {
+//            // 현재 최대 수용 인원수에서 예약할 인원수를 차감
+//            int currentCapacity = timeslotSetting.getMaxCapacity();
+//            int reservedCount = timeslotSetting.getReservedCount(); // 현재 예약된 인원 수
+//
+//            if (reservedCount + reservationInfo.getNumberOfPeople() <= currentCapacity) {
+//                // 예약 가능하다면 예약된 인원 수를 증가시킴
+//                timeslotSetting.setReservedCount(reservedCount + reservationInfo.getNumberOfPeople());
+//                reservationRepository.save(timeslotSetting); // 변경 사항 저장
+//            } else {
+//                throw new IllegalArgumentException("예약 가능 인원을 초과했습니다.");
+//            }
+//        } else {
+//            throw new EntityNotFoundException("해당 시간대의 설정을 찾을 수 없습니다.");
+//        }
+
     }
 
     /**
@@ -171,7 +195,7 @@ public class ReservationService {
 
     /**
      * 손님의 취소 요청
-      */
+     */
     public boolean cancelReservation(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESERVATION_NOT_FOUND));
