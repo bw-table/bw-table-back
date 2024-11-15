@@ -39,9 +39,13 @@ public class ReservationController {
      * 1. 분산 락을 사용하여 동시 접근 제어
      * 2. 예약 가능 여부를 확인
      * 3. 가능한 경우, 임시 예약 정보를 Redis에 저장
+     *
+     * TODO 예외 처리
+     * TODO 예약 취소
+     * TODO 결제 실패 처리
      */
     @PostMapping()
-    public ResponseEntity<?> createReservation(@RequestBody ReservationCreateReqDto request) {
+    public ResponseEntity<?> requestReservation(@RequestBody ReservationCreateReqDto request) {
         String lockKey = "lock:reservation:" + request.restaurantId() + ":" + request.reservationDate() + ":" + request.reservationTime();
         RLock lock = redissonClient.getLock(lockKey);
 
@@ -82,57 +86,26 @@ public class ReservationController {
     ) {
         String email = memberDetails.getUsername();
 
-        if (paymentService.verifyPayment(paymentDto)) { // 아임포트 결제 검증
+        if (paymentService.verifyPaymentAndSave(paymentDto)) { // 아임포트 결제 검증 및 결제 정보 저장
             ReservationCompleteResDto response = reservationService.saveReservation(paymentDto, email);
 
             redisTemplate.delete("reservation:token:" + paymentDto.getReservationToken());
-            // TODO 예약 확정으로 변경
 
-            // TODO 채팅방 생성
             chatService.createChatRoom(response.getReservation());
 
-            // TODO 예약 확정 알림
+            // TODO 예약 확정 알림 연결
+
             return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.badRequest().body("결제 확인에 실패했습니다.");
         }
     }
 
-//    @PostMapping("/complete-payment")
-//    public ResponseEntity<PaymentCompleteResDto> confirmReservation(
-//            @RequestBody PaymentDto paymentDto) {
-//        // FIXME 원래는 저장된 세션의 예약 정보를 가졍옴
-//        // TODO 결제 시 PAYMENT 정보 저장
-//        // TODO 세션에 있는 예약 정보 저장
-//
-////        ReservationResponseDto reservationResponseDto = reservationService.confirmReservation(reservationId);
-//
-//        // FIXME 임의의 예약 정보 생성 - 세션으로 대체
-//        Long reservationId = 4L;
-//        Long restaurantId = 8L;  // 식당 ID
-//        Long memberId = 30L;      // 회원 ID
-//        LocalDate reservationDate = LocalDate.of(2024, 11, 15); // 예약 날짜
-//        LocalTime reservationTime = LocalTime.of(19, 30); // 예약 시간 (예: 19:30)
-//        int numberOfPeople = 4;   // 인원 수
-//        String specialRequest = "창가 자리 요청"; // 특별 요청
-//        ReservationStatus reservationStatus = ReservationStatus.CONFIRMED; // 예약 상태
-//
-//        // DTO 객체 생성
-//        ReservationResDto reservationResDto = new ReservationResDto(
-//                reservationId,
-//                restaurantId,
-//                memberId,
-//                reservationDate,
-//                reservationTime,
-//                numberOfPeople,
-//                specialRequest,
-//                reservationStatus
-//        );
-//
-//        PaymentCompleteResDto paymentCompleteDto = chatService.createChatRoom(reservationResDto);
-//
-//        return ResponseEntity.status(HttpStatus.CREATED).body(paymentCompleteDto);
-//    }
+    /**
+     * TODO 예약 취소
+     * - 채팅방 비활성화
+     * - 예약 상태 변경 - CANCELED
+     */
 
     @PutMapping("/{reservationId}/confirm")
     public PaymentCompleteResDto confirmReservation(

@@ -40,7 +40,7 @@ public class ReservationService {
         return ReservationResDto.fromEntity(reservation);
     }
 
-    // 고객이 생성한 예약 정보를 저장
+    // FIXME 사용 안함: 고객이 생성한 예약 정보를 저장
     public ReservationResDto createReservation(ReservationCreateReqDto reservationCreateReqDto, Long memberId) {
         Restaurant restaurant = findRestaurantById(reservationCreateReqDto.restaurantId());
         Member member = findMemberById(memberId);
@@ -51,7 +51,17 @@ public class ReservationService {
     }
 
     public boolean checkReservationAvailability(ReservationCreateReqDto request) {
-        //TODO 예약 가능 확인
+
+        /**
+         * TODO 현재 인원수 보다 작거나 같은지 확인, 가능성 확인
+         *
+         * - 현재 예약 가능 인원수와 요청 예약 인원수 비교
+         * - DB에 예약 가능 설정에서 차감된 수 저장
+          */
+
+        Restaurant restaurant = restaurantRepository.findById(request.restaurantId())
+                .orElseThrow(() -> new CustomException(ErrorCode.RESTAURANT_NOT_FOUND));
+
         return true;
     }
 

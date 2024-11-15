@@ -23,7 +23,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
 
-    public boolean verifyPayment(PaymentDto paymentDto) {
+    public boolean verifyPaymentAndSave(PaymentDto paymentDto) {
         try {
             // FIXME 테스트 true 반환
             if (paymentDto.getImpUid() != null) {
@@ -45,7 +45,6 @@ public class PaymentService {
                 throw new RuntimeException("결제 정보가 없습니다.");
             }
         } catch (Exception e) {
-            // 예외 처리: 로그 기록 및 적절한 예외 반환
             throw new RuntimeException("결제 검증 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
