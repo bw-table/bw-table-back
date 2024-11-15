@@ -29,8 +29,7 @@ public class NotificationEmitterService {
         String emitterId = memberId + "_" + System.currentTimeMillis();
         SseEmitter emitter = new SseEmitter(3_600_000L); // 기본 타임아웃 한 시간으로 설정
 
-        // Emitter 저장
-        emitterRepository.saveEmitter(emitterId, emitter, memberId);
+        emitterRepository.saveEmitter(emitterId, emitter);
 
         // 마지막 알림 이후의 알림부터 전송
         long lastEventIdLong = parseLastEventId(lastEventId);
@@ -52,7 +51,7 @@ public class NotificationEmitterService {
         sendNotificationToConnectedUser(ownerId, notification);
     }
 
-    // 모든 로그인한 기기에 전송
+    // 회원의 활성화된 emitter에 알림 전송
     public void sendNotificationToConnectedUser(Long memberId, Notification notification) {
         List<String> emitterIds = emitterRepository.findAllEmitterIdsByMemberId(memberId);
         String jsonMessage = createNotificationMessage(notification);

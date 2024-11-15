@@ -64,7 +64,7 @@ public class NotificationEmitterServiceTest {
         // then
         assertThat(result).isNotNull();
         verify(emitterRepository, times(1))
-                .saveEmitter(anyString(), any(SseEmitter.class), eq(memberId));
+                .saveEmitter(anyString(), any(SseEmitter.class));
         verify(notificationRepository, times(1))
                 .findByReservation_Member_IdAndIdGreaterThan(eq(memberId), anyLong());
     }
@@ -97,7 +97,7 @@ public class NotificationEmitterServiceTest {
         Long memberId = 1L;
 
         // mocking
-        doNothing().when(emitterRepository).saveEmitter(anyString(), any(SseEmitter.class), eq(memberId));
+        doNothing().when(emitterRepository).saveEmitter(anyString(), any(SseEmitter.class));
 
         // when
         SseEmitter resultForNullId = notificationEmitterService.subscribe(memberId, null);
@@ -106,7 +106,7 @@ public class NotificationEmitterServiceTest {
         // then
         assertThat(resultForNullId).isNotNull();
         assertThat(resultForEmptyId).isNotNull();
-        verify(emitterRepository, times(2)).saveEmitter(anyString(), any(SseEmitter.class), eq(memberId));
+        verify(emitterRepository, times(2)).saveEmitter(anyString(), any(SseEmitter.class));
     }
 
     private Notification createMockNotification(Long memberId, Long ownerId) {
@@ -135,7 +135,7 @@ public class NotificationEmitterServiceTest {
     }
 
     private void mockEmitterRepositoryForSubscription(Long memberId, String emitterId) {
-        doNothing().when(emitterRepository).saveEmitter(anyString(), any(SseEmitter.class), eq(memberId));
+        doNothing().when(emitterRepository).saveEmitter(anyString(), any(SseEmitter.class));
         given(emitterRepository.findAllEmitterIdsByMemberId(memberId)).willReturn(List.of(emitterId));
     }
 
