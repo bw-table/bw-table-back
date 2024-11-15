@@ -4,10 +4,7 @@ import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
-import com.zero.bwtableback.reservation.dto.PaymentCompleteResDto;
-import com.zero.bwtableback.reservation.dto.ReservationCreateReqDto;
-import com.zero.bwtableback.reservation.dto.ReservationResDto;
-import com.zero.bwtableback.reservation.dto.ReservationUpdateReqDto;
+import com.zero.bwtableback.reservation.dto.*;
 import com.zero.bwtableback.reservation.entity.NotificationType;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.entity.ReservationStatus;
@@ -17,7 +14,12 @@ import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Map;
+
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -29,6 +31,8 @@ public class ReservationService {
     private final MemberRepository memberRepository;
     private final NotificationScheduleService notificationScheduleService;
     private final RestaurantService restaurantService;
+
+    private final RedisTemplate<String, Object> redisTemplate;
 
     public ReservationResDto getReservationById(Long reservationId) {
         Reservation reservation = findReservationById(reservationId);
@@ -46,10 +50,54 @@ public class ReservationService {
     }
 
     public boolean checkReservationAvailability(ReservationCreateReqDto request){
-
+            //TODO 예약 가능 확인
         return true;
     }
 
+    /**
+     * 결제 성공 시 예약 정보 저장
+     */
+    public void saveReservation(PaymentDto paymentDto, String email){
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // Redis에서 임시 예약 정보 조회 TODO ReservationCreateDto ReservationInfoDto로 통합
+        Object redisValue = redisTemplate.opsForValue().get("reservation:token:" + paymentDto.getReservationToken());
+        if (redisValue == null) {
+            throw new RuntimeException("예약 토큰이 존재하지 않습니다.");
+        }
+
+        if (redisValue instanceof Map) {
+            Map<String, Object> map = (Map<String, Object>) redisValue;
+
+            Long restaurantId = Long.valueOf(map.get("restaurantId").toString());
+            Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                    .orElseThrow(() -> new RuntimeException("Restaurant not found"));
+
+            List<Integer> dateList = (List<Integer>) map.get("reservationDate");
+            LocalDate reservationDate = LocalDate.of(dateList.get(0), dateList.get(1), dateList.get(2));
+
+            List<Integer> timeList = (List<Integer>) map.get("reservationTime");
+            LocalTime reservationTime = LocalTime.of(timeList.get(0), timeList.get(1));
+
+            int numberOfPeople = (Integer) map.get("numberOfPeople");
+            String specialRequest = (String) map.get("specialRequest");
+
+            Reservation reservation = Reservation.builder()
+                    .restaurant(restaurant)
+                    .member(member)
+                    .reservationDate(reservationDate)
+                    .reservationTime(reservationTime)
+                    .numberOfPeople(numberOfPeople)
+                    .specialRequest(specialRequest)
+                    .reservationStatus(ReservationStatus.CONFIRMED)
+                    .build();
+
+            reservationRepository.save(reservation);
+        } else {
+            throw new RuntimeException("레디스에 저장된 데이터 형식과 다릅니다.");
+        }
+    }
 
     // CONFIRMED 상태 업데이트
     public PaymentCompleteResDto confirmReservation(Long reservationId, Long restaurantId, Long memberId) {

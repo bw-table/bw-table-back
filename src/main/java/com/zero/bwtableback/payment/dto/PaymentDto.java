@@ -1,4 +1,4 @@
-package com.zero.bwtableback.reservation.dto;
+package com.zero.bwtableback.payment.dto;
 
 import lombok.Getter;
 import lombok.Setter;

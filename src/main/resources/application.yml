@@ -4,6 +4,10 @@ spring:
   multipart:
     max-file-size: 5MB // 파일의 용량 제한
     max-request-size: 10MB // 전체 최대 크기 용량 제한
+  iamport:
+    api:
+      key: ${IMP_API_KEY}
+      secret: ${IMP_API_SECRET}
 ---
 spring:
   servlet:
