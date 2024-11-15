@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -450,6 +451,16 @@ public class RestaurantService {
     public List<RestaurantListDto> getRestaurantsByCategory(String category, Pageable pageable) {
         CategoryType categoryType = convertToCategoryType(category);
 
+        Optional<Category> optionalCategory = categoryRepository.findByCategoryType(categoryType);
+
+        optionalCategory.ifPresent(categoryEntity -> {
+            categoryEntity.setSearchCount(categoryEntity.getSearchCount() + 1);
+            categoryRepository.save(categoryEntity);
+        });
+
+        Category categoryEntity = optionalCategory.orElseThrow(() ->
+                new EntityNotFoundException("Category not found"));
+
         Page<Restaurant> restaurants = restaurantRepository.findByCategory_CategoryType(categoryType, pageable);
 
         return restaurants.stream()
@@ -468,6 +479,16 @@ public class RestaurantService {
 
     // 해시태그로 식당 검색
     public List<RestaurantListDto> getRestaurantsByHashtag(String hashtag, Pageable pageable) {
+        Optional<Hashtag> optionalHashtag = hashtagRepository.findByName(hashtag);
+
+        optionalHashtag.ifPresent(hashtagEntity -> {
+            hashtagEntity.setSearchCount(hashtagEntity.getSearchCount() + 1);
+            hashtagRepository.save(hashtagEntity);
+        });
+
+//        Hashtag hashtagEntity = optionalHashtag.orElseThrow(() -> (
+//            new EntityNotFoundException("Hashtag not found")));
+
         Page<Restaurant> restaurants = restaurantRepository.findByHashtags_NameContaining(hashtag, pageable);
 
         return restaurants.stream()
