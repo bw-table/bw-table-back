@@ -42,14 +42,14 @@ public class NotificationController {
 
     // 고객 회원에게 전송된 알림 목록 조회
     @GetMapping("/customers/{userId}")
-    public Page<?> getCustomerNotifications(@PathVariable Long userId, Pageable pageable) {
+    public Page<NotificationResDto> getCustomerNotifications(@PathVariable Long userId, Pageable pageable) {
         Page<Notification> notifications = notificationSearchService.getNotificationsSentToCustomer(userId, pageable);
         return notifications.map(NotificationResDto::fromEntity);
     }
 
     // 가게 주인 회원에게 전송된 알림 목록 조회
     @GetMapping("/owners/{ownerId}")
-    public Page<?> getOwnerNotifications(@PathVariable Long ownerId, Pageable pageable) {
+    public Page<NotificationResDto> getOwnerNotifications(@PathVariable Long ownerId, Pageable pageable) {
         Page<Notification> notifications = notificationSearchService.getNotificationsSentToOwner(ownerId, pageable);
         return notifications.map(NotificationResDto::fromEntity);
     }
