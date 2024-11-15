@@ -43,6 +43,10 @@ public class MainService {
         return restaurantService.getRestaurantsByMenu("파스타", pageable);
     }
 
+    // TODO 어디로 가시나요?
+    // 내주변 : 프론트에서 위도/경도값 받아와서 구현
+    // 지역 : 주소 필터링(정규표현식)해서 지역별 식당 조회 구현
+
     // 놓치면 안되는 혜택 가득!
     // 이벤트 진행중인 식당
     // Announcement 엔티티의 event 필드가 true인 식당

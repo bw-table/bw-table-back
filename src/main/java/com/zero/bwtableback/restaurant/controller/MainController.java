@@ -3,7 +3,6 @@ package com.zero.bwtableback.restaurant.controller;
 import com.zero.bwtableback.restaurant.dto.RestaurantListDto;
 import com.zero.bwtableback.restaurant.service.MainService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
