@@ -26,11 +26,11 @@ import java.util.stream.Collectors;
 public class RestaurantService {
 
     private final RestaurantRepository restaurantRepository;
+    private final MenuRepository menuRepository;
     private final CategoryRepository categoryRepository;
     private final FacilityRepository facilityRepository;
     private final HashtagRepository hashtagRepository;
     private final RestaurantImageRepository restaurantImageRepository;
-    private final AnnouncementRepository announcementRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ImageUploadService imageUploadService;
 
@@ -142,7 +142,8 @@ public class RestaurantService {
 
     public Restaurant registerRestaurant(RegisterReqDto reqDto,
                                          MultipartFile[] images,
-                                         List<MenuRegisterDto> menus) throws IOException {
+                                         List<MenuRegisterDto> menus,
+                                         List<MultipartFile> menuImages) throws IOException {
 
         reqDto.validate();
 
@@ -179,7 +180,7 @@ public class RestaurantService {
         List<OperatingHours> operatingHours = assignOperatingHours(reqDto.getOperatingHours(), restaurant);
         restaurant.setOperatingHours(operatingHours);
 
-        List<Menu> menuList = assignMenu(menus, restaurant, images);
+        List<Menu> menuList = assignMenu(menus, restaurant);
         restaurant.setMenus(menuList);
 
         List<Facility> facilities = assignFacilities(reqDto.getFacilities());
@@ -190,16 +191,28 @@ public class RestaurantService {
 
         Restaurant savedRestaurant = restaurantRepository.save(restaurant);
 
-        // 이미지 임시 경로로 업로드
-        Set<String> tempImageUrls = new HashSet<>();
-        if (reqDto.getImages() != null && reqDto.getImages().length > 0) {
-            tempImageUrls = imageUploadService.uploadRestaurantImages(reqDto.getImages());
-            assignImages(savedRestaurant, tempImageUrls);
+        // 식당 이미지 설정
+        Set<RestaurantImage> restaurantImages = new HashSet<>();
+        if (images != null && images.length > 0) {
+
+            List<String> imageUrls = imageUploadService.uploadRestaurantImages(savedRestaurant.getId(), images);
+
+            for (String imageUrl: imageUrls) {
+                RestaurantImage restaurantImage = new RestaurantImage(imageUrl, savedRestaurant);
+                restaurantImages.add(restaurantImage);
+            }
+            restaurantImageRepository.saveAll(restaurantImages);
         }
 
-        // 등록 후 임시 이미지 경로를 최종 경로로 이동
-        imageUploadService.moveRestaurantImagesToFinalPath(savedRestaurant.getId(), tempImageUrls);
-        imageUploadService.moveMenuImagesToFinalPath(savedRestaurant.getId(), savedRestaurant.getMenus());
+        // 메뉴 이미지 설정
+        for (int i = 0; i < menus.size(); i++) {
+            Menu menu = savedRestaurant.getMenus().get(i);
+            if (menuImages != null && menuImages.size() > i) {
+                String menuImageUrl = imageUploadService.uploadMenuImage(savedRestaurant.getId(), menu.getId(), menuImages.get(i));
+                menu.setImageUrl(menuImageUrl);  // 메뉴 이미지 URL 설정
+                menuRepository.save(menu);  // 메뉴 저장
+            }
+        }
 
         return savedRestaurant;
     }
@@ -298,16 +311,17 @@ public class RestaurantService {
     }
 
     // 이미지 업로드
-    public void assignImages(Restaurant restaurant, Set<String> imageUrls) {
-        Set<RestaurantImage> images = imageUrls.stream()
-                .map(imageUrl -> RestaurantImage.builder()
-                        .imageUrl(imageUrl)
-                        .restaurant(restaurant)
-                        .build())
-                .collect(Collectors.toSet());
-
-        restaurantImageRepository.saveAll(images);
-    }
+    // TODO: 보류
+//    public void assignImages(Restaurant restaurant, List<String> imageUrls) {
+//        Set<RestaurantImage> images = imageUrls.stream()
+//                .map(imageUrl -> RestaurantImage.builder()
+//                        .imageUrl(imageUrl)
+//                        .restaurant(restaurant)
+//                        .build())
+//                .collect(Collectors.toSet());
+//
+//        restaurantImageRepository.saveAll(images);
+//    }
 
     // 카테고리 설정
     private Category assignCategory(String categoryType) {
@@ -338,30 +352,15 @@ public class RestaurantService {
     }
 
     // 메뉴 설정
-    private List<Menu> assignMenu(List<MenuRegisterDto> menuDto, Restaurant restaurant, MultipartFile[] images) throws IOException {
-        List<Menu> menus = new ArrayList<>();
-
-        for (int i = 0; i < menuDto.size(); i++) {
-            MenuRegisterDto dto = menuDto.get(i);
-            String imageUrl = null;
-
-            // 이미지가 있으면 S3 업로드 후 URL 받기
-            if (images != null && images.length > i && images[i] != null) {
-                imageUrl = imageUploadService.uploadMenuImages(images[i]);
-            }
-
-            Menu menu = Menu.builder()
-                    .name(dto.getName())
-                    .price(dto.getPrice())
-                    .description(dto.getDescription())
-                    .imageUrl(imageUrl)
-                    .restaurant(restaurant)
-                    .build();
-
-            menus.add(menu);
-        }
-
-        return menus;
+    private List<Menu> assignMenu(List<MenuRegisterDto> menuDto, Restaurant restaurant) {
+        return menuDto.stream()
+                .map(dto -> Menu.builder()
+                        .name(dto.getName())
+                        .price(dto.getPrice())
+                        .description(dto.getDescription())
+                        .restaurant(restaurant)
+                        .build())
+                .collect(Collectors.toList());
     }
 
     // 편의시설 설정

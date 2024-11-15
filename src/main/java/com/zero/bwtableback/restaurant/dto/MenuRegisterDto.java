@@ -12,7 +12,6 @@ import org.springframework.web.multipart.MultipartFile;
 @NoArgsConstructor
 public class MenuRegisterDto {
 
-    private Long id;
     private String name;
     private int price;
     private String description;

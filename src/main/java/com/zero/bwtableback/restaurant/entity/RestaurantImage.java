@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Set;
+
 @Getter
 @Builder
 @AllArgsConstructor
@@ -26,4 +28,9 @@ public class RestaurantImage {
     @JoinColumn(name = "restaurant_id", nullable = false)
     @JsonIgnore
     private Restaurant restaurant;
+
+    public RestaurantImage(String imageUrl, Restaurant savedRestaurant) {
+        this.imageUrl = imageUrl;
+        this.restaurant = savedRestaurant;
+    }
 }

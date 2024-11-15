@@ -32,7 +32,7 @@ public class RestaurantController {
     // 식당 등록
     // TODO: 식당 등록 후 응답형식 결정 필요
 //    @PostMapping("/new")
-//    public ResponseEntity<?> registerRestaurant(@RequestBody @Valid RegisterReqDto reqDto) {
+//    public ResponseEntity<?> registerRestaurant(@RequestBody RegisterReqDto reqDto) {
 //
 //        try {
 //            Restaurant savedRestaurant = restaurantService.registerRestaurant(reqDto);
@@ -56,7 +56,8 @@ public class RestaurantController {
     @PostMapping("/new")
     public ResponseEntity<?> registerRestaurant(@RequestPart("restaurant") RegisterReqDto reqDto,
                                                 @RequestPart("images") MultipartFile[] images,
-                                                @RequestPart("menus") List<MenuRegisterDto> menus) {
+                                                @RequestPart("menus") List<MenuRegisterDto> menus,
+                                                @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages) {
         // TODO: 유효성 검사 오류 발생 시 처리 로직 추가
         try {
             // 레스토랑과 관련된 이미지 및 메뉴 등록 처리
@@ -64,7 +65,7 @@ public class RestaurantController {
             reqDto.setMenus(menus);
 
             // 레스토랑 등록 및 메뉴 처리
-            Restaurant savedRestaurant = restaurantService.registerRestaurant(reqDto, images, menus);
+            Restaurant savedRestaurant = restaurantService.registerRestaurant(reqDto, images, menus, menuImages);
 
             // 성공적으로 등록된 레스토랑 반환
             return ResponseEntity.ok(savedRestaurant);

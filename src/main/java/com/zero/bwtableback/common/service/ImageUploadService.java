@@ -6,9 +6,6 @@ import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
-import com.zero.bwtableback.restaurant.entity.Menu;
-import com.zero.bwtableback.restaurant.entity.ReviewImage;
-import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -16,9 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +21,6 @@ public class ImageUploadService {
 
     private final AmazonS3 amazonS3Client;
     private final MemberRepository memberRepository;
-    private final RestaurantRepository restaurantRepository;
 
     @Value("${cloud.aws.s3.bucket}")
     private String BUCKET_NAME;
@@ -52,77 +46,43 @@ public class ImageUploadService {
     /**
      * 가게 이미지
      * - 최대 5장
-     * TODO 가게 아이디로 받을 수 있게 설정
      * TODO 순서는 어떻게 보장할지 생각해보기
      */
-    public Set<String> uploadRestaurantImages(MultipartFile[] files) throws IOException {
+    public List<String> uploadRestaurantImages(Long restaurantId, MultipartFile[] files) throws IOException {
         validateImageFiles(files, 5);
 
-        Set<String> fileUrls = new HashSet<>();
+        List<String> fileUrls = new ArrayList<>();
 
         for (MultipartFile file: files) {
-            String fileUrl = uploadFile(file, "temp/restaurant/");
+            String fileUrl = uploadFile(file, "restaurant/" + restaurantId + "/main/");
             fileUrls.add(fileUrl);
         }
         return fileUrls;
     }
 
-    // 식당 등록 후 식당 이미지 이동
-    public void moveRestaurantImagesToFinalPath(Long restaurantId, Set<String> tempFileUrls) throws IOException {
-        String tempFolderPath = "temp/restaurant/";
-        String finalFolderPath = "restaurant/" + restaurantId + "/main/";
-
-        for (String tempFileUrl: tempFileUrls) {
-            // 임시 URL에서 파일명 추출
-            String tempFileName = tempFileUrl.substring(tempFileUrl.lastIndexOf("/") + 1);
-
-            // 최종 경로로 복사
-            amazonS3Client.copyObject(BUCKET_NAME, tempFolderPath + tempFileName, BUCKET_NAME, finalFolderPath + tempFileName);
-            // 원본 삭제
-            amazonS3Client.deleteObject(BUCKET_NAME, tempFolderPath + tempFileName);
-        }
-    }
-
     /**
      * 메뉴 이미지
      * - 최대 1장
-     *  TODO 가게 아이디로 받을 수 있게 설정
      *  TODO 메뉴 아이디 받아야하는지 생각
      */
-    public String uploadMenuImages(MultipartFile file) throws IOException {
-        return uploadFile(file, "temp/restaurant/menu/");
-    }
+    public String uploadMenuImage(Long restaurantId, Long menuId, MultipartFile file) throws IOException {
+        validateSingleImageFile(file);
 
-    // 식당 등록 후 메뉴 이미지 이동
-    public void moveMenuImagesToFinalPath(Long restaurantId, List<Menu> menus) throws IOException {
-        String tempFolderPath = "temp/restaurant/menu/";
-        String finalFolderPathTemplate = "restaurant/" + restaurantId + "/menu/";
+        String fileUrl = uploadFile(file, "restaurant/" + restaurantId + "/menu/" + menuId + "/");
 
-        for (Menu menu: menus) {
-            if (menu.getImageUrl() != null) {
-                String tempFileName = menu.getImageUrl().substring(menu.getImageUrl().lastIndexOf("/") + 1);
-                String finalFolderPath = finalFolderPathTemplate + menu.getId() + "/";
-
-                amazonS3Client.copyObject(BUCKET_NAME, tempFolderPath + tempFileName, BUCKET_NAME, finalFolderPath + tempFileName);
-                amazonS3Client.deleteObject(BUCKET_NAME, tempFolderPath + tempFileName);
-
-                String finalImageUrl = "https://" + BUCKET_NAME + ".s3.amazonaws.com/" + finalFolderPath + tempFileName;
-                menu.setImageUrl(finalImageUrl);
-            }
-        }
+        return fileUrl;
     }
 
     /**
      * 리뷰 이미지
      * - 최대 5장
-     * TODO 가게 아이디로 받을 수 있게 설정
-     * TODO 리뷰 아이디로 필요한지 생각
      * TODO 순서는 어떻게 보장할지 생각해보기
      */
     public List<String> uploadReviewImages(Long restaurantId,
                                            Long reviewId,
                                            MultipartFile[] files) throws IOException {
-//        String tempFolderPath = "temp/restaurant/" + restaurantId + "/review/";
+
+        validateImageFiles(files, 5);
 
         List<String> fileUrls = new ArrayList<>();
         for (MultipartFile file: files) {
@@ -131,25 +91,6 @@ public class ImageUploadService {
         }
 
         return fileUrls;
-    }
-
-    // 리뷰 등록 후 리뷰 이미지 이동
-    public void moveReviewImagesToFinalPath(Long restaurantId,
-                                            Long reviewId,
-                                            List<ReviewImage> reviewImages) throws IOException {
-
-        String tempFolderPath = "temp/restaurant/" + restaurantId + "/review/";
-        String finalFolderPath = "restaurant/" + restaurantId + "/review/" + reviewId + "/";
-
-        for (ReviewImage reviewImage: reviewImages) {
-            String tempFileName = reviewImage.getImageUrl().substring(reviewImage.getImageUrl().lastIndexOf("/") + 1);
-
-            amazonS3Client.copyObject(BUCKET_NAME, tempFolderPath + tempFileName, BUCKET_NAME, finalFolderPath + tempFileName);
-            amazonS3Client.deleteObject(BUCKET_NAME, tempFolderPath + tempFileName);
-
-            String finalImageUrl = "https://" + BUCKET_NAME + ".s3.amazonaws.com/" + finalFolderPath + tempFileName;
-            reviewImage.setImageUrl(finalImageUrl);
-        }
     }
 
     // S3에 이미지 업로드
@@ -165,19 +106,6 @@ public class ImageUploadService {
 
         return "https://" + BUCKET_NAME + ".s3.amazonaws.com/" + folderPath + fileName;
     }
-
-    // s3 임시 경로에 이미지 업로드
-//    private String uploadTempFile(MultipartFile file, String folderPath) throws IOException {
-//        String fileName = System.currentTimeMillis() + "_" + UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-//
-//        ObjectMetadata metadata = new ObjectMetadata();
-//        metadata.setContentType(file.getContentType());
-//        metadata.setContentLength(file.getSize());
-//
-//        amazonS3Client.putObject(BUCKET_NAME, folderPath + fileName, file.getInputStream(), metadata);
-//
-//        return "https://" + BUCKET_NAME + ".s3.amazonaws.com/" + folderPath + fileName;
-//    }
 
     // 이미지 1장 유효성 검사
     private void validateSingleImageFile(MultipartFile file) {
