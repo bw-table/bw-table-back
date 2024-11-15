@@ -632,4 +632,5 @@ public class RestaurantService {
         return chatRoomRepository.findByRestaurantId(restaurantId, pageable)
                 .map(ChatRoomCreateResDto::fromEntity);
     }
+
 }

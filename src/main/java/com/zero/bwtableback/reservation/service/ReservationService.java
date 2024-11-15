@@ -17,6 +17,9 @@ import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
 import java.time.LocalDate;
+import java.util.List;
+
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -163,4 +166,18 @@ public class ReservationService {
         return !reservationDate.minusDays(3).isBefore(currentDate);
     }
 
+    /**
+     * 예약 대시보드
+     * 특정 식당의 예약 내역 조회
+     */
+    public List<Reservation> getReservationByRestaurant(Long restaurantId, LocalDate reservationDate) {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
+
+        if (reservationDate != null) {
+            return reservationRepository.findByRestaurantIdAndReservationDate(restaurantId, reservationDate);
+        }
+
+        return reservationRepository.findByRestaurantId(restaurantId);
+    }
 }

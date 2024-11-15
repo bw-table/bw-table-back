@@ -20,4 +20,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long>,
 
     Optional<Reservation> findByMemberAndRestaurantAndReservationDateBetween(
             Member member, Restaurant restaurant, LocalDate startDate, LocalDate endDate);
+
+    List<Reservation> findByRestaurantId(Long restaurantId);
+
+    List<Reservation> findByRestaurantIdAndReservationDate(Long restaurantId, LocalDate reservationDate);
 }
