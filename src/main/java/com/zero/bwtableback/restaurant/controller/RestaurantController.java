@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/restaurants")
@@ -87,9 +88,13 @@ public class RestaurantController {
 
     // 식당 정보 수정
     @PutMapping("/{id}")
-    public ResponseEntity<Restaurant> updateRestaurant(@PathVariable("id") Long restaurantId,
-                                                       @RequestBody UpdateReqDto reqDto) {
-        Restaurant updatedRestaurant = restaurantService.updateRestaurant(restaurantId, reqDto);
+    public ResponseEntity<Restaurant> updateRestaurant(
+            @PathVariable("id") Long restaurantId,
+            @RequestPart("restaurant") UpdateReqDto reqDto,
+            @RequestPart(value = "images", required = false) MultipartFile[] images,
+            @RequestPart(value = "menuImages", required = false) Map<Long, MultipartFile> menuImages)
+                                                    throws IOException {
+        Restaurant updatedRestaurant = restaurantService.updateRestaurant(restaurantId, reqDto, images, menuImages);
 
         return ResponseEntity.ok(updatedRestaurant);
     }

@@ -15,10 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -219,16 +216,22 @@ public class RestaurantService {
 
     // 식당 정보 수정
     // FIXME: 현재 확인용으로 Restaurant 객체 반환하도록 작성 -> 추후 응답객체 변경
-    public Restaurant updateRestaurant(Long id, UpdateReqDto reqDto) {
+    public Restaurant updateRestaurant(Long id,
+                                       UpdateReqDto reqDto,
+                                       MultipartFile[] newImages,
+                                       Map<Long, MultipartFile> newMenuImages) throws IOException {
+
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
 
         if (reqDto.getName() != null) {
             restaurant.setName(reqDto.getName());
         }
+
         if (reqDto.getDescription() != null) {
             restaurant.setDescription(reqDto.getDescription());
         }
+
         if (reqDto.getAddress() != null && !restaurant.getAddress().equals(reqDto.getAddress())) {
             if (restaurantRepository.existsByAddress(reqDto.getAddress())) {
                 throw new RestaurantException("Restaurant with this address already exists");
@@ -296,15 +299,37 @@ public class RestaurantService {
             restaurant.setOperatingHours(operatingHours);
         }
 
-        if (reqDto.getImages() != null && !reqDto.getImages().isEmpty()) {
-            Set<RestaurantImage> images = reqDto.getImages().stream()
-                    .map(imageUrl -> RestaurantImage.builder()
-                            .imageUrl(imageUrl)
-                            .restaurant(restaurant)
-                            .build())
-                    .collect(Collectors.toSet());
+        if (newImages != null && newImages.length > 0) {
+            if (restaurant.getImages() != null && !restaurant.getImages().isEmpty()) {
+                imageUploadService.deleteExistingRestaurantImages(restaurant);
+            }
+
+            Set<RestaurantImage> images = new HashSet<>();
+            List<String> imageUrls = imageUploadService.uploadRestaurantImages(restaurant.getId(), newImages);
+            for (String imageUrl: imageUrls) {
+                images.add(new RestaurantImage(imageUrl, restaurant));
+            }
             restaurant.setImages(images);
             restaurantImageRepository.saveAll(images);
+        }
+
+        if (newMenuImages != null && !newMenuImages.isEmpty()) {
+            for (Map.Entry<Long, MultipartFile> entry: newMenuImages.entrySet()) {
+                Long menuId = entry.getKey();
+                MultipartFile file = entry.getValue();
+
+                Menu menu = restaurant.getMenus().stream()
+                        .filter(m -> m.getId().equals(menuId))
+                        .findFirst()
+                        .orElseThrow(() -> new EntityNotFoundException("Menu not found"));
+
+                if (menu.getImageUrl() != null) {
+                    imageUploadService.deleteMenuImage(restaurant.getId(), menu.getId(), menu.getImageUrl());
+                }
+
+                String imageUrl = imageUploadService.uploadMenuImage(restaurant.getId(), menuId, file);
+                menu.setImageUrl(imageUrl);
+            }
         }
 
         return restaurantRepository.save(restaurant);
