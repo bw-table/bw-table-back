@@ -161,7 +161,7 @@ public class RestaurantService {
                 .latitude(reqDto.getLatitude())
                 .longitude(reqDto.getLongitude())
                 .contact(reqDto.getContact())
-                .closedDay(reqDto.getClosedDay())
+//                .closedDay(reqDto.getClosedDay())
                 .link(reqDto.getLink())
                 .info(reqDto.getInfo())
                 .deposit(reqDto.getDeposit())
@@ -176,6 +176,10 @@ public class RestaurantService {
 
         List<OperatingHours> operatingHours = assignOperatingHours(reqDto.getOperatingHours(), restaurant);
         restaurant.setOperatingHours(operatingHours);
+
+        // 휴무일
+        String closedDays = getClosedDays(operatingHours);
+        restaurant.setClosedDay(closedDays);
 
         List<Menu> menuList = assignMenu(menus, restaurant);
         restaurant.setMenus(menuList);
@@ -374,6 +378,19 @@ public class RestaurantService {
                         .restaurant(restaurant)
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    private String getClosedDays(List<OperatingHours> operatingHours) {
+        Set<DayOfWeek> allDaysOfWeek = EnumSet.allOf(DayOfWeek.class);
+
+        Set<DayOfWeek> closedDaysSet = new HashSet<>(allDaysOfWeek);
+        for (OperatingHours operatingHour: operatingHours) {
+            closedDaysSet.remove(operatingHour.getDayOfWeek());
+        }
+
+        return closedDaysSet.stream()
+                .map(DayOfWeek::toString)
+                .collect(Collectors.joining(", "));
     }
 
     // 메뉴 설정

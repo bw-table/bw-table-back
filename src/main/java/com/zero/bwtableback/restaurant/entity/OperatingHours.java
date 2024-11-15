@@ -31,4 +31,9 @@ public class OperatingHours {
     @JoinColumn(name = "restaurant_id", nullable = false)
     @JsonIgnore
     private Restaurant restaurant;
+
+    // 휴무일(closedDay) 설정 시 필요한 메서드
+    public boolean isClosed() {
+        return openingTime == null && closingTime == null;
+    }
 }
