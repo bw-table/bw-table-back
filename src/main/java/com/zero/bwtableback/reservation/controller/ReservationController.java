@@ -97,15 +97,32 @@ public class ReservationController {
 
             return ResponseEntity.ok(response);
         } else {
+            // TODO 결제 실패 시 처리
             return ResponseEntity.badRequest().body("결제 확인에 실패했습니다.");
         }
     }
 
     /**
-     * TODO 예약 취소
+     * 예약 취소
      * - 채팅방 비활성화
      * - 예약 상태 변경 - CANCELED
      */
+    @PutMapping("/{reservationId}")
+    public ResponseEntity<?> cancelReservation(@PathVariable Long reservationId) {
+        try {
+            boolean isCanceled = reservationService.cancelReservation(reservationId);
+
+            if (isCanceled) {
+                chatService.inactivateChatRoom(reservationId);
+
+                return ResponseEntity.ok("예약이 성공적으로 취소되었습니다.");
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 예약을 찾을 수 없습니다.");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("예약 취소 중 오류가 발생했습니다.");
+        }
+    }
 
     @PutMapping("/{reservationId}/confirm")
     public PaymentCompleteResDto confirmReservation(

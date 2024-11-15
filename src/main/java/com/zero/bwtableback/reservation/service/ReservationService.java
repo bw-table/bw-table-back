@@ -57,7 +57,7 @@ public class ReservationService {
          *
          * - 현재 예약 가능 인원수와 요청 예약 인원수 비교
          * - DB에 예약 가능 설정에서 차감된 수 저장
-          */
+         */
 
         Restaurant restaurant = restaurantRepository.findById(request.restaurantId())
                 .orElseThrow(() -> new CustomException(ErrorCode.RESTAURANT_NOT_FOUND));
@@ -162,6 +162,21 @@ public class ReservationService {
 //          FIXME  default -> throw new CustomException(ErrorCode.INVALID_RESERVATION_STATUS);
             default -> throw new RuntimeException("INVALID_RESERVATION_STATUS");
         };
+    }
+
+    /**
+     * 손님의 취소 요청
+      */
+    public boolean cancelReservation(Long reservationId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new CustomException(ErrorCode.RESERVATION_NOT_FOUND));
+        if (reservation == null) {
+            return false;
+        }
+        reservation.setReservationStatus(ReservationStatus.CUSTOMER_CANCELED);
+        reservationRepository.save(reservation);
+
+        return true;
     }
 
     // CUSTOMER_CANCELED 상태 처리
