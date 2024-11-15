@@ -114,8 +114,11 @@ public class ReviewService {
 
     // 리뷰 수정
     // TODO: 방문일 3일 이내에만 수정 가능하도록 하는 코드 추가
-    @Transactional
-    public ReviewResDto updateReview(Long reviewId, Long restaurantId, ReviewUpdateReqDto reqDto) {
+    public ReviewResDto updateReview(Long reviewId,
+                                     Long restaurantId,
+                                     ReviewUpdateReqDto reqDto,
+                                     MultipartFile[] images) throws IOException {
+
         Review review = findRestaurantAndReview(reviewId, restaurantId);
 
         Review updatedReview = review.toBuilder()
@@ -123,11 +126,13 @@ public class ReviewService {
                 .rating(reqDto.getRating() != null ? reqDto.getRating() : review.getRating())
                 .build();
 
-        if (reqDto.getImages() != null && !reqDto.getImages().isEmpty()) {
-            reviewImageRepository.deleteByReviewId(reviewId);
+        if (images != null && images.length > 0) {
+            imageUploadService.deleteExistingReviewImages(review);
 
             Set<ReviewImage> newImages = new HashSet<>();
-            for (String imageUrl: reqDto.getImages()) {
+
+            List<String> imageUrls = imageUploadService.uploadReviewImages(restaurantId, reviewId, images);
+            for (String imageUrl: imageUrls) {
                 newImages.add(new ReviewImage(imageUrl, updatedReview));
             }
 
@@ -147,7 +152,6 @@ public class ReviewService {
     }
 
     // 리뷰 삭제
-    @Transactional
     public void deleteReview(Long reviewId, Long restaurantId) {
         Review review = findRestaurantAndReview(reviewId, restaurantId);
 

@@ -48,8 +48,9 @@ public class ReviewController {
     @PutMapping("/{restaurantId}/reviews/{reviewId}")
     public ResponseEntity<ReviewResDto> updateReview(@PathVariable Long restaurantId,
                                                      @PathVariable Long reviewId,
-                                                     @RequestBody ReviewUpdateReqDto reqDto) {
-        ReviewResDto response = reviewService.updateReview(reviewId, restaurantId, reqDto);
+                                                     @RequestPart(value = "review") ReviewUpdateReqDto reqDto,
+                                                     @RequestPart(value = "images", required = false) MultipartFile[] images) throws IOException {
+        ReviewResDto response = reviewService.updateReview(reviewId, restaurantId, reqDto, images);
 
         return ResponseEntity.ok(response);
     }
