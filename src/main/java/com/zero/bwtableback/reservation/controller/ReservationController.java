@@ -1,9 +1,8 @@
 package com.zero.bwtableback.reservation.controller;
 
 import com.zero.bwtableback.chat.service.ChatService;
-import com.zero.bwtableback.reservation.dto.*;
-import com.zero.bwtableback.reservation.entity.ReservationStatus;
 import com.zero.bwtableback.payment.PaymentService;
+import com.zero.bwtableback.reservation.dto.*;
 import com.zero.bwtableback.reservation.service.ReservationService;
 import com.zero.bwtableback.security.MemberDetails;
 import lombok.RequiredArgsConstructor;
@@ -13,11 +12,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -83,18 +79,20 @@ public class ReservationController {
     @PostMapping("/complete")
     public ResponseEntity<?> completeReservation(@RequestBody PaymentDto paymentDto,
                                                  @AuthenticationPrincipal MemberDetails memberDetails
-                                                 ) {
+    ) {
         String email = memberDetails.getUsername();
 
-        // 결제 확인 및 최종 확정 로직
-        if (paymentService.verifyPayment(paymentDto)) {
-            reservationService.saveReservation(paymentDto, email);
+        if (paymentService.verifyPayment(paymentDto)) { // 아임포트 결제 검증
+            ReservationCompleteResDto response = reservationService.saveReservation(paymentDto, email);
+
             redisTemplate.delete("reservation:token:" + paymentDto.getReservationToken());
             // TODO 예약 확정으로 변경
+
             // TODO 채팅방 생성
+            chatService.createChatRoom(response.getReservation());
+
             // TODO 예약 확정 알림
-            // TODO 예약 완료 페이지에 전달할 정보 반환
-            return ResponseEntity.ok("예약이 완료되었습니다.");
+            return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.badRequest().body("결제 확인에 실패했습니다.");
         }

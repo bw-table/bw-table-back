@@ -10,17 +10,18 @@ import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.entity.ReservationStatus;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
 import com.zero.bwtableback.restaurant.dto.RestaurantInfoDto;
+import com.zero.bwtableback.restaurant.dto.RestaurantResDto;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
-
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -49,24 +50,23 @@ public class ReservationService {
         return ReservationResDto.fromEntity(savedReservation);
     }
 
-    public boolean checkReservationAvailability(ReservationCreateReqDto request){
-            //TODO 예약 가능 확인
+    public boolean checkReservationAvailability(ReservationCreateReqDto request) {
+        //TODO 예약 가능 확인
         return true;
     }
 
     /**
      * 결제 성공 시 예약 정보 저장
      */
-    public void saveReservation(PaymentDto paymentDto, String email){
+    public ReservationCompleteResDto saveReservation(PaymentDto paymentDto, String email) {
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // Redis에서 임시 예약 정보 조회 TODO ReservationCreateDto ReservationInfoDto로 통합
         Object redisValue = redisTemplate.opsForValue().get("reservation:token:" + paymentDto.getReservationToken());
         if (redisValue == null) {
             throw new RuntimeException("예약 토큰이 존재하지 않습니다.");
         }
-
         if (redisValue instanceof Map) {
             Map<String, Object> map = (Map<String, Object>) redisValue;
 
@@ -94,6 +94,11 @@ public class ReservationService {
                     .build();
 
             reservationRepository.save(reservation);
+
+            return new ReservationCompleteResDto(
+                    RestaurantResDto.fromEntity(restaurant),
+                    ReservationResDto.fromEntity(reservation)
+            );
         } else {
             throw new RuntimeException("레디스에 저장된 데이터 형식과 다릅니다.");
         }
