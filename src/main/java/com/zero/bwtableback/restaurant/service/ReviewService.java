@@ -1,5 +1,8 @@
 package com.zero.bwtableback.restaurant.service;
 
+import com.zero.bwtableback.common.service.ImageUploadService;
+import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.restaurant.dto.ReviewInfoDto;
 import com.zero.bwtableback.restaurant.dto.ReviewUpdateReqDto;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
@@ -16,7 +19,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -29,9 +35,15 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final RestaurantRepository restaurantRepository;
     private final ReviewImageRepository reviewImageRepository;
+    private final ImageUploadService imageUploadService;
+    private final MemberRepository memberRepository;
 
     // 리뷰 작성
-    public ReviewResDto createReview(Long restaurantId, ReviewReqDto reqDto) {
+    public ReviewResDto createReview(Long restaurantId, ReviewReqDto reqDto, MultipartFile[] images) throws IOException {
+
+        Member member = memberRepository.findById(reqDto.getMemberId())
+                .orElseThrow(() -> new EntityNotFoundException("Member not found with id: " + reqDto.getMemberId()));
+
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found with id: " + restaurantId));
 
@@ -39,17 +51,20 @@ public class ReviewService {
                 .content(reqDto.getContent())
                 .rating(reqDto.getRating())
                 .restaurant(restaurant)
+                .member(member)
                 .build();
+
         Review savedReview = reviewRepository.save(review);
 
-        Set<ReviewImage> images = new HashSet<>();
-        if (reqDto.getImages() != null && !reqDto.getImages().isEmpty()) {
-            for (String imageUrl: reqDto.getImages()) {
-                ReviewImage image = new ReviewImage(imageUrl, savedReview);
-                images.add(image);
-            }
+        Set<ReviewImage> reviewImages = new HashSet<>();
+        if (images != null && images.length > 0) {
+            List<String> imageUrls = imageUploadService.uploadReviewImages(restaurantId, savedReview.getId(), images);
 
-            reviewImageRepository.saveAll(images);
+            for (String imageUrl: imageUrls) {
+                ReviewImage reviewImage = new ReviewImage(imageUrl, savedReview);
+                reviewImages.add(reviewImage);
+            }
+            reviewImageRepository.saveAll(reviewImages);
         }
 
         ReviewResDto resDto = new ReviewResDto(
@@ -57,6 +72,7 @@ public class ReviewService {
                 restaurantId,
                 "Review and rating added successfully"
         );
+
         return resDto;
     }
 

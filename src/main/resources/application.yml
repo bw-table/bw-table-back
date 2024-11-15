@@ -22,7 +22,8 @@ spring:
       defer-datasource-initialization: true
       ddl-auto: update
     show-sql: true
-#  sql:  // data.sql 을 위한 설정
+#    database-platform: org.hibernate.dialect.MySQL8Dialect
+  #  sql:  // data.sql 을 위한 설정
 #    init:
 #      mode: always
   data:

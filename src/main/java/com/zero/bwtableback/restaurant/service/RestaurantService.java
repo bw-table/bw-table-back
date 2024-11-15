@@ -190,11 +190,16 @@ public class RestaurantService {
 
         Restaurant savedRestaurant = restaurantRepository.save(restaurant);
 
-        // 이미지 설정
+        // 이미지 임시 경로로 업로드
+        Set<String> tempImageUrls = new HashSet<>();
         if (reqDto.getImages() != null && reqDto.getImages().length > 0) {
-            Set<String> imageUrls = imageUploadService.uploadRestaurantImages(restaurant.getId(), reqDto.getImages());
-            assignImages(savedRestaurant, imageUrls);
+            tempImageUrls = imageUploadService.uploadRestaurantImages(reqDto.getImages());
+            assignImages(savedRestaurant, tempImageUrls);
         }
+
+        // 등록 후 임시 이미지 경로를 최종 경로로 이동
+        imageUploadService.moveRestaurantImagesToFinalPath(savedRestaurant.getId(), tempImageUrls);
+        imageUploadService.moveMenuImagesToFinalPath(savedRestaurant.getId(), savedRestaurant.getMenus());
 
         return savedRestaurant;
     }
@@ -342,7 +347,7 @@ public class RestaurantService {
 
             // 이미지가 있으면 S3 업로드 후 URL 받기
             if (images != null && images.length > i && images[i] != null) {
-                imageUrl = imageUploadService.uploadMenuImage(restaurant.getId(), dto.getId(), images[i]);
+                imageUrl = imageUploadService.uploadMenuImages(images[i]);
             }
 
             Menu menu = Menu.builder()
