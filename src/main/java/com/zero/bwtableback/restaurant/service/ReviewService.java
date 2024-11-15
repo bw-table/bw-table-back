@@ -53,12 +53,12 @@ public class ReviewService {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found with id: " + restaurantId));
 
-        Reservation reservation = reservationRepository.findByMemberAndRestaurantAndReservationDateBetween(
-                member, restaurant, LocalDate.now().minusDays(3), LocalDate.now())
-                .orElseThrow(() -> new EntityNotFoundException("No reservation found within the last 3 days"));
+        Reservation reservation = reservationRepository.findByMemberAndRestaurantAndReservationStatus(
+                member, restaurant, ReservationStatus.VISITED)
+                .orElseThrow(() -> new EntityNotFoundException("No reservation found"));
 
-        if (reservation.getReservationStatus() != ReservationStatus.VISITED) {
-            throw new IllegalArgumentException("You can write review only when you visited");
+        if (reservation.getReservationDate().isBefore(LocalDate.now().minusDays(3))) {
+            throw new IllegalArgumentException("You can only write a review within 3 days of reservation");
         }
 
         Review review = Review.builder()

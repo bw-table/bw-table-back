@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import com.zero.bwtableback.reservation.entity.ReservationStatus;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +19,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long>,
 
     Page<Reservation> findByMemberId(Long memberId, Pageable pageable);
 
-    Optional<Reservation> findByMemberAndRestaurantAndReservationDateBetween(
-            Member member, Restaurant restaurant, LocalDate startDate, LocalDate endDate);
+    Optional<Reservation> findByMemberAndRestaurantAndReservationStatus(
+            Member member, Restaurant restaurant, ReservationStatus reservationStatus);
 }
