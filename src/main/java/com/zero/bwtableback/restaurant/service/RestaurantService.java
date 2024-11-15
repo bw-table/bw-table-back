@@ -489,7 +489,7 @@ public class RestaurantService {
 //        Hashtag hashtagEntity = optionalHashtag.orElseThrow(() -> (
 //            new EntityNotFoundException("Hashtag not found")));
 
-        Page<Restaurant> restaurants = restaurantRepository.findByHashtags_NameContaining(hashtag, pageable);
+        Page<Restaurant> restaurants = restaurantRepository.findByHashtags_Name(hashtag, pageable);
 
         return restaurants.stream()
                 .map(this::convertToDto)

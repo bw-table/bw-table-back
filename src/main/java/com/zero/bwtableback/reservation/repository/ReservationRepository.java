@@ -1,8 +1,12 @@
 package com.zero.bwtableback.reservation.repository;
 
+import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
+
+import com.zero.bwtableback.restaurant.entity.Restaurant;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,4 +17,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long>,
     List<Reservation> findByReservationDate(LocalDate reservationDate);
 
     Page<Reservation> findByMemberId(Long memberId, Pageable pageable);
+
+    Optional<Reservation> findByMemberAndRestaurantAndReservationDateBetween(
+            Member member, Restaurant restaurant, LocalDate startDate, LocalDate endDate);
 }

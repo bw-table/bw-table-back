@@ -3,6 +3,9 @@ package com.zero.bwtableback.restaurant.service;
 import com.zero.bwtableback.common.service.ImageUploadService;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
+import com.zero.bwtableback.reservation.entity.Reservation;
+import com.zero.bwtableback.reservation.entity.ReservationStatus;
+import com.zero.bwtableback.reservation.repository.ReservationRepository;
 import com.zero.bwtableback.restaurant.dto.ReviewInfoDto;
 import com.zero.bwtableback.restaurant.dto.ReviewUpdateReqDto;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
@@ -17,11 +20,13 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -37,6 +42,7 @@ public class ReviewService {
     private final ReviewImageRepository reviewImageRepository;
     private final ImageUploadService imageUploadService;
     private final MemberRepository memberRepository;
+    private final ReservationRepository reservationRepository;
 
     // 리뷰 작성
     public ReviewResDto createReview(Long restaurantId, ReviewReqDto reqDto, MultipartFile[] images) throws IOException {
@@ -46,6 +52,14 @@ public class ReviewService {
 
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found with id: " + restaurantId));
+
+        Reservation reservation = reservationRepository.findByMemberAndRestaurantAndReservationDateBetween(
+                member, restaurant, LocalDate.now().minusDays(3), LocalDate.now())
+                .orElseThrow(() -> new EntityNotFoundException("No reservation found within the last 3 days"));
+
+        if (reservation.getReservationStatus() != ReservationStatus.VISITED) {
+            throw new IllegalArgumentException("You can write review only when you visited");
+        }
 
         Review review = Review.builder()
                 .content(reqDto.getContent())
@@ -113,7 +127,7 @@ public class ReviewService {
     }
 
     // 리뷰 수정
-    // TODO: 방문일 3일 이내에만 수정 가능하도록 하는 코드 추가
+    // TODO: 작성일 3일 이내에만 수정 가능하도록 하는 코드 추가
     public ReviewResDto updateReview(Long reviewId,
                                      Long restaurantId,
                                      ReviewUpdateReqDto reqDto,
@@ -152,11 +166,13 @@ public class ReviewService {
     }
 
     // 리뷰 삭제
-    public void deleteReview(Long reviewId, Long restaurantId) {
+    public ResponseEntity<String> deleteReview(Long reviewId, Long restaurantId) {
         Review review = findRestaurantAndReview(reviewId, restaurantId);
 
         reviewRepository.delete(review);
         reviewImageRepository.deleteByReviewId(reviewId);
+
+        return ResponseEntity.ok("Review deleted successfully");
     }
 
     // 레스토랑, 리뷰 검증
