@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReservationAvailabilityResult {
+public class ReservationAvailabilityDto {
     private boolean isAvailable;
     private String message;
 }

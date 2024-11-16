@@ -4,7 +4,7 @@ import com.zero.bwtableback.chat.service.ChatService;
 import com.zero.bwtableback.payment.PaymentService;
 import com.zero.bwtableback.reservation.dto.*;
 import com.zero.bwtableback.reservation.service.ReservationService;
-import com.zero.bwtableback.restaurant.dto.ReservationAvailabilityResult;
+import com.zero.bwtableback.restaurant.dto.ReservationAvailabilityDto;
 import com.zero.bwtableback.security.MemberDetails;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RLock;
@@ -43,16 +43,16 @@ public class ReservationController {
      * 3. 반환된 예약 토큰을 클라이언트에 전달하여 결제 시 사용
      */
     @PostMapping()
-    public ResponseEntity<?> requestReservation(@RequestBody ReservationCreateReqDto request) {
-        ReservationAvailabilityResult result = reservationService.checkReservationAvailability(request);
+    public ResponseEntity<?> requestReservation(@RequestBody ReservationCreateReqDto request,
+                                                @AuthenticationPrincipal MemberDetails memberDetails) {
+        ReservationAvailabilityDto availability = reservationService.checkReservationAvailability(request);
 
-        // TODO redis로 가능 인원 관리
-        if (result.isAvailable()) {
+        if (availability.isAvailable()) {
             String reservationToken = UUID.randomUUID().toString();
             redisTemplate.opsForValue().set("reservation:token:" + reservationToken, request, 5, TimeUnit.MINUTES);
             return ResponseEntity.ok(reservationToken);
         } else {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(result.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(availability.getMessage());
         }
     }
 
@@ -68,45 +68,44 @@ public class ReservationController {
      */
     @PostMapping("/complete")
     public ResponseEntity<?> completeReservation(@RequestBody PaymentResDto paymentResDto,
-                                                 @AuthenticationPrincipal MemberDetails memberDetails
-    ) {
-        String email = memberDetails.getUsername();
+                                                 @AuthenticationPrincipal MemberDetails memberDetails) {
         ReservationCreateReqDto reservationInfo = reservationService.getReservationInfo(paymentResDto.getReservationToken());
 
         if (paymentService.verifyPaymentAndSave(paymentResDto)) {
             String lockKey = "lock:reservation:" + reservationInfo.restaurantId() + ":" + reservationInfo.reservationDate() + ":" + reservationInfo.reservationTime();
             RLock lock = redissonClient.getLock(lockKey);
 
+            ReservationCompleteResDto response = null;
             try {
                 if (lock.tryLock(5, TimeUnit.SECONDS)) {
                     try {
-                        // DB 예약 가능 인원 수 차감
-                        ReservationCompleteResDto response = reservationService.reduceReservedCount(reservationInfo, email);
+                        // DB 예약 가능 인원 수 차감 및 예약 정보 저장
+                        response = reservationService.reduceReservedCount(reservationInfo, memberDetails.getUsername());
 
-                        // TODO DB 예약 정보 저장 분리 필요 여부 판단
-
+                        // Redis에서 임시 예약 정보 삭제
+                        redisTemplate.delete("reservation:token:" + paymentResDto.getReservationToken());
+                    } finally {
+                        lock.unlock(); // 락 해제
+                    }
+                    if (response != null) {
                         // 채팅방 생성
                         chatService.createChatRoom(response.getReservation());
 
                         // TODO 예약 확정 알림 전송
-
-                        // Redis에서 임시 예약 정보 삭제
-                        redisTemplate.delete("reservation:token:" + paymentResDto.getReservationToken());
-
-                        return ResponseEntity.ok(response);
-                    } finally {
-                        lock.unlock();
                     }
+                    return ResponseEntity.ok(response);
                 } else {
                     return ResponseEntity.status(HttpStatus.CONFLICT).body("다른 예약 처리 중입니다. 잠시 후 다시 시도해주세요.");
                 }
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+                reservationService.restoreReservedCount(reservationInfo);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("예약 처리 중 오류가 발생했습니다.");
             }
         } else {
             // TODO 결제 실패 시 처리
-            // TODO 임시 예약 시 인원수 복구
+            // TODO 예약 실패 알림 전송
+            // 결제 실패 시 예약 가능 인원수 복구
+            reservationService.restoreReservedCount(reservationInfo);
             return ResponseEntity.badRequest().body("결제 확인에 실패했습니다.");
         }
     }
@@ -116,19 +115,11 @@ public class ReservationController {
      * - 채팅방 비활성화
      * - 예약 상태 변경 - CANCELED
      */
-    @PutMapping("/{reservationId}")
-    public ResponseEntity<?> cancelReservation(@PathVariable Long reservationId) {
+    @PutMapping("/{reservationId}/cancel")
+    public ResponseEntity<?> cancelReservation(@PathVariable Long reservationId,
+                                               @AuthenticationPrincipal MemberDetails memberDetails) {
         try {
-            boolean isCanceled = reservationService.cancelReservation(reservationId);
-
-            if (isCanceled) {
-                chatService.inactivateChatRoom(reservationId);
-                // TODO 환불 규정에 따른 환불
-                // TODO 예약 취소 알림
-                return ResponseEntity.ok("예약이 성공적으로 취소되었습니다.");
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 예약을 찾을 수 없습니다.");
-            }
+            return ResponseEntity.ok(reservationService.cancelReservation(reservationId, memberDetails.getMemberId()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("예약 취소 중 오류가 발생했습니다.");
         }
@@ -149,5 +140,4 @@ public class ReservationController {
             @AuthenticationPrincipal MemberDetails memberDetails) {
         return reservationService.updateReservationStatus(statusUpdateDto, reservationId, memberDetails.getMemberId());
     }
-
 }

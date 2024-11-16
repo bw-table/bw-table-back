@@ -7,9 +7,11 @@ import com.zero.bwtableback.payment.entity.PaymentEntity;
 import com.zero.bwtableback.payment.entity.PaymentStatus;
 import com.zero.bwtableback.reservation.dto.PaymentResDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
@@ -43,10 +45,12 @@ public class PaymentService {
 
                 return true;
             } else {
-                throw new RuntimeException("결제 정보가 없습니다.");
+                log.error("결제 정보가 없습니다.");
+                return false;
             }
         } catch (Exception e) {
-            throw new RuntimeException("결제 검증 중 오류가 발생했습니다: " + e.getMessage());
+            log.error("결제 검증 중 오류가 발생했습니다: " + e.getMessage());
+            return false;
         }
     }
 

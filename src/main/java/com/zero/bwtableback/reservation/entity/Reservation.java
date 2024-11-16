@@ -41,7 +41,7 @@ public class Reservation extends BaseEntity {
 
     @ManyToOne
     @JoinColumn(updatable = false, nullable = false)
-    private Member member;
+    private Member member; // 손님
 
     @Column(nullable = false)
     private LocalDate reservationDate;

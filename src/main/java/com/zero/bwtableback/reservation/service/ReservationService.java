@@ -1,15 +1,18 @@
 package com.zero.bwtableback.reservation.service;
 
+import com.zero.bwtableback.chat.service.ChatService;
 import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.repository.MemberRepository;
+import com.zero.bwtableback.payment.PaymentService;
 import com.zero.bwtableback.reservation.dto.*;
 import com.zero.bwtableback.reservation.entity.NotificationType;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.entity.ReservationStatus;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
-import com.zero.bwtableback.restaurant.dto.ReservationAvailabilityResult;
+import com.zero.bwtableback.restaurant.dto.ReservationAvailabilityDto;
 import com.zero.bwtableback.restaurant.dto.RestaurantInfoDto;
 import com.zero.bwtableback.restaurant.dto.RestaurantResDto;
 import com.zero.bwtableback.restaurant.entity.*;
@@ -42,20 +45,26 @@ public class ReservationService {
 
     private final NotificationScheduleService notificationScheduleService;
     private final RestaurantService restaurantService;
+    private final PaymentService paymentService;
+    private final ChatService chatService;
 
     private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Integer> integerRedisTemplate;
 
     public ReservationResDto getReservationById(Long reservationId) {
         Reservation reservation = findReservationById(reservationId);
         return ReservationResDto.fromEntity(reservation);
     }
 
-    public ReservationAvailabilityResult checkReservationAvailability(ReservationCreateReqDto request) {
+    /**
+     * 예약 가능 여부 확인
+     */
+    public ReservationAvailabilityDto checkReservationAvailability(ReservationCreateReqDto request) {
         try {
             LocalDate today = LocalDate.now();
             // 현재 날짜 이전 및 당일 예약 불가
             if (request.reservationDate().isBefore(today) || request.reservationDate().isEqual(today)) {
-                return new ReservationAvailabilityResult(false, "현재 날짜 이전 및 당일 예약은 불가능합니다.");
+                return new ReservationAvailabilityDto(false, "현재 날짜 이전 및 당일 예약은 불가능합니다.");
             }
 
             restaurantRepository.findById(request.restaurantId())
@@ -68,19 +77,28 @@ public class ReservationService {
             // 시간대 설정 확인
             TimeslotSetting timeslotSetting = findTimeslotSetting(weekdaySetting, request.reservationTime());
 
-            // 현재 예약된 인원 수 조회
-            int currentReservedCount = getReservedCount(request);
+            String currentCountKey = String.format("reservation:currentCount:%d:%s:%s",
+                    request.restaurantId(),
+                    request.reservationDate(),
+                    request.reservationTime());
 
-            // 예약 가능 여부 확인
-            int maxCapacity = timeslotSetting.getMaxCapacity();
-
-            if (currentReservedCount + request.numberOfPeople() > maxCapacity) {
-                return new ReservationAvailabilityResult(false, "예약 가능 인원을 초과했습니다.");
+            if (integerRedisTemplate.opsForValue().get(currentCountKey) == null) {
+                integerRedisTemplate.opsForValue().set(currentCountKey, timeslotSetting.getMaxCapacity());
             }
 
-            return new ReservationAvailabilityResult(true, "예약 가능합니다.");
+            Integer availableReservedCount = integerRedisTemplate.opsForValue().get(currentCountKey); // 현재 예약 가능 수
+
+            // 예약 가능 여부 확인
+            if (request.numberOfPeople() > availableReservedCount) {
+                return new ReservationAvailabilityDto(false, "예약 가능 인원을 초과했습니다.");
+            }
+
+            // 현재 가능 인원 갱신
+            integerRedisTemplate.opsForValue().set(currentCountKey, availableReservedCount - request.numberOfPeople());
+
+            return new ReservationAvailabilityDto(true, "예약 가능합니다.");
         } catch (CustomException e) {
-            return new ReservationAvailabilityResult(false, e.getMessage());
+            return new ReservationAvailabilityDto(false, e.getMessage());
         }
     }
 
@@ -136,6 +154,9 @@ public class ReservationService {
             throw new IllegalArgumentException("예약 가능 인원을 초과했습니다. (현재 예약 가능 인원: " + (maxCapacity - reservedCount) + ")");
         }
 
+        timeslotSetting.setMaxCapacity(maxCapacity - reservedCount);
+        timeslotSettingRepository.save(timeslotSetting);
+
         Restaurant restaurant = restaurantRepository.findById(reservationInfo.restaurantId())
                 .orElseThrow(() -> new CustomException(ErrorCode.RESTAURANT_NOT_FOUND));
         Member member = memberRepository.findByEmail(email)
@@ -166,6 +187,7 @@ public class ReservationService {
                 .orElseThrow(() -> new CustomException(ErrorCode.TIMESLOT_SETTING_NOT_FOUND));
     }
 
+    // 해당 식당의 날짜, 시간대에 예약된 인원수
     private int getReservedCount(ReservationCreateReqDto reservationInfo) {
         return reservationRepository.countReservedPeopleByRestaurantAndDateTime(
                 reservationInfo.restaurantId(),
@@ -237,15 +259,17 @@ public class ReservationService {
     }
 
     /**
-     * 예약 복구
+     * 결제 실패 시 카운트 복구 (redis)
      */
-//    public void restoreSeats(ReservationCreateReqDto request) {
-//        Reservation reservation = reservationRepository.findById(request.getReservationId())
-//                .orElseThrow(() -> new IllegalArgumentException("해당 예약을 찾을 수 없습니다."));
-//
-//        reservation.setAvailableSeats(reservation.getAvailableSeats() + request.getNumberOfPeople());
-//        reservationRepository.save(reservation);
-//    }
+    public void restoreReservedCount(ReservationCreateReqDto reservationInfo) {
+        String availableCountKey = String.format("reservation:currentCount:%d:%s:%s",
+                reservationInfo.restaurantId(),
+                reservationInfo.reservationDate(),
+                reservationInfo.reservationTime());
+
+        Integer CurrentCountKey = integerRedisTemplate.opsForValue().get(availableCountKey);
+        redisTemplate.opsForValue().set(availableCountKey, CurrentCountKey + reservationInfo.numberOfPeople());
+    }
 
     // CONFIRMED 상태 업데이트
     public PaymentCompleteResDto confirmReservation(Long
@@ -302,16 +326,30 @@ public class ReservationService {
     /**
      * 손님의 취소 요청
      */
-    public boolean cancelReservation(Long reservationId) {
+    public String cancelReservation(Long reservationId, Long memberId) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESERVATION_NOT_FOUND));
-        if (reservation == null) {
-            return false;
-        }
-        reservation.setReservationStatus(ReservationStatus.CUSTOMER_CANCELED);
-        reservationRepository.save(reservation);
 
-        return true;
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 손님 역할일 경우 본인 예약 확인
+        if (member.getRole() == Role.GUEST) {
+            if (!reservation.getMember().getId().equals(memberId)) {
+                throw new CustomException(ErrorCode.UNAUTHORIZED_ACCESS); // 본인 예약이 아닐 경우 예외 발생
+            }
+            handleCustomerCanceledStatus(reservation);
+        } else { // 사장 역할일 경우 본인 가게의 예약 확인
+            if (!reservation.getRestaurant().getId().equals(member.getRestaurant().getId())) {
+                throw new CustomException(ErrorCode.UNAUTHORIZED_ACCESS); // 본인 가게의 예약이 아닐 경우 예외 발생
+            }
+            handleOwnerCanceledStatus(reservation);
+        }
+
+        // 채팅방 비활성화
+        chatService.inactivateChatRoom(reservationId);
+
+        return "예약이 성공적으로 취소되었습니다.";
     }
 
     // CUSTOMER_CANCELED 상태 처리
