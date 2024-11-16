@@ -529,6 +529,12 @@ public class RestaurantService {
         }
     }
 
+    // 특정 편의시설을 가진 식당 조회
+    public List<Restaurant> getRestaurantsByFacility(FacilityType facilityType, Pageable pageable) {
+        // 'EVENT_SPACE' 시설을 가진 Facility를 가진 식당들을 찾아 반환
+        return restaurantRepository.findByFacilities_FacilityType(facilityType, pageable);
+    }
+
     // 식당 상세정보 조회
     public RestaurantInfoDto getRestaurantById(Long id) {
         Restaurant restaurant = restaurantRepository.findById(id)
