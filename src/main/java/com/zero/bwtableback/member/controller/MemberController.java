@@ -113,10 +113,8 @@ public class MemberController {
     @PostMapping("/profile-image")
     public ResponseEntity<Map<String, String>> uploadFile(@AuthenticationPrincipal MemberDetails memberDetails,
                                                           @RequestParam("file") MultipartFile file) {
-        String email = memberDetails.getUsername();
-
         try {
-            String fileUrl = imageUploadService.uploadProfileImage(file, email);
+            String fileUrl = imageUploadService.uploadProfileImage(file, memberDetails.getMemberId());
 
             Map<String, String> response = new HashMap<>();
             response.put("imageUrl", fileUrl);
@@ -163,9 +161,23 @@ public class MemberController {
 
     /**
      * 이미지 수정
+     * 기존 이미지 삭제 (S3)
+     * 새로운 이미지 업로드 (S3)
      */
+    @PutMapping("/profile-image/update")
+    public ResponseEntity<?> updateProfileImage(@AuthenticationPrincipal MemberDetails memberDetails,
+                                                @RequestParam("file") MultipartFile file) throws IOException {
+        return ResponseEntity.ok(imageUploadService.updateProfileImage(file, memberDetails.getMemberId()));
+    }
 
     /**
-     * TODO 이미지 삭제
+     * 이미지 삭제
+     * S3 이미지 삭제
+     * DB에서 삭제
      */
+    @DeleteMapping("/profile-image/delete")
+    public ResponseEntity<?> removeProfileImage(@AuthenticationPrincipal MemberDetails memberDetails) throws IOException {
+        imageUploadService.deleteFileFromDB(memberDetails.getMemberId());
+        return ResponseEntity.noContent().build();
+    }
 }

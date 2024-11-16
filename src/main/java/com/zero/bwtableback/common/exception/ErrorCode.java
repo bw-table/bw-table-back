@@ -58,6 +58,9 @@ public enum ErrorCode {
     NOTIFICATION_ALREADY_SENT(HttpStatus.BAD_REQUEST, "이미 전송된 알림입니다."),
     NOTIFICATION_SCHEDULED_TIME_NOT_REACHED(HttpStatus.BAD_REQUEST, "예정된 전송 시간이 아닙니다."),
 
+    // 이미지 업로드 관련 오류
+    FILE_UPLOAD_FAILED(HttpStatus.BAD_REQUEST, "파일 업로드에 실패했습니다."),
+    FILE_DELETE_FAILED(HttpStatus.BAD_REQUEST, "파일 삭제에 실패하였습니다."),
     // 기타 오류
     UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
