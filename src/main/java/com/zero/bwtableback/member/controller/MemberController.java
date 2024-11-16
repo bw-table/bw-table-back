@@ -110,7 +110,7 @@ public class MemberController {
     /**
      * 프로필 이미지 업로드 (S3)
      */
-    @PostMapping("/profile-image")
+    @PostMapping("/me/profile-image")
     public ResponseEntity<Map<String, String>> uploadFile(@AuthenticationPrincipal MemberDetails memberDetails,
                                                           @RequestParam("file") MultipartFile file) {
         try {
@@ -164,7 +164,7 @@ public class MemberController {
      * 기존 이미지 삭제 (S3)
      * 새로운 이미지 업로드 (S3)
      */
-    @PutMapping("/profile-image/update")
+    @PutMapping("/me/profile-image")
     public ResponseEntity<?> updateProfileImage(@AuthenticationPrincipal MemberDetails memberDetails,
                                                 @RequestParam("file") MultipartFile file) throws IOException {
         return ResponseEntity.ok(imageUploadService.updateProfileImage(file, memberDetails.getMemberId()));
@@ -175,7 +175,7 @@ public class MemberController {
      * S3 이미지 삭제
      * DB에서 삭제
      */
-    @DeleteMapping("/profile-image/delete")
+    @DeleteMapping("/me/profile-image")
     public ResponseEntity<?> removeProfileImage(@AuthenticationPrincipal MemberDetails memberDetails) throws IOException {
         imageUploadService.deleteFileFromDB(memberDetails.getMemberId());
         return ResponseEntity.noContent().build();
