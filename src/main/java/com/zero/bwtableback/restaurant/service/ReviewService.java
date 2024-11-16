@@ -102,7 +102,7 @@ public class ReviewService {
                 .collect(Collectors.toList());
     }
 
-    // 리뷰 상세 조회
+    // 리뷰 상세 조회 (필요없음)
     public ReviewInfoDto getReviewById(Long id) {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Review not found with id: " + id));
@@ -123,6 +123,9 @@ public class ReviewService {
                 .createdAt(review.getCreatedAt())
                 .updatedAt(review.getUpdatedAt())
                 .restaurantId(review.getRestaurant().getId())
+                .memberId(review.getMember().getId())
+                .memberProfileImage(review.getMember().getProfileImage())
+                .memberNickname(review.getMember().getNickname())
                 .build();
     }
 

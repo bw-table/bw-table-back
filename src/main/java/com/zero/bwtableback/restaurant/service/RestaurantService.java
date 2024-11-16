@@ -603,7 +603,10 @@ public class RestaurantService {
                                 .collect(Collectors.toList()),
                         review.getCreatedAt(),
                         review.getUpdatedAt(),
-                        review.getRestaurant().getId()))
+                        review.getRestaurant().getId(),
+                        review.getMember().getId(),
+                        review.getMember().getProfileImage(),
+                        review.getMember().getNickname()))
                 .collect(Collectors.toList());
 
         return RestaurantInfoDto.builder()

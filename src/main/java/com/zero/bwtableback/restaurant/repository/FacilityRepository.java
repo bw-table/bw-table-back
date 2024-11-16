@@ -13,6 +13,4 @@ import java.util.Optional;
 public interface FacilityRepository extends JpaRepository<Facility, Long> {
 
     Optional<Facility> findByFacilityType(FacilityType type);
-
-    List<RestaurantListDto> findRestaurantsByFacilityType(FacilityType facilityType);
 }
