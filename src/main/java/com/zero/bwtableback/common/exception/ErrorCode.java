@@ -35,6 +35,11 @@ public enum ErrorCode {
     INVALID_RESERVATION_DATE(HttpStatus.BAD_REQUEST, "현재보다 과거의 날짜는 예약이 불가합니다."),
     INVALID_RESERVATION_TIME(HttpStatus.BAD_REQUEST, "현재보다 과거의 시간은 예약이 불가합니다."),
 
+    // 예약 설정 관련 에러 코드
+    RESERVATION_SETTING_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 레스토랑의 유효한 예약 설정을 찾을 수 없습니다."),
+    WEEKDAY_SETTING_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 날짜의 요일 설정을 찾을 수 없습니다."),
+    TIMESLOT_SETTING_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 시간대의 예약 설정을 찾을 수 없습니다."),
+
     // 예약 내역 조회 관련 오류
     RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 예약을 찾을 수 없습니다."),
     RESTAURANT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 가게를 찾을 수 없습니다."),

@@ -9,14 +9,19 @@ import com.zero.bwtableback.reservation.entity.NotificationType;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.entity.ReservationStatus;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
+import com.zero.bwtableback.restaurant.dto.ReservationAvailabilityResult;
 import com.zero.bwtableback.restaurant.dto.RestaurantInfoDto;
 import com.zero.bwtableback.restaurant.dto.RestaurantResDto;
-import com.zero.bwtableback.restaurant.entity.Restaurant;
+import com.zero.bwtableback.restaurant.entity.*;
+import com.zero.bwtableback.restaurant.repository.ReservationSettingRepository;
 import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
+import com.zero.bwtableback.restaurant.repository.TimeslotSettingRepository;
+import com.zero.bwtableback.restaurant.repository.WeekdaySettingRepository;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -27,9 +32,14 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ReservationService {
 
+    private final MemberRepository memberRepository;
     private final ReservationRepository reservationRepository;
     private final RestaurantRepository restaurantRepository;
-    private final MemberRepository memberRepository;
+    private final ReservationSettingRepository reservationSettingRepository;
+    private final WeekdaySettingRepository weekdaySettingRepository;
+    private final TimeslotSettingRepository timeslotSettingRepository;
+
+
     private final NotificationScheduleService notificationScheduleService;
     private final RestaurantService restaurantService;
 
@@ -40,64 +50,147 @@ public class ReservationService {
         return ReservationResDto.fromEntity(reservation);
     }
 
-    // FIXME 사용 안함: 고객이 생성한 예약 정보를 저장
-    public ReservationResDto createReservation(ReservationCreateReqDto reservationCreateReqDto, Long memberId) {
-        Restaurant restaurant = findRestaurantById(reservationCreateReqDto.restaurantId());
-        Member member = findMemberById(memberId);
+    public ReservationAvailabilityResult checkReservationAvailability(ReservationCreateReqDto request) {
+        try {
+            LocalDate today = LocalDate.now();
+            // 현재 날짜 이전 및 당일 예약 불가
+            if (request.reservationDate().isBefore(today) || request.reservationDate().isEqual(today)) {
+                return new ReservationAvailabilityResult(false, "현재 날짜 이전 및 당일 예약은 불가능합니다.");
+            }
 
-        Reservation reservation = ReservationCreateReqDto.toEntity(reservationCreateReqDto, restaurant, member);
-        Reservation savedReservation = reservationRepository.save(reservation);
-        return ReservationResDto.fromEntity(savedReservation);
+            restaurantRepository.findById(request.restaurantId())
+                    .orElseThrow(() -> new CustomException(ErrorCode.RESTAURANT_NOT_FOUND));
+
+            // 예약 기간 설정 확인
+            ReservationSetting reservationSetting = findReservationSetting(request);
+            // 요일 설정 확인
+            WeekdaySetting weekdaySetting = findWeekdaySetting(reservationSetting, request.reservationDate());
+            // 시간대 설정 확인
+            TimeslotSetting timeslotSetting = findTimeslotSetting(weekdaySetting, request.reservationTime());
+
+            // 현재 예약된 인원 수 조회
+            int currentReservedCount = getReservedCount(request);
+
+            // 예약 가능 여부 확인
+            int maxCapacity = timeslotSetting.getMaxCapacity();
+
+            if (currentReservedCount + request.numberOfPeople() > maxCapacity) {
+                return new ReservationAvailabilityResult(false, "예약 가능 인원을 초과했습니다.");
+            }
+
+            return new ReservationAvailabilityResult(true, "예약 가능합니다.");
+        } catch (CustomException e) {
+            return new ReservationAvailabilityResult(false, e.getMessage());
+        }
     }
 
-    public boolean checkReservationAvailability(ReservationCreateReqDto request) {
+    /**
+     * 레디스에 임시 저장 예약 정보 반환
+     */
+    public ReservationCreateReqDto getReservationInfo(String reservationToken
+    ) {
+        String reservationKey = "reservation:token:" + reservationToken;
+        Object redisValue = redisTemplate.opsForValue().get(reservationKey);
 
-        /**
-         * TODO 현재 인원수 보다 작거나 같은지 확인, 가능성 확인
-         *
-         * - 현재 예약 가능 인원수와 요청 예약 인원수 비교
-         * - DB에 예약 가능 설정에서 차감된 수 저장
-         */
-        Restaurant restaurant = restaurantRepository.findById(request.restaurantId())
+        if (redisValue == null) {
+            throw new RuntimeException("예약 토큰이 존재하지 않습니다.");
+        }
+        if (redisValue instanceof Map) {
+            Map<String, Object> map = (Map<String, Object>) redisValue;
+
+            Long restaurantId = Long.valueOf(map.get("restaurantId").toString());
+            Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                    .orElseThrow(() -> new RuntimeException("Restaurant not found"));
+
+            List<Integer> dateList = (List<Integer>) map.get("reservationDate");
+            LocalDate reservationDate = LocalDate.of(dateList.get(0), dateList.get(1), dateList.get(2));
+
+            List<Integer> timeList = (List<Integer>) map.get("reservationTime");
+            LocalTime reservationTime = LocalTime.of(timeList.get(0), timeList.get(1));
+
+            int numberOfPeople = (Integer) map.get("numberOfPeople");
+            String specialRequest = (String) map.get("specialRequest");
+
+            return new ReservationCreateReqDto(
+                    restaurantId,
+                    reservationDate,
+                    reservationTime,
+                    numberOfPeople,
+                    specialRequest
+            );
+        } else {
+            throw new RuntimeException("예약 정보 형식이 올바르지 않습니다.");
+        }
+    }
+
+    @Transactional
+    public ReservationCompleteResDto reduceReservedCount(ReservationCreateReqDto reservationInfo, String email) {
+        ReservationSetting reservationSetting = findReservationSetting(reservationInfo);
+        WeekdaySetting weekdaySetting = findWeekdaySetting(reservationSetting, reservationInfo.reservationDate());
+        TimeslotSetting timeslotSetting = findTimeslotSetting(weekdaySetting, reservationInfo.reservationTime());
+
+        int maxCapacity = timeslotSetting.getMaxCapacity();
+        int reservedCount = getReservedCount(reservationInfo);
+
+        if (reservedCount + reservationInfo.numberOfPeople() > maxCapacity) {
+            throw new IllegalArgumentException("예약 가능 인원을 초과했습니다. (현재 예약 가능 인원: " + (maxCapacity - reservedCount) + ")");
+        }
+
+        Restaurant restaurant = restaurantRepository.findById(reservationInfo.restaurantId())
                 .orElseThrow(() -> new CustomException(ErrorCode.RESTAURANT_NOT_FOUND));
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        // 최대 수용 인원을 초과
-//        if (currentReservedCount + request.getNumberOfPeople() > MAX_CAPACITY) {
-//            return false;
-//        }
+        Reservation reservation = createReservation(reservationInfo, restaurant, member);
+        reservationRepository.save(reservation);
 
-        return true;
+        return new ReservationCompleteResDto(
+                RestaurantResDto.fromEntity(restaurant),
+                ReservationResDto.fromEntity(reservation)
+        );
     }
 
-    public void reduceReservedCount(ReservationCreateReqDto reservationInfo) {
-//        TimeslotSetting timeslotSetting = reservationRepository.findTimeslotSetting(
-//                reservationInfo.getRestaurantId(),
-//                reservationInfo.getReservationDate(),
-//                reservationInfo.getReservationTime()
-//        );
-//
-//        if (timeslotSetting != null) {
-//            // 현재 최대 수용 인원수에서 예약할 인원수를 차감
-//            int currentCapacity = timeslotSetting.getMaxCapacity();
-//            int reservedCount = timeslotSetting.getReservedCount(); // 현재 예약된 인원 수
-//
-//            if (reservedCount + reservationInfo.getNumberOfPeople() <= currentCapacity) {
-//                // 예약 가능하다면 예약된 인원 수를 증가시킴
-//                timeslotSetting.setReservedCount(reservedCount + reservationInfo.getNumberOfPeople());
-//                reservationRepository.save(timeslotSetting); // 변경 사항 저장
-//            } else {
-//                throw new IllegalArgumentException("예약 가능 인원을 초과했습니다.");
-//            }
-//        } else {
-//            throw new EntityNotFoundException("해당 시간대의 설정을 찾을 수 없습니다.");
-//        }
+    private ReservationSetting findReservationSetting(ReservationCreateReqDto reservationInfo) {
+        return reservationSettingRepository.findByRestaurantIdAndDateRange(reservationInfo.restaurantId(), reservationInfo.reservationDate())
+                .orElseThrow(() -> new CustomException(ErrorCode.RESERVATION_SETTING_NOT_FOUND));
+    }
 
+    private WeekdaySetting findWeekdaySetting(ReservationSetting reservationSetting, LocalDate date) {
+        DayOfWeek dayOfWeek = DayOfWeek.valueOf(date.getDayOfWeek().name());
+        return weekdaySettingRepository.findByReservationSettingIdAndDayOfWeek(reservationSetting.getId(), dayOfWeek)
+                .orElseThrow(() -> new CustomException(ErrorCode.WEEKDAY_SETTING_NOT_FOUND));
+    }
+
+    private TimeslotSetting findTimeslotSetting(WeekdaySetting weekdaySetting, LocalTime time) {
+        return timeslotSettingRepository.findByWeekdaySettingAndTimeslot(weekdaySetting, time)
+                .orElseThrow(() -> new CustomException(ErrorCode.TIMESLOT_SETTING_NOT_FOUND));
+    }
+
+    private int getReservedCount(ReservationCreateReqDto reservationInfo) {
+        return reservationRepository.countReservedPeopleByRestaurantAndDateTime(
+                reservationInfo.restaurantId(),
+                reservationInfo.reservationDate(),
+                reservationInfo.reservationTime()
+        );
+    }
+
+    private Reservation createReservation(ReservationCreateReqDto reservationInfo, Restaurant restaurant, Member member) {
+        return Reservation.builder()
+                .restaurant(restaurant)
+                .member(member)
+                .reservationDate(reservationInfo.reservationDate())
+                .reservationTime(reservationInfo.reservationTime())
+                .numberOfPeople(reservationInfo.numberOfPeople())
+                .specialRequest(reservationInfo.specialRequest())
+                .reservationStatus(ReservationStatus.CONFIRMED)
+                .build();
     }
 
     /**
      * 결제 성공 시 예약 정보 저장
      */
-    public ReservationCompleteResDto saveReservation(PaymentResDto paymentResDto, String email) {
+    public ReservationCompleteResDto saveReservation(PaymentResDto
+                                                             paymentResDto, String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
@@ -143,8 +236,20 @@ public class ReservationService {
         }
     }
 
+    /**
+     * 예약 복구
+     */
+//    public void restoreSeats(ReservationCreateReqDto request) {
+//        Reservation reservation = reservationRepository.findById(request.getReservationId())
+//                .orElseThrow(() -> new IllegalArgumentException("해당 예약을 찾을 수 없습니다."));
+//
+//        reservation.setAvailableSeats(reservation.getAvailableSeats() + request.getNumberOfPeople());
+//        reservationRepository.save(reservation);
+//    }
+
     // CONFIRMED 상태 업데이트
-    public PaymentCompleteResDto confirmReservation(Long reservationId, Long restaurantId, Long memberId) {
+    public PaymentCompleteResDto confirmReservation(Long
+                                                            reservationId, Long restaurantId, Long memberId) {
         Reservation reservation = findReservationById(reservationId);
         Member member = findMemberById(memberId);
 
@@ -167,9 +272,10 @@ public class ReservationService {
     }
 
     // CONFIRMED 제외한 나머지 상태 업데이트
-    public ReservationResDto updateReservationStatus(ReservationUpdateReqDto statusUpdateDto,
-                                                     Long reservationId,
-                                                     Long memberId) {
+    public ReservationResDto updateReservationStatus
+    (ReservationUpdateReqDto statusUpdateDto,
+     Long reservationId,
+     Long memberId) {
         Reservation reservation = findReservationById(reservationId);
         Member member = findMemberById(memberId);
 
@@ -209,7 +315,8 @@ public class ReservationService {
     }
 
     // CUSTOMER_CANCELED 상태 처리
-    private ReservationResDto handleCustomerCanceledStatus(Reservation reservation) {
+    private ReservationResDto handleCustomerCanceledStatus(Reservation
+                                                                   reservation) {
         if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED) {
             throw new CustomException(ErrorCode.INVALID_STATUS_CUSTOMER_CANCEL);
         }
@@ -226,7 +333,8 @@ public class ReservationService {
     }
 
     // OWNER_CANCELED 상태 처리
-    private ReservationResDto handleOwnerCanceledStatus(Reservation reservation) {
+    private ReservationResDto handleOwnerCanceledStatus(Reservation
+                                                                reservation) {
         if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED) {
             throw new CustomException(ErrorCode.INVALID_STATUS_OWNER_CANCEL);
         }
@@ -272,7 +380,8 @@ public class ReservationService {
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
     }
 
-    private boolean canCancelReservation(LocalDate reservationDate, LocalDate currentDate) {
+    private boolean canCancelReservation(LocalDate
+                                                 reservationDate, LocalDate currentDate) {
         return !reservationDate.minusDays(3).isBefore(currentDate);
     }
 }
