@@ -21,7 +21,7 @@ public class UpdateReqDto {
     private String impCode;
     private String category;
     private List<OperatingHoursDto> operatingHours;
-    private List<MenuRegisterDto> menus;
+    private List<MenuUpdateDto> menus;
     private List<String> facilities;
     private List<String> hashtags;
 //    private List<String> images;

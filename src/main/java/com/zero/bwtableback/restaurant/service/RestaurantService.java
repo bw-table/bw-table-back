@@ -359,6 +359,85 @@ public class RestaurantService {
         return restaurantRepository.save(restaurant);
     }
 
+    // 메뉴 수정
+    public void updateMenu(Restaurant restaurant, UpdateReqDto reqDto, Map<Long, MultipartFile> menuImagesToUpdate) throws IOException {
+        for (MenuUpdateDto menuUpdate : reqDto.getMenus()) {
+            // 메뉴를 찾기
+            Menu menu = restaurant.getMenus().stream()
+                    .filter(m -> m.getId().equals(menuUpdate.getId()))
+                    .findFirst()
+                    .orElseThrow(() -> new EntityNotFoundException("Menu not found"));
+
+            // 기존 메뉴를 바탕으로 빌더로 새 메뉴 객체를 생성
+            Menu updatedMenu = menu.toBuilder()
+                    .name(menuUpdate.getName() != null ? menuUpdate.getName() : menu.getName())
+                    .price(menuUpdate.getPrice() != null ? menuUpdate.getPrice() : menu.getPrice())
+                    .description(menuUpdate.getDescription() != null ? menuUpdate.getDescription() : menu.getDescription())
+                    .build();
+
+            // 메뉴 이미지 수정 (업데이트 요청에 이미지가 있으면 처리)
+            if (menuUpdate.getImage() != null) {
+                // 기존 이미지 삭제 (S3에서)
+                if (menu.getImageUrl() != null) {
+                    imageUploadService.deleteMenuImage(restaurant.getId(), menu.getId(), menu.getImageUrl());
+                }
+                // 새로운 이미지 업로드
+                String newImageUrl = imageUploadService.uploadMenuImage(restaurant.getId(), menu.getId(), menuUpdate.getImage());
+                updatedMenu = updatedMenu.toBuilder()
+                        .imageUrl(newImageUrl)
+                        .build();
+            } else if (menuUpdate.getDeleteImage() != null && menuUpdate.getDeleteImage()) {
+                // 이미지 삭제 요청이 있는 경우
+                if (menu.getImageUrl() != null) {
+                    imageUploadService.deleteMenuImage(restaurant.getId(), menu.getId(), menu.getImageUrl());
+                    updatedMenu = updatedMenu.toBuilder()
+                            .imageUrl(null)  // 이미지 URL을 null로 설정
+                            .build();
+                }
+            }
+
+            // 수정된 메뉴 정보 저장
+            menuRepository.save(updatedMenu);
+        }
+    }
+
+    // 메뉴 이미지 수정
+    public void updateMenuImages(Restaurant restaurant, Map<Long, MultipartFile> menuImagesToUpdate) throws IOException {
+        for (Map.Entry<Long, MultipartFile> entry : menuImagesToUpdate.entrySet()) {
+            Long menuId = entry.getKey();
+            MultipartFile newImage = entry.getValue();
+
+            // 메뉴 찾기
+            Menu menu = restaurant.getMenus().stream()
+                    .filter(m -> m.getId().equals(menuId))
+                    .findFirst()
+                    .orElseThrow(() -> new EntityNotFoundException("Menu not found"));
+
+            // 메뉴 삭제인 경우, 해당 이미지도 삭제
+            if (newImage == null) {
+                if (menu.getImageUrl() != null) {
+                    // 기존 메뉴 이미지 삭제 (S3에서)
+                    imageUploadService.deleteMenuImage(restaurant.getId(), menu.getId(), menu.getImageUrl());
+
+                    // 메뉴에서 이미지 URL null 처리
+                    menu.setImageUrl(null);
+                }
+            } else {
+                // 새로운 이미지가 있다면 기존 이미지 삭제 후 업로드
+                if (menu.getImageUrl() != null) {
+                    // 기존 이미지 삭제 (S3에서)
+                    imageUploadService.deleteMenuImage(restaurant.getId(), menu.getId(), menu.getImageUrl());
+                }
+
+                // 새로운 이미지 업로드
+                String newImageUrl = imageUploadService.uploadMenuImage(restaurant.getId(), menuId, newImage);
+
+                // 메뉴의 이미지 URL 업데이트
+                menu.setImageUrl(newImageUrl);
+            }
+        }
+    }
+
     // 이미지 업로드
     // TODO: 보류
 //    public void assignImages(Restaurant restaurant, List<String> imageUrls) {
