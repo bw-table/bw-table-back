@@ -13,6 +13,7 @@ import com.zero.bwtableback.restaurant.entity.ReviewImage;
 import com.zero.bwtableback.restaurant.repository.MenuRepository;
 import com.zero.bwtableback.restaurant.repository.RestaurantImageRepository;
 import com.zero.bwtableback.restaurant.repository.ReviewImageRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -213,16 +214,13 @@ public class ImageUploadService {
     }
 
     // 리뷰 이미지 삭제
-    public void deleteExistingReviewImages(Review review) throws IOException {
-        Set<ReviewImage> existingImages = review.getImages();
-        for (ReviewImage reviewImage: existingImages) {
-            String imageUrl = reviewImage.getImageUrl();
-            String imagePath = getImagePathFromUrl(imageUrl);
+    public void deleteReviewImageFile(Long imageId) {
+        ReviewImage image = reviewImageRepository.findById(imageId)
+                .orElseThrow(() -> new EntityNotFoundException("Review image not found"));
 
-            amazonS3Client.deleteObject(BUCKET_NAME, imagePath);
-        }
+        deleteFileFromS3(image.getImageUrl());
 
-        reviewImageRepository.deleteAll(existingImages);
+        reviewImageRepository.delete(image);
     }
 
     // URL에서 파일 경로 추출

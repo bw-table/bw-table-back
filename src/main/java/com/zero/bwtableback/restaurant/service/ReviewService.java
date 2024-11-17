@@ -26,7 +26,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -53,13 +57,13 @@ public class ReviewService {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found with id: " + restaurantId));
 
-        Reservation reservation = reservationRepository.findByMemberAndRestaurantAndReservationDateBetween(
-                member, restaurant, LocalDate.now().minusDays(3), LocalDate.now())
-                .orElseThrow(() -> new EntityNotFoundException("No reservation found within the last 3 days"));
-
-        if (reservation.getReservationStatus() != ReservationStatus.VISITED) {
-            throw new IllegalArgumentException("You can write review only when you visited");
-        }
+//        Reservation reservation = reservationRepository.findByMemberAndRestaurantAndReservationDateBetween(
+//                member, restaurant, LocalDate.now().minusDays(3), LocalDate.now())
+//                .orElseThrow(() -> new EntityNotFoundException("No reservation found within the last 3 days"));
+//
+//        if (reservation.getReservationStatus() != ReservationStatus.VISITED) {
+//            throw new IllegalArgumentException("You can write review only when you visited");
+//        }
 
         Review review = Review.builder()
                 .content(reqDto.getContent())
@@ -80,6 +84,9 @@ public class ReviewService {
             }
             reviewImageRepository.saveAll(reviewImages);
         }
+
+        // restaurant 평균 평점 update
+        updateRestaurantAverageRating(restaurant);
 
         ReviewResDto resDto = new ReviewResDto(
                 savedReview.getId(),
@@ -138,25 +145,52 @@ public class ReviewService {
 
         Review review = findRestaurantAndReview(reviewId, restaurantId);
 
+        // 리뷰 작성일 기준 3일 이내에만 수정 가능
+        LocalDate reviewDate = review.getCreatedAt().toLocalDate();
+
+        long daysBetween = ChronoUnit.DAYS.between(reviewDate, LocalDate.now());
+        if (daysBetween > 3) {
+            throw new IllegalArgumentException("You can only update reviews within 3 days of creation");
+        }
+
         Review updatedReview = review.toBuilder()
                 .content(reqDto.getContent() != null ? reqDto.getContent() : review.getContent())
                 .rating(reqDto.getRating() != null ? reqDto.getRating() : review.getRating())
                 .build();
 
-        if (images != null && images.length > 0) {
-            imageUploadService.deleteExistingReviewImages(review);
-
-            Set<ReviewImage> newImages = new HashSet<>();
-
-            List<String> imageUrls = imageUploadService.uploadReviewImages(restaurantId, reviewId, images);
-            for (String imageUrl: imageUrls) {
-                newImages.add(new ReviewImage(imageUrl, updatedReview));
+        // 삭제할 이미지가 있는 경우 기존 이미지 삭제
+        if (reqDto.getImageIdsToDelete() != null && !reqDto.getImageIdsToDelete().isEmpty()) {
+            for (Long imageId: reqDto.getImageIdsToDelete()) {
+                imageUploadService.deleteReviewImageFile(imageId);
             }
-
-            updatedReview = updatedReview.toBuilder()
-                    .images(newImages)
-                    .build();
         }
+
+        // 새로운 이미지를 추가할 경우
+        Set<ReviewImage> newImages = new HashSet<>();
+        if (images != null && images.length > 0) {
+            List<String> imageUrls = imageUploadService.uploadReviewImages(restaurantId, reviewId, images);
+
+            Set<ReviewImage> existingImages = review.getImages();
+            int currentImageCount = existingImages.size();
+            int availableSpace = 5 - currentImageCount;
+
+            for (String imageUrl: imageUrls) {
+                if (availableSpace <= 0) {
+                    break;
+                }
+
+                newImages.add(new ReviewImage(imageUrl, updatedReview));
+                availableSpace--;
+            }
+        }
+
+        // 기존 이미지와 새 이미지 리뷰에 반영
+        Set<ReviewImage> finalImages = new HashSet<>(review.getImages());
+        finalImages.addAll(newImages);
+
+        updatedReview = updatedReview.toBuilder()
+                .images(newImages)
+                .build();
 
         Review savedReview = reviewRepository.save(updatedReview);
 
@@ -191,5 +225,25 @@ public class ReviewService {
         }
 
         return review;
+    }
+
+    // 평균 평점 업데이트
+    private void updateRestaurantAverageRating(Restaurant restaurant) {
+        List<Review> reviews = reviewRepository.findByRestaurant(restaurant);
+
+        if (reviews.isEmpty()) {
+            restaurant.setAverageRating(0);
+        } else {
+            double average = reviews.stream()
+                    .mapToInt(Review::getRating)
+                    .average()
+                    .orElse(0);
+
+            BigDecimal roundedAverage = new BigDecimal(average).setScale(1, RoundingMode.HALF_UP);
+
+            restaurant.setAverageRating(roundedAverage.doubleValue());
+        }
+
+        restaurantRepository.save(restaurant);
     }
 }

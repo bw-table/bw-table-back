@@ -3,6 +3,9 @@ package com.zero.bwtableback.restaurant.service;
 import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
 import com.zero.bwtableback.chat.repository.ChatRoomRepository;
 import com.zero.bwtableback.common.service.ImageUploadService;
+import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.member.entity.Role;
+import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.restaurant.dto.*;
 import com.zero.bwtableback.restaurant.entity.*;
 import com.zero.bwtableback.restaurant.exception.RestaurantException;
@@ -16,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.swing.text.html.Option;
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,8 +35,10 @@ public class RestaurantService {
     private final RestaurantImageRepository restaurantImageRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ImageUploadService imageUploadService;
+    private final MemberRepository memberRepository;
 
     // 등록
+    // TODO 테스트 끝나면 응답형식 RegisterResDto로 수정 예정
 //    public Restaurant registerRestaurant(RegisterReqDto reqDto) {
 //        reqDto.validate();
 //
@@ -143,7 +149,14 @@ public class RestaurantService {
                                          List<MenuRegisterDto> menus,
                                          List<MultipartFile> menuImages) throws IOException {
 
-        reqDto.validate();
+        reqDto.validate();  // TODO 간단한 테스트 후 삭제 예정
+
+//        Member member = memberRepository.findById(memberId)
+//                .orElseThrow(() -> new EntityNotFoundException("Member not found"));
+//
+//        if (member.getRole() != Role.OWNER) {
+//            throw new AccessDeniedException("Only owners can register restaurants");
+//        }
 
         if (restaurantRepository.existsByAddress(reqDto.getAddress())) {
             throw new RestaurantException("Restaurant with this address already exists.");
