@@ -81,15 +81,7 @@ public class AnnouncementService {
         Announcement announcement = announcementRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Announcement not found"));
 
-        return new AnnouncementDetailDto(
-                announcement.getId(),
-                announcement.getTitle(),
-                announcement.getContent(),
-                announcement.isEvent(),
-                announcement.getRestaurant().getId(),
-                announcement.getCreatedAt(),
-                announcement.getUpdatedAt()
-        );
+        return convertToDto(announcement);
     }
 
     // 식당 공지 목록 조회

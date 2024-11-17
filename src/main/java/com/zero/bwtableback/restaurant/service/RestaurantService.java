@@ -3,8 +3,6 @@ package com.zero.bwtableback.restaurant.service;
 import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
 import com.zero.bwtableback.chat.repository.ChatRoomRepository;
 import com.zero.bwtableback.common.service.ImageUploadService;
-import com.zero.bwtableback.member.entity.Member;
-import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.restaurant.dto.*;
 import com.zero.bwtableback.restaurant.entity.*;
@@ -17,9 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.swing.text.html.Option;
 import java.io.IOException;
-import java.nio.file.AccessDeniedException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -144,7 +140,7 @@ public class RestaurantService {
 //        return savedRestaurant;
 //    }
 
-    public Restaurant registerRestaurant(RegisterReqDto reqDto,
+    public RestaurantResDto registerRestaurant(RestaurantReqDto reqDto,
                                          MultipartFile[] images,
                                          List<MenuRegisterDto> menus,
                                          List<MultipartFile> menuImages) throws IOException {
@@ -229,15 +225,19 @@ public class RestaurantService {
             }
         }
 
-        return savedRestaurant;
+        return new RestaurantResDto(
+                savedRestaurant.getId(),
+                savedRestaurant.getName(),
+                "Restaurant registered successfully"
+        );
     }
 
     // 식당 정보 수정
     // FIXME: 현재 확인용으로 Restaurant 객체 반환하도록 작성 -> 추후 응답객체 변경
-    public Restaurant updateRestaurant(Long id,
-                                       UpdateReqDto reqDto,
-                                       MultipartFile[] newImages,
-                                       List<MultipartFile> newMenuImages) throws IOException {
+    public RestaurantResDto updateRestaurant(Long id,
+                                             UpdateReqDto reqDto,
+                                             MultipartFile[] newImages,
+                                             List<MultipartFile> newMenuImages) throws IOException {
 
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
@@ -307,11 +307,6 @@ public class RestaurantService {
             restaurant.setHashtags(hashtags);
         }
 
-//        if (reqDto.getMenus() != null) {
-//            List<Menu> menus = assignMenu(reqDto.getMenus(), restaurant);
-//            restaurant.setMenus(menus);
-//        }
-
         if (reqDto.getOperatingHours() != null) {
             List<OperatingHours> operatingHours = assignOperatingHours(reqDto.getOperatingHours(), restaurant);
             restaurant.setOperatingHours(operatingHours);
@@ -338,7 +333,12 @@ public class RestaurantService {
             restaurantImageRepository.saveAll(images);
         }
 
-        return restaurantRepository.save(restaurant);
+        Restaurant updatedRestaurant = restaurantRepository.save(restaurant);
+        return new RestaurantResDto(
+                updatedRestaurant.getId(),
+                updatedRestaurant.getName(),
+                "Restaurant updated successfully"
+        );
     }
 
     // 메뉴 수정
@@ -394,19 +394,6 @@ public class RestaurantService {
             }
         }
     }
-
-    // 이미지 업로드
-    // TODO: 보류
-//    public void assignImages(Restaurant restaurant, List<String> imageUrls) {
-//        Set<RestaurantImage> images = imageUrls.stream()
-//                .map(imageUrl -> RestaurantImage.builder()
-//                        .imageUrl(imageUrl)
-//                        .restaurant(restaurant)
-//                        .build())
-//                .collect(Collectors.toSet());
-//
-//        restaurantImageRepository.saveAll(images);
-//    }
 
     // 카테고리 설정
     private Category assignCategory(String categoryType) {

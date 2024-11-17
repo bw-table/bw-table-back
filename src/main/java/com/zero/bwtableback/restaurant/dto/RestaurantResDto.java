@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class RegisterResDto {
+public class RestaurantResDto {
 
     private Long id;
     private String name;
