@@ -7,10 +7,7 @@ import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
-import com.zero.bwtableback.restaurant.entity.Restaurant;
-import com.zero.bwtableback.restaurant.entity.RestaurantImage;
-import com.zero.bwtableback.restaurant.entity.Review;
-import com.zero.bwtableback.restaurant.entity.ReviewImage;
+import com.zero.bwtableback.restaurant.entity.*;
 import com.zero.bwtableback.restaurant.repository.MenuRepository;
 import com.zero.bwtableback.restaurant.repository.RestaurantImageRepository;
 import com.zero.bwtableback.restaurant.repository.ReviewImageRepository;
@@ -196,15 +193,13 @@ public class ImageUploadService {
     }
 
     // 메뉴 이미지 삭제
-    public void deleteMenuImage(Long restaurantId, Long menuId, String imageUrl) throws IOException {
-        String imagePath = getImagePathFromUrl(imageUrl);
+    public void deleteMenuImage(Long restaurantId, Long menuId) throws IOException {
+        Menu menu = menuRepository.findById(menuId)
+                .orElseThrow(() -> new EntityNotFoundException("Menu not found"));
 
-        amazonS3Client.deleteObject(BUCKET_NAME, imagePath);
+        deleteFileFromS3(menu.getImageUrl());
 
-        menuRepository.findById(menuId).ifPresent(menu -> {
-            menu.setImageUrl(null);
-            menuRepository.save(menu);
-        });
+        menuRepository.deleteMenuImageByRestaurantAndMenuId(restaurantId, menuId);
     }
 
     // 리뷰 이미지 삭제

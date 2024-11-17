@@ -94,7 +94,7 @@ public class RestaurantController {
             @PathVariable("id") Long restaurantId,
             @RequestPart("restaurant") UpdateReqDto reqDto,
             @RequestPart(value = "images", required = false) MultipartFile[] images,
-            @RequestPart(value = "menuImages", required = false) Map<Long, MultipartFile> menuImages)
+            @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages)
                                                     throws IOException {
         Restaurant updatedRestaurant = restaurantService.updateRestaurant(restaurantId, reqDto, images, menuImages);
 

@@ -237,7 +237,7 @@ public class RestaurantService {
     public Restaurant updateRestaurant(Long id,
                                        UpdateReqDto reqDto,
                                        MultipartFile[] newImages,
-                                       Map<Long, MultipartFile> newMenuImages) throws IOException {
+                                       List<MultipartFile> newMenuImages) throws IOException {
 
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
@@ -317,6 +317,8 @@ public class RestaurantService {
             restaurant.setOperatingHours(operatingHours);
         }
 
+        updateMenu(restaurant, reqDto, newMenuImages);
+
         // 삭제할 이미지 처리
         if (reqDto.getImageIdsToDelete() != null && !reqDto.getImageIdsToDelete().isEmpty()) {
             for (Long imageId: reqDto.getImageIdsToDelete()) {
@@ -336,104 +338,59 @@ public class RestaurantService {
             restaurantImageRepository.saveAll(images);
         }
 
-        // 메뉴 이미지 처리
-        if (newMenuImages != null && !newMenuImages.isEmpty()) {
-            for (Map.Entry<Long, MultipartFile> entry: newMenuImages.entrySet()) {
-                Long menuId = entry.getKey();
-                MultipartFile file = entry.getValue();
-
-                Menu menu = restaurant.getMenus().stream()
-                        .filter(m -> m.getId().equals(menuId))
-                        .findFirst()
-                        .orElseThrow(() -> new EntityNotFoundException("Menu not found"));
-
-                if (menu.getImageUrl() != null) {
-                    imageUploadService.deleteMenuImage(restaurant.getId(), menu.getId(), menu.getImageUrl());
-                }
-
-                String imageUrl = imageUploadService.uploadMenuImage(restaurant.getId(), menuId, file);
-                menu.setImageUrl(imageUrl);
-            }
-        }
-
         return restaurantRepository.save(restaurant);
     }
 
     // 메뉴 수정
-    public void updateMenu(Restaurant restaurant, UpdateReqDto reqDto, Map<Long, MultipartFile> menuImagesToUpdate) throws IOException {
-        for (MenuUpdateDto menuUpdate : reqDto.getMenus()) {
-            // 메뉴를 찾기
+    public void updateMenu(Restaurant restaurant, UpdateReqDto reqDto, List<MultipartFile> menuImages) throws IOException {
+        for (int i = 0; i < reqDto.getMenus().size(); i++) {
+            MenuUpdateDto menuDto = reqDto.getMenus().get(i);
             Menu menu = restaurant.getMenus().stream()
-                    .filter(m -> m.getId().equals(menuUpdate.getId()))
+                    .filter(m -> m.getId().equals(menuDto.getId()))
                     .findFirst()
                     .orElseThrow(() -> new EntityNotFoundException("Menu not found"));
 
-            // 기존 메뉴를 바탕으로 빌더로 새 메뉴 객체를 생성
-            Menu updatedMenu = menu.toBuilder()
-                    .name(menuUpdate.getName() != null ? menuUpdate.getName() : menu.getName())
-                    .price(menuUpdate.getPrice() != null ? menuUpdate.getPrice() : menu.getPrice())
-                    .description(menuUpdate.getDescription() != null ? menuUpdate.getDescription() : menu.getDescription())
-                    .build();
+            Menu updatedMenu = menu;
 
-            // 메뉴 이미지 수정 (업데이트 요청에 이미지가 있으면 처리)
-            if (menuUpdate.getImage() != null) {
-                // 기존 이미지 삭제 (S3에서)
+            // 메뉴 정보 수정
+            if (menuDto.getName() != null && !menuDto.getName().equals(menu.getName())) {
+                updatedMenu = updatedMenu.toBuilder().name(menuDto.getName()).build();
+            }
+
+            if (menuDto.getPrice() != null && !menuDto.getPrice().equals(menu.getPrice())) {
+                updatedMenu = updatedMenu.toBuilder().price(menuDto.getPrice()).build();
+            }
+
+            if (menuDto.getDescription() != null && !menuDto.getDescription().equals(menu.getDescription())) {
+                updatedMenu = updatedMenu.toBuilder().description(menuDto.getDescription()).build();
+            }
+
+            menuRepository.save(updatedMenu);
+
+            // 기존 메뉴 이미지 삭제
+            if (menuDto.getDeleteImage() != null && menuDto.getDeleteImage()) {
                 if (menu.getImageUrl() != null) {
-                    imageUploadService.deleteMenuImage(restaurant.getId(), menu.getId(), menu.getImageUrl());
-                }
-                // 새로운 이미지 업로드
-                String newImageUrl = imageUploadService.uploadMenuImage(restaurant.getId(), menu.getId(), menuUpdate.getImage());
-                updatedMenu = updatedMenu.toBuilder()
-                        .imageUrl(newImageUrl)
-                        .build();
-            } else if (menuUpdate.getDeleteImage() != null && menuUpdate.getDeleteImage()) {
-                // 이미지 삭제 요청이 있는 경우
-                if (menu.getImageUrl() != null) {
-                    imageUploadService.deleteMenuImage(restaurant.getId(), menu.getId(), menu.getImageUrl());
-                    updatedMenu = updatedMenu.toBuilder()
-                            .imageUrl(null)  // 이미지 URL을 null로 설정
-                            .build();
+                    imageUploadService.deleteMenuImage(restaurant.getId(), menu.getId());
+                    menu.setImageUrl(null);
+                    menuRepository.save(menu); // 변경된 내용 저장
                 }
             }
 
-            // 수정된 메뉴 정보 저장
-            menuRepository.save(updatedMenu);
-        }
-    }
+            // 새로운 메뉴 이미지 추가
+            if (menuImages != null && !menuImages.isEmpty() && menuImages.size() > i) {
+                MultipartFile menuImage = menuImages.get(i);
 
-    // 메뉴 이미지 수정
-    public void updateMenuImages(Restaurant restaurant, Map<Long, MultipartFile> menuImagesToUpdate) throws IOException {
-        for (Map.Entry<Long, MultipartFile> entry : menuImagesToUpdate.entrySet()) {
-            Long menuId = entry.getKey();
-            MultipartFile newImage = entry.getValue();
+                if (menuImage != null) {
+                    // 기존 이미지 삭제
+                    if (menu.getImageUrl() != null) {
+                        imageUploadService.deleteMenuImage(restaurant.getId(), menu.getId());
+                    }
 
-            // 메뉴 찾기
-            Menu menu = restaurant.getMenus().stream()
-                    .filter(m -> m.getId().equals(menuId))
-                    .findFirst()
-                    .orElseThrow(() -> new EntityNotFoundException("Menu not found"));
-
-            // 메뉴 삭제인 경우, 해당 이미지도 삭제
-            if (newImage == null) {
-                if (menu.getImageUrl() != null) {
-                    // 기존 메뉴 이미지 삭제 (S3에서)
-                    imageUploadService.deleteMenuImage(restaurant.getId(), menu.getId(), menu.getImageUrl());
-
-                    // 메뉴에서 이미지 URL null 처리
-                    menu.setImageUrl(null);
+                    // 새 이미지 업로드
+                    String newImageUrl = imageUploadService.uploadMenuImage(restaurant.getId(), menu.getId(), menuImage);
+                    menu.setImageUrl(newImageUrl);
+                    menuRepository.save(menu);
                 }
-            } else {
-                // 새로운 이미지가 있다면 기존 이미지 삭제 후 업로드
-                if (menu.getImageUrl() != null) {
-                    // 기존 이미지 삭제 (S3에서)
-                    imageUploadService.deleteMenuImage(restaurant.getId(), menu.getId(), menu.getImageUrl());
-                }
-
-                // 새로운 이미지 업로드
-                String newImageUrl = imageUploadService.uploadMenuImage(restaurant.getId(), menuId, newImage);
-
-                // 메뉴의 이미지 URL 업데이트
-                menu.setImageUrl(newImageUrl);
             }
         }
     }
