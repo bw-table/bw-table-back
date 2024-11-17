@@ -317,12 +317,17 @@ public class RestaurantService {
             restaurant.setOperatingHours(operatingHours);
         }
 
-        if (newImages != null && newImages.length > 0) {
-            if (restaurant.getImages() != null && !restaurant.getImages().isEmpty()) {
-                imageUploadService.deleteExistingRestaurantImages(restaurant);
+        // 삭제할 이미지 처리
+        if (reqDto.getImageIdsToDelete() != null && !reqDto.getImageIdsToDelete().isEmpty()) {
+            for (Long imageId: reqDto.getImageIdsToDelete()) {
+                imageUploadService.deleteRestaurantImage(imageId);
             }
+        }
 
+        // 새로운 이미지 처리
+        if (newImages != null && newImages.length > 0) {
             Set<RestaurantImage> images = new HashSet<>();
+
             List<String> imageUrls = imageUploadService.uploadRestaurantImages(restaurant.getId(), newImages);
             for (String imageUrl: imageUrls) {
                 images.add(new RestaurantImage(imageUrl, restaurant));
@@ -331,6 +336,7 @@ public class RestaurantService {
             restaurantImageRepository.saveAll(images);
         }
 
+        // 메뉴 이미지 처리
         if (newMenuImages != null && !newMenuImages.isEmpty()) {
             for (Map.Entry<Long, MultipartFile> entry: newMenuImages.entrySet()) {
                 Long menuId = entry.getKey();

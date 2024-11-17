@@ -1,6 +1,7 @@
 package com.zero.bwtableback.common.service;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
@@ -76,7 +77,6 @@ public class ImageUploadService {
     /**
      * 메뉴 이미지
      * - 최대 1장
-     *  TODO 메뉴 아이디 받아야하는지 생각
      */
     public String uploadMenuImage(Long restaurantId, Long menuId, MultipartFile file) throws IOException {
         validateSingleImageFile(file);
@@ -186,19 +186,13 @@ public class ImageUploadService {
     }
 
     // 식당 이미지 삭제
-    public void deleteExistingRestaurantImages(Restaurant restaurant) throws IOException {
-        if (restaurant.getImages() != null && restaurant.getImages().isEmpty()) {
-            Set<RestaurantImage> existingImages = restaurant.getImages();
+    public void deleteRestaurantImage(Long imageId) {
+        RestaurantImage image = restaurantImageRepository.findById(imageId)
+                .orElseThrow(() -> new EntityNotFoundException("Restaurant image not found"));
 
-            for (RestaurantImage restaurantImage: existingImages) {
-                String imageUrl = restaurantImage.getImageUrl();
-                String imagePath = getImagePathFromUrl(imageUrl);
+        deleteFileFromS3(image.getImageUrl());
 
-                amazonS3Client.deleteObject(BUCKET_NAME, imagePath);
-            }
-
-        restaurantImageRepository.deleteAll(existingImages);
-        }
+        restaurantImageRepository.delete(image);
     }
 
     // 메뉴 이미지 삭제
@@ -230,5 +224,10 @@ public class ImageUploadService {
             return imageUrl.substring(baseUrl.length());
         }
         return imageUrl;
+    }
+
+    // URL에서 파일 이름 추출
+    private String getFileNameFromUrl(String imageUrl) {
+        return imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
     }
 }

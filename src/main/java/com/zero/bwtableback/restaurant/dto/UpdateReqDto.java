@@ -24,5 +24,6 @@ public class UpdateReqDto {
     private List<MenuRegisterDto> menus;
     private List<String> facilities;
     private List<String> hashtags;
-    private List<String> images;
+//    private List<String> images;
+    private List<Long> imageIdsToDelete;
 }
