@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  app:
+    image: blubincod/bwtable-server
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/bwtable-mysql
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATASOURCE_USERNAME: root  # MySQL 사용자 이름
+      SPRING_DATASOURCE_PASSWORD: 1  # MySQL 비밀번호
+
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      IMP_API_KEY: ${IMP_API_KEY}
+      IMP_API_SECRET: ${IMP_API_SECRET}
+      JWT_ACCESS_TOKEN_VALIDITY: ${JWT_ACCESS_TOKEN_VALIDITY}
+      JWT_REFRESH_TOKEN_VALIDITY: ${JWT_REFRESH_TOKEN_VALIDITY}
+      JWT_SECRET: ${JWT_SECRET}
+      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
+      KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      IMP_CODE: ${IMP_CODE}
+
+    depends_on:
+      - db
+      - redis
+    restart: on-failure
+    networks:
+      - app-network
+
+  db:
+    image: mysql:5.7
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: 1
+      MYSQL_DATABASE: bwtable-mysql
+    networks:
+      - app-network
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+networks:
+  app-network:
