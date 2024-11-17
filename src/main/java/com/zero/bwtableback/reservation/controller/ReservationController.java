@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -123,6 +124,29 @@ public class ReservationController {
         }
     }
 
+    /**
+     * 사장님의 방문 처리
+     */
+    @PutMapping("/{reservationId}/visited")
+    public PaymentCompleteResDto handleVisited(
+            @PathVariable Long reservationId,
+            @RequestParam Long restaurantId,
+            @AuthenticationPrincipal MemberDetails memberDetails) {
+        return reservationService.confirmReservation(reservationId, restaurantId, memberDetails.getMemberId());
+    }
+
+    /**
+     * 사장님의 노쇼 처리
+     */
+    @PutMapping("/{reservationId}/noshow")
+    public PaymentCompleteResDto handleNoShow(
+            @PathVariable Long reservationId,
+            @RequestParam Long restaurantId,
+            @AuthenticationPrincipal MemberDetails memberDetails) {
+        return reservationService.confirmReservation(reservationId, restaurantId, memberDetails.getMemberId());
+    }
+
+    // FIXME 사용 여부 확인
     @PutMapping("/{reservationId}/confirm")
     public PaymentCompleteResDto confirmReservation(
             @PathVariable Long reservationId,
@@ -135,7 +159,7 @@ public class ReservationController {
     public ReservationResDto updateReservationStatus(
             @PathVariable Long reservationId,
             @RequestBody ReservationUpdateReqDto statusUpdateDto,
-            @AuthenticationPrincipal MemberDetails memberDetails) {
+            @AuthenticationPrincipal MemberDetails memberDetails) throws IOException {
         return reservationService.updateReservationStatus(statusUpdateDto, reservationId, memberDetails.getMemberId());
     }
 }

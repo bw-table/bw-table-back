@@ -20,6 +20,8 @@ import com.zero.bwtableback.reservation.repository.ReservationRepository;
 import com.zero.bwtableback.restaurant.dto.RestaurantInfoDto;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
+
+import java.io.IOException;
 import java.time.LocalDate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -100,7 +102,7 @@ class ReservationServiceTest {
 
     @DisplayName("예약일 3일 전일 경우 고객이 예약을 취소할 수 있다")
     @Test
-    void givenConfirmedReservation_whenCustomerCancelWithin3Days_thenCancelSuccessfully() {
+    void givenConfirmedReservation_whenCustomerCancelWithin3Days_thenCancelSuccessfully() throws IOException {
         // given
         Long reservationId = 1L;
         Long restaurantId = 2L;

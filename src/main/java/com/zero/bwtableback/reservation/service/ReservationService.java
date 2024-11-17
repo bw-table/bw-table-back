@@ -26,6 +26,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -293,12 +294,11 @@ public class ReservationService {
 
     // CONFIRMED 제외한 나머지 상태 업데이트
     public ReservationResDto updateReservationStatus
-    (ReservationUpdateReqDto statusUpdateDto,
-     Long reservationId,
-     Long memberId) {
+    (ReservationUpdateReqDto statusUpdateDto, Long reservationId, Long memberId) throws IOException {
         Reservation reservation = findReservationById(reservationId);
         Member member = findMemberById(memberId);
 
+        // FIXME 예약의 member는 손님이고, 사장님이 방문 처리 사용 시 문제
         if (!member.getId().equals(reservation.getMember().getId())) {
             throw new CustomException(ErrorCode.UNAUTHORIZED_ACCESS);
         }
@@ -320,9 +320,9 @@ public class ReservationService {
     }
 
     /**
-     * 손님의 취소 요청
+     * 손님/가게의 취소 요청
      */
-    public String cancelReservation(Long reservationId, Long memberId) {
+    public String cancelReservation(Long reservationId, Long memberId) throws IOException {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESERVATION_NOT_FOUND));
 
@@ -350,7 +350,7 @@ public class ReservationService {
 
     // CUSTOMER_CANCELED 상태 처리
     private ReservationResDto handleCustomerCanceledStatus(Reservation
-                                                                   reservation) {
+                                                                   reservation) throws IOException {
         if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED) {
             throw new CustomException(ErrorCode.INVALID_STATUS_CUSTOMER_CANCEL);
         }
@@ -361,6 +361,7 @@ public class ReservationService {
         }
 
         // 환불 3일 전
+        paymentService.refundReservationDeposit(reservation.getId());
 
         reservation.setReservationStatus(ReservationStatus.CUSTOMER_CANCELED);
         notificationScheduleService.scheduleImmediateNotification(reservation, NotificationType.CANCELLATION);
@@ -370,13 +371,14 @@ public class ReservationService {
 
     // OWNER_CANCELED 상태 처리
     private ReservationResDto handleOwnerCanceledStatus(Reservation
-                                                                reservation) {
+                                                                reservation) throws IOException {
         if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED) {
             throw new CustomException(ErrorCode.INVALID_STATUS_OWNER_CANCEL);
         }
         reservation.setReservationStatus(ReservationStatus.OWNER_CANCELED);
 
         // 환불 3일 전
+        paymentService.refundReservationDeposit(reservation.getId());
 
         notificationScheduleService.scheduleImmediateNotification(reservation, NotificationType.CANCELLATION);
 
@@ -393,12 +395,11 @@ public class ReservationService {
         // 채팅방 비활성화
         chatService.inactivateChatRoom(reservation.getId());
 
-
         return ReservationResDto.fromEntity(reservation);
     }
 
     // VISITED 상태 처리
-    private ReservationResDto handleVisitedStatus(Reservation reservation) {
+    private ReservationResDto handleVisitedStatus(Reservation reservation) throws IOException {
         if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED) {
             throw new CustomException(ErrorCode.INVALID_STATUS_VISITED);
         }
@@ -407,6 +408,7 @@ public class ReservationService {
         chatService.inactivateChatRoom(reservation.getId());
 
         // 환불 전액
+        paymentService.refundReservationDeposit(reservation.getId());
 
         return ReservationResDto.fromEntity(reservation);
     }

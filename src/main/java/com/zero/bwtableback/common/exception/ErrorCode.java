@@ -65,7 +65,8 @@ public enum ErrorCode {
 
     // 기타 오류
     UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
+    INVALID_RESERVATION_STATUS(HttpStatus.BAD_REQUEST,"예약 상태가 유효하지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String detail;
