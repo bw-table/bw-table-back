@@ -8,6 +8,7 @@ import com.zero.bwtableback.restaurant.exception.RestaurantException;
 import com.zero.bwtableback.restaurant.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,9 @@ public class RestaurantService {
     private final RestaurantImageRepository restaurantImageRepository;
     private final AnnouncementRepository announcementRepository;
     private final ChatRoomRepository chatRoomRepository;
+
+    @Value("${IMP_CODE}")
+    private String impCode;
 
     // 등록
 //    @Transactional
@@ -164,7 +168,7 @@ public class RestaurantService {
                 .link(reqDto.getLink())
                 .info(reqDto.getInfo())
                 .deposit(reqDto.getDeposit())
-                .impCode(reqDto.getImpCode())
+                .impCode(impCode)
                 .category(category)
                 .images(new HashSet<>())
                 .operatingHours(new ArrayList<>())

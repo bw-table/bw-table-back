@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>예약 결제 테스트</title>
+    <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+</head>
+<body>
+<h1>예약 및 결제 테스트 페이지</h1>
+<div id="reservation-form">
+    <label for="restaurantId">레스토랑 ID:</label>
+    <input type="number" id="restaurantId" required><br>
+
+    <label for="date">날짜:</label>
+    <input type="date" id="date" required><br>
+
+    <label for="time">시간:</label>
+    <input type="time" id="time" required><br>
+
+    <label for="people">인원수:</label>
+    <input type="number" id="people" min="1" required><br>
+
+    <label for="special_request">요청사항:</label>
+    <input type="text" id="special_request"><br>
+
+    <button id="next-button">다음</button>
+</div>
+
+<div id="reservation-details" style="display:none;">
+    <h2>예약 정보 확인</h2>
+    <span id="details"></span><br>
+    <button id="confirm-button">확인</button>
+</div>
+
+<script>
+    let reservationToken = '';
+    let jwtToken = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJndWVzdEBleGFtcGxlLmNvbSIsInJvbGUiOiJHVUVTVCIsImlhdCI6MTczMTgyMjAyNCwiZXhwIjoxNzMxODIzODI0fQ.dqg3ot1E2e0lKk5xbILHxodW9FbaE0ZHp0zT_tqXyJyFLrCRDLHwRNVO4bfr64r2PiCr7z_ndgU7TXHowvSvRw';
+    let reservationData = {};
+
+    document.getElementById('next-button').addEventListener('click', function () {
+        reservationData = {
+            restaurantId: document.getElementById('restaurantId').value,
+            reservationDate: document.getElementById('date').value,
+            reservationTime: document.getElementById('time').value,
+            numberOfPeople: document.getElementById('people').value,
+            specialRequest: document.getElementById('special_request').value
+        };
+
+        document.getElementById('details').innerText = `
+            예약 날짜: ${reservationData.reservationDate}
+            예약 시간: ${reservationData.reservationTime}
+            인원수: ${reservationData.numberOfPeople}
+            요청사항: ${reservationData.specialRequest}
+        `;
+        document.getElementById('reservation-form').style.display = 'none';
+        document.getElementById('reservation-details').style.display = 'block';
+    });
+
+    document.getElementById('confirm-button').addEventListener('click', function () {
+        fetch('/api/reservations', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${jwtToken}`
+            },
+            body: JSON.stringify(reservationData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text);
+                    });
+                }
+                return response.text();
+            })
+            .then(data => {
+                console.log(data);
+                reservationToken = data.trim();
+
+                if (reservationToken && reservationToken.length === 36) {
+                    // 결제 프로세스 시작
+                    IMP.init('imp45115062');
+                    IMP.request_pay({
+                        pg: "html5_inicis",
+                        merchant_uid: "order_" + new Date().getTime(),
+                        name: "트리드",
+                        amount: 100,
+                        buyer_email: "buyer@example.com",
+                        buyer_name: "홍길동",
+                        buyer_tel: "010-1234-5678"
+                    }, function (rsp) {
+                        if (rsp.success) {
+                            confirmPayment(rsp);
+                        } else {
+                            confirmPayment(rsp);
+                            alert("결제에 실패하였습니다. 에러 내용: " + rsp.error_msg);
+                        }
+                    });
+                } else {
+                    throw new Error("유효하지 않은 예약 토큰입니다.");
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("예약 생성에 실패하였습니다: " + error.message);
+            });
+    });
+
+    function confirmPayment(paymentResult) {
+        fetch('/api/reservations/complete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${jwtToken}`
+            },
+            body: JSON.stringify({
+                reservationToken: reservationToken,
+                impUid: paymentResult.imp_uid
+            })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert("예약이 완료되었습니다!");
+                console.log(data);
+                // 여기에 예약 완료 후 처리 로직 추가
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert(error.message || "예약 확정에 실패하였습니다.");
+            });
+    }
+</script>
+</body>
+</html>

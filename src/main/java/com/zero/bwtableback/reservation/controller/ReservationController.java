@@ -29,7 +29,6 @@ public class ReservationController {
 
     private final RedissonClient redissonClient;
     private final RedisTemplate<String, Object> redisTemplate;
-    private final RedisTemplate<String, Integer> integerRedisTemplate;
 
     @GetMapping("/{reservationId}")
     public ReservationResDto getReservationById(@PathVariable Long reservationId) {
@@ -46,7 +45,6 @@ public class ReservationController {
     public ResponseEntity<?> requestReservation(@RequestBody ReservationCreateReqDto request,
                                                 @AuthenticationPrincipal MemberDetails memberDetails) {
         ReservationAvailabilityDto availability = reservationService.checkReservationAvailability(request);
-
         if (availability.isAvailable()) {
             String reservationToken = UUID.randomUUID().toString();
             redisTemplate.opsForValue().set("reservation:token:" + reservationToken, request, 5, TimeUnit.MINUTES);
@@ -113,7 +111,7 @@ public class ReservationController {
     /**
      * 예약 취소
      * - 채팅방 비활성화
-     * - 예약 상태 변경 - CANCELED
+     * - 예약 상태 변경(GUEST_CANCELED/OWNER_CANCELED)
      */
     @PutMapping("/{reservationId}/cancel")
     public ResponseEntity<?> cancelReservation(@PathVariable Long reservationId,

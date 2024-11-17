@@ -81,7 +81,6 @@ public class ReservationService {
                     request.restaurantId(),
                     request.reservationDate(),
                     request.reservationTime());
-
             if (integerRedisTemplate.opsForValue().get(currentCountKey) == null) {
                 integerRedisTemplate.opsForValue().set(currentCountKey, timeslotSetting.getMaxCapacity());
             }
@@ -153,9 +152,6 @@ public class ReservationService {
         if (reservedCount + reservationInfo.numberOfPeople() > maxCapacity) {
             throw new IllegalArgumentException("예약 가능 인원을 초과했습니다. (현재 예약 가능 인원: " + (maxCapacity - reservedCount) + ")");
         }
-
-        timeslotSetting.setMaxCapacity(maxCapacity - reservedCount);
-        timeslotSettingRepository.save(timeslotSetting);
 
         Restaurant restaurant = restaurantRepository.findById(reservationInfo.restaurantId())
                 .orElseThrow(() -> new CustomException(ErrorCode.RESTAURANT_NOT_FOUND));
@@ -364,6 +360,8 @@ public class ReservationService {
             throw new CustomException(ErrorCode.CUSTOMER_CANCEL_TOO_LATE);
         }
 
+        // 환불 3일 전
+
         reservation.setReservationStatus(ReservationStatus.CUSTOMER_CANCELED);
         notificationScheduleService.scheduleImmediateNotification(reservation, NotificationType.CANCELLATION);
 
@@ -377,6 +375,9 @@ public class ReservationService {
             throw new CustomException(ErrorCode.INVALID_STATUS_OWNER_CANCEL);
         }
         reservation.setReservationStatus(ReservationStatus.OWNER_CANCELED);
+
+        // 환불 3일 전
+
         notificationScheduleService.scheduleImmediateNotification(reservation, NotificationType.CANCELLATION);
 
         return ReservationResDto.fromEntity(reservation);
@@ -389,6 +390,9 @@ public class ReservationService {
             throw new CustomException(ErrorCode.INVALID_STATUS_NO_SHOW);
         }
         reservation.setReservationStatus(ReservationStatus.NO_SHOW);
+        // 채팅방 비활성화
+        chatService.inactivateChatRoom(reservation.getId());
+
 
         return ReservationResDto.fromEntity(reservation);
     }
@@ -399,6 +403,10 @@ public class ReservationService {
             throw new CustomException(ErrorCode.INVALID_STATUS_VISITED);
         }
         reservation.setReservationStatus(ReservationStatus.VISITED);
+        // 채팅방 비활성화
+        chatService.inactivateChatRoom(reservation.getId());
+
+        // 환불 전액
 
         return ReservationResDto.fromEntity(reservation);
     }

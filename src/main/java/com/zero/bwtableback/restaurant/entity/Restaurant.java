@@ -52,7 +52,6 @@ public class Restaurant {
     @Column(nullable = false)
     private int deposit; // 인당예약금
 
-    @Column(nullable = false)
     private String impCode; // 가맹점 식별코드
 
     @OneToMany(
