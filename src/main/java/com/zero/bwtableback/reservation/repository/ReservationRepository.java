@@ -11,11 +11,13 @@ import com.zero.bwtableback.restaurant.entity.Restaurant;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-public interface ReservationRepository extends JpaRepository<Reservation, Long>, JpaSpecificationExecutor<Reservation> {
+public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
-    List<Reservation> findByReservationDate(LocalDate reservationDate);
+    @Query("SELECT r FROM Reservation r WHERE r.reservationDate = :date")
+    List<Reservation> findReservationsByDate(@Param("date") LocalDate date);
 
     Page<Reservation> findByMemberId(Long memberId, Pageable pageable);
 
