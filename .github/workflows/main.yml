@@ -28,8 +28,8 @@ jobs:
       - name: Docker build & push to docker repo
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:${{ github.sha }} .
-          docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:${{ github.sha }}
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest .
+          docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest
 
       - name: Deploy to server
         uses: appleboy/ssh-action@master
@@ -40,7 +40,6 @@ jobs:
           key: ${{ secrets.KEY }}
           script: |
             set -e  # 오류 발생 시 스크립트 종료
-            export GITHUB_SHA=${{ github.sha }}
             sudo docker-compose down
             sudo docker-compose pull
             sudo docker-compose up -d
