@@ -88,7 +88,7 @@ spring:
   #      mode: always
   data:
     redis:
-      host: ${EC2_IP}
+      host: redis
       port: 6379
   jwt:
     secret: ${JWT_SECRET:your-256-bit-secret-key-default} # HS512 알고리즘을 사용할 경우, 비밀 키는 최소 512비트(64바이트) 이상
