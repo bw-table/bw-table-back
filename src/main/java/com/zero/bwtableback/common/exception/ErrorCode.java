@@ -63,10 +63,13 @@ public enum ErrorCode {
     NOTIFICATION_ALREADY_SENT(HttpStatus.BAD_REQUEST, "이미 전송된 알림입니다."),
     NOTIFICATION_SCHEDULED_TIME_NOT_REACHED(HttpStatus.BAD_REQUEST, "예정된 전송 시간이 아닙니다."),
 
+    // 결제 관련 오류
+    PAYMENT_PROCESSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "결제 처리 중 오류가 발생했습니다. 다시 시도해 주세요."),
+
     // 기타 오류
     UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
-    INVALID_RESERVATION_STATUS(HttpStatus.BAD_REQUEST,"예약 상태가 유효하지 않습니다.");
+    INVALID_RESERVATION_STATUS(HttpStatus.BAD_REQUEST, "예약 상태가 유효하지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String detail;

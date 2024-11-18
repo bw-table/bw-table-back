@@ -9,9 +9,7 @@ import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.payment.entity.PaymentEntity;
 import com.zero.bwtableback.payment.entity.PaymentStatus;
 import com.zero.bwtableback.reservation.dto.PaymentResDto;
-import com.zero.bwtableback.reservation.dto.ReservationResDto;
 import com.zero.bwtableback.reservation.entity.Reservation;
-import com.zero.bwtableback.reservation.entity.ReservationStatus;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +18,6 @@ import org.springframework.stereotype.Service;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 @Slf4j
@@ -52,7 +49,7 @@ public class PaymentService {
                 PaymentEntity paymentEntity = convertToPaymentEntity(payment);
                 paymentRepository.save(paymentEntity);
                 // 결제 상태 체크
-                if(!PaymentStatus.PAID.equals(paymentEntity.getStatus())){
+                if (!PaymentStatus.PAID.equals(paymentEntity.getStatus())) {
                     return false;
                 }
                 return true;
@@ -87,38 +84,49 @@ public class PaymentService {
     /**
      * 결제된 예약금 환불
      */
-    public void refundReservationDeposit(Long reservationId) throws IOException {
+    public void refundReservationDeposit(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(()->new CustomException(ErrorCode.RESERVATION_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.RESERVATION_NOT_FOUND));
 
         String impUid = reservation.getRestaurant().getImpCode();
         int deposit = reservation.getRestaurant().getDeposit();
 
         HttpsURLConnection conn = null;
-        URL url = new URL("https://api.iamport.kr/payments/cancel");
+        try {
+            URL url = new URL("https://api.iamport.kr/payments/cancel");
+            conn = (HttpsURLConnection) url.openConnection();
 
-        conn = (HttpsURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-type", "application/json");
+            conn.setRequestProperty("Accept", "application/json");
+            conn.setDoOutput(true);
 
-        conn.setRequestMethod("POST");
+            JsonObject json = new JsonObject();
+            json.addProperty("reason", "방문 완료");
+            json.addProperty("imp_uid", impUid);
+            json.addProperty("amount", deposit);
+            json.addProperty("checksum", deposit);
 
-        conn.setRequestProperty("Content-type", "application/json");
-        conn.setRequestProperty("Accept", "application/json");
+            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream()))) {
+                bw.write(json.toString());
+                bw.flush();
+            }
 
-        conn.setDoOutput(true);
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"))) {
+                String responseLine;
+                StringBuilder response = new StringBuilder();
+                while ((responseLine = br.readLine()) != null) {
+                    response.append(responseLine);
+                }
+                System.out.println("Response: " + response.toString());
+            }
 
-        JsonObject json = new JsonObject();
-
-        json.addProperty("reason", "방문 완료");
-        json.addProperty("imp_uid", impUid);
-        json.addProperty("amount", deposit);
-        json.addProperty("checksum", deposit);
-
-        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream()));
-
-        bw.write(json.toString());
-        bw.flush();
-        bw.close();
-
-        BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"));
+        } catch (IOException e) {
+            throw new CustomException(ErrorCode.PAYMENT_PROCESSING_ERROR);
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
     }
 }

@@ -269,15 +269,17 @@ public class ReservationService {
     }
 
     // CONFIRMED 상태 업데이트
-    public PaymentCompleteResDto confirmReservation(Long
-                                                            reservationId, Long restaurantId, Long memberId) {
+    public PaymentCompleteResDto confirmReservation(Long reservationId, Long memberId) {
         Reservation reservation = findReservationById(reservationId);
-        Member member = findMemberById(memberId);
+        Restaurant restaurant = findRestaurantById(reservation.getRestaurant().getId());
+        findMemberById(memberId); // 사장님 객체
 
-        if (!member.getId().equals(reservation.getMember().getId())) {
+        // 사장님 가게 확인
+        if (restaurant.getMember().getId() != memberId) {
             throw new CustomException(ErrorCode.UNAUTHORIZED_ACCESS);
         }
 
+        // 예약 확정 확인
         if (reservation.getReservationStatus() == ReservationStatus.CONFIRMED) {
             throw new CustomException(ErrorCode.INVALID_STATUS_CONFIRM);
         }
@@ -288,35 +290,8 @@ public class ReservationService {
         notificationScheduleService.scheduleImmediateNotification(reservation, NotificationType.CONFIRMATION);
         notificationScheduleService.schedule24HoursBeforeNotification(reservation);
 
-        RestaurantInfoDto restaurantInfoDto = restaurantService.getRestaurantById(restaurantId);
+        RestaurantInfoDto restaurantInfoDto = restaurantService.getRestaurantById(restaurant.getId());
         return PaymentCompleteResDto.fromEntities(restaurantInfoDto, reservation);
-    }
-
-    // CONFIRMED 제외한 나머지 상태 업데이트
-    public ReservationResDto updateReservationStatus
-    (ReservationUpdateReqDto statusUpdateDto, Long reservationId, Long memberId) throws IOException {
-        Reservation reservation = findReservationById(reservationId);
-        Member member = findMemberById(memberId);
-
-        // FIXME 예약의 member는 손님이고, 사장님이 방문 처리 사용 시 문제
-        if (!member.getId().equals(reservation.getMember().getId())) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED_ACCESS);
-        }
-
-        if (statusUpdateDto.reservationStatus() == null) {
-//          FIXME  throw new CustomException(ErrorCode.INVALID_RESERVATION_STATUS);
-        }
-
-        ReservationStatus newStatus = statusUpdateDto.reservationStatus();
-
-        return switch (newStatus) {
-            case CUSTOMER_CANCELED -> handleCustomerCanceledStatus(reservation);
-            case OWNER_CANCELED -> handleOwnerCanceledStatus(reservation);
-            case NO_SHOW -> handleNoShowStatus(reservation);
-            case VISITED -> handleVisitedStatus(reservation);
-//          FIXME  default -> throw new CustomException(ErrorCode.INVALID_RESERVATION_STATUS);
-            default -> throw new RuntimeException("INVALID_RESERVATION_STATUS");
-        };
     }
 
     /**
@@ -346,6 +321,33 @@ public class ReservationService {
         chatService.inactivateChatRoom(reservationId);
 
         return "예약이 성공적으로 취소되었습니다.";
+    }
+
+    // CONFIRMED, NOSHOW를 제외한 나머지 상태 업데이트
+    public ReservationResDto updateReservationStatus
+    (ReservationUpdateReqDto statusUpdateDto, Long reservationId, Long memberId) throws IOException {
+        Reservation reservation = findReservationById(reservationId);
+        Member member = findMemberById(memberId);
+
+        // FIXME 예약의 member는 손님이고, 사장님이 방문 처리 사용 시 문제
+        if (!member.getId().equals(reservation.getMember().getId())) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED_ACCESS);
+        }
+
+        if (statusUpdateDto.reservationStatus() == null) {
+//          FIXME  throw new CustomException(ErrorCode.INVALID_RESERVATION_STATUS);
+        }
+
+        ReservationStatus newStatus = statusUpdateDto.reservationStatus();
+
+        return switch (newStatus) {
+            case CUSTOMER_CANCELED -> handleCustomerCanceledStatus(reservation);
+            case OWNER_CANCELED -> handleOwnerCanceledStatus(reservation);
+//            case NO_SHOW -> handleNoShowStatus(reservation);
+//            case VISITED -> handleVisitedStatus(reservation);
+//          FIXME  default -> throw new CustomException(ErrorCode.INVALID_RESERVATION_STATUS);
+            default -> throw new RuntimeException("INVALID_RESERVATION_STATUS");
+        };
     }
 
     // CUSTOMER_CANCELED 상태 처리
@@ -385,30 +387,48 @@ public class ReservationService {
         return ReservationResDto.fromEntity(reservation);
     }
 
-    // NO_SHOW 상태 처리
-    private ReservationResDto handleNoShowStatus(Reservation reservation) {
-        if (reservation.getReservationStatus() == ReservationStatus.CUSTOMER_CANCELED ||
-                reservation.getReservationStatus() == ReservationStatus.OWNER_CANCELED) {
-            throw new CustomException(ErrorCode.INVALID_STATUS_NO_SHOW);
-        }
-        reservation.setReservationStatus(ReservationStatus.NO_SHOW);
-        // 채팅방 비활성화
-        chatService.inactivateChatRoom(reservation.getId());
-
-        return ReservationResDto.fromEntity(reservation);
-    }
-
     // VISITED 상태 처리
-    private ReservationResDto handleVisitedStatus(Reservation reservation) throws IOException {
+    public ReservationResDto handleVisitedStatus(Long reservationId, Long memberId)  {
+        Reservation reservation = findReservationById(reservationId);
+        Member member = findMemberById(memberId);
+
+        // 예약된 가게가 사장님 소유 여부 확인
+        if(reservation.getRestaurant().getId() != member.getRestaurant().getId()){
+            throw new CustomException(ErrorCode.INVALID_STATUS_VISITED);
+        }
+
         if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED) {
             throw new CustomException(ErrorCode.INVALID_STATUS_VISITED);
         }
+
         reservation.setReservationStatus(ReservationStatus.VISITED);
         // 채팅방 비활성화
         chatService.inactivateChatRoom(reservation.getId());
 
         // 환불 전액
         paymentService.refundReservationDeposit(reservation.getId());
+
+        return ReservationResDto.fromEntity(reservation);
+    }
+
+    // NO_SHOW 상태 처리
+    public ReservationResDto handleNoShowStatus(Long reservationId, Long memberId) {
+        Reservation reservation = findReservationById(reservationId);
+        Member member = findMemberById(memberId);
+
+        // 예약된 가게가 사장님 소유 여부 확인
+        if(reservation.getRestaurant().getId() != member.getRestaurant().getId()){
+            throw new CustomException(ErrorCode.INVALID_STATUS_VISITED);
+        }
+
+        if (reservation.getReservationStatus() == ReservationStatus.CUSTOMER_CANCELED ||
+                reservation.getReservationStatus() == ReservationStatus.OWNER_CANCELED) {
+            throw new CustomException(ErrorCode.INVALID_STATUS_NO_SHOW);
+        }
+        reservation.setReservationStatus(ReservationStatus.NO_SHOW);
+
+        // 채팅방 비활성화
+        chatService.inactivateChatRoom(reservation.getId());
 
         return ReservationResDto.fromEntity(reservation);
     }

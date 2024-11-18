@@ -6,6 +6,9 @@ import com.zero.bwtableback.reservation.dto.*;
 import com.zero.bwtableback.reservation.service.ReservationService;
 import com.zero.bwtableback.restaurant.dto.ReservationAvailabilityDto;
 import com.zero.bwtableback.security.MemberDetails;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -30,11 +33,6 @@ public class ReservationController {
 
     private final RedissonClient redissonClient;
     private final RedisTemplate<String, Object> redisTemplate;
-
-    @GetMapping("/{reservationId}")
-    public ReservationResDto getReservationById(@PathVariable Long reservationId) {
-        return reservationService.getReservationById(reservationId);
-    }
 
     /**
      * 예약 생성 요청을 처리
@@ -115,6 +113,7 @@ public class ReservationController {
      * - 예약 상태 변경(GUEST_CANCELED/OWNER_CANCELED)
      */
     @PutMapping("/{reservationId}/cancel")
+    @Operation(summary = "예약 취소", description = "주어진 예약 ID로 예약을 취소합니다.")
     public ResponseEntity<?> cancelReservation(@PathVariable Long reservationId,
                                                @AuthenticationPrincipal MemberDetails memberDetails) {
         try {
@@ -124,42 +123,38 @@ public class ReservationController {
         }
     }
 
-    /**
-     * 사장님의 방문 처리
-     */
+//    @PutMapping("/{reservationId}/status")
+//    @Operation(summary = "예약 상태 업데이트", description = "주어진 예약 ID의 상태를 업데이트합니다.")
+//    public ReservationResDto updateReservationStatus(
+//            @PathVariable Long reservationId,
+//            @RequestBody ReservationUpdateReqDto statusUpdateDto,
+//            @AuthenticationPrincipal MemberDetails memberDetails) throws IOException {
+//        return reservationService.updateReservationStatus(statusUpdateDto, reservationId, memberDetails.getMemberId());
+//    }
+
     @PutMapping("/{reservationId}/visited")
-    public PaymentCompleteResDto handleVisited(
+    @Operation(summary = "사장님의 방문 처리", description = "주어진 예약 ID로 방문 처리를 합니다.")
+    public ResponseEntity<?> handleVisited(
             @PathVariable Long reservationId,
-            @RequestParam Long restaurantId,
             @AuthenticationPrincipal MemberDetails memberDetails) {
-        return reservationService.confirmReservation(reservationId, restaurantId, memberDetails.getMemberId());
+        return ResponseEntity.ok(reservationService.handleVisitedStatus(reservationId, memberDetails.getMemberId()));
     }
 
-    /**
-     * 사장님의 노쇼 처리
-     */
     @PutMapping("/{reservationId}/noshow")
-    public PaymentCompleteResDto handleNoShow(
+    @Operation(summary = "사장님의 노쇼 처리", description = "주어진 예약 ID로 노쇼 처리를 합니다.")
+    public ResponseEntity<?> handleNoShow(
             @PathVariable Long reservationId,
-            @RequestParam Long restaurantId,
             @AuthenticationPrincipal MemberDetails memberDetails) {
-        return reservationService.confirmReservation(reservationId, restaurantId, memberDetails.getMemberId());
+        return ResponseEntity.ok(reservationService.handleNoShowStatus(reservationId, memberDetails.getMemberId()));
     }
 
     // FIXME 사용 여부 확인
-    @PutMapping("/{reservationId}/confirm")
-    public PaymentCompleteResDto confirmReservation(
-            @PathVariable Long reservationId,
-            @RequestParam Long restaurantId,
-            @AuthenticationPrincipal MemberDetails memberDetails) {
-        return reservationService.confirmReservation(reservationId, restaurantId, memberDetails.getMemberId());
-    }
-
-    @PutMapping("/{reservationId}/status")
-    public ReservationResDto updateReservationStatus(
-            @PathVariable Long reservationId,
-            @RequestBody ReservationUpdateReqDto statusUpdateDto,
-            @AuthenticationPrincipal MemberDetails memberDetails) throws IOException {
-        return reservationService.updateReservationStatus(statusUpdateDto, reservationId, memberDetails.getMemberId());
-    }
+//    @PutMapping("/{reservationId}/confirm")
+//    @Operation(summary = "예약 확정", description = "주어진 예약 ID로 예약을 확정합니다.")
+//    public PaymentCompleteResDto confirmReservation(
+//            @PathVariable Long reservationId,
+//            @RequestParam Long restaurantId,
+//            @AuthenticationPrincipal MemberDetails memberDetails) {
+//        return reservationService.confirmReservation(reservationId, restaurantId, memberDetails.getMemberId());
+//    }
 }
