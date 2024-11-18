@@ -18,18 +18,12 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: '17'
-          distribution: "adopt"
+          distribution: 'corretto'
 
       - name: Build with Gradle
         run: |
           chmod +x ./gradlew
           ./gradlew clean build -x test
-
-      - name: List build directory
-        run: ls -R build/libs
-
-      - name: List current directory
-        run: pwd && ls -la
 
       - name: Docker build & push to docker repo
         run: |
