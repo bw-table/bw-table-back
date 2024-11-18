@@ -53,5 +53,9 @@ services:
     networks:
       - app-network
 
+volumes:
+  mysql-data: {}
+  redis-data: {}
+
 networks:
   app-network:

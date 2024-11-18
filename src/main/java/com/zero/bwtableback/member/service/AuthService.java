@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -167,7 +168,14 @@ public class AuthService {
     // Redis에 리프레시 토큰 저장
     public void saveRefreshTokenToRedis(Long memberId, String refreshToken) {
         String key = "refresh_token:" + memberId;
-        redisTemplate.opsForValue().set(key, refreshToken);
+        try {
+            redisTemplate.opsForValue().set(key, refreshToken);
+        } catch (RedisConnectionFailureException e) {
+            System.err.println("Redis에 연결할 수 없습니다: " + e.getMessage());
+        } catch (Exception e) {
+            // 다른 예외 처리
+            System.err.println("예기치 않은 오류 발생: " + e.getMessage());
+        }
     }
 
     // 기존 유효한 Access Token이 존재하는 경우 처리
