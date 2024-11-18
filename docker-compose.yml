@@ -39,6 +39,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: 1
       MYSQL_DATABASE: bwtable-mysql
+    volumes:
+      - mysql-data:/var/lib/mysql
     networks:
       - app-network
 
@@ -46,6 +48,8 @@ services:
     image: redis
     ports:
       - "6379:6379"
+    volumes:
+      - redis-data:/data
     networks:
       - app-network
 
