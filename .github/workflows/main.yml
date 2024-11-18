@@ -35,7 +35,7 @@ jobs:
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
           docker build --no-cache -t ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:test --platform linux/amd64 .
-          docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:x86_64
+          docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:test
 
       - name: Deploy to server
         uses: appleboy/ssh-action@master
