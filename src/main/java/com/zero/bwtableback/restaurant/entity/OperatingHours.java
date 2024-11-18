@@ -21,6 +21,7 @@ public class OperatingHours {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Enumerated(EnumType.STRING)
     private DayOfWeek dayOfWeek; // 요일
 
     private LocalTime openingTime;

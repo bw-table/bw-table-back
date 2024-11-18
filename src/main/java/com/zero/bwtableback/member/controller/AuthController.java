@@ -1,5 +1,6 @@
 package com.zero.bwtableback.member.controller;
 
+import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.member.dto.*;
 import com.zero.bwtableback.member.service.AuthService;
 import com.zero.bwtableback.security.MemberDetails;
@@ -15,6 +16,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Collections;
 import java.util.Map;
@@ -31,7 +33,7 @@ public class AuthController {
      * 이메일 중복 검사
      */
     @PostMapping("/check/email")
-    public ResponseEntity<Map<String, Boolean>>  checkEmailDuplicate(@RequestBody DuplicateCheckReqDto request) {
+    public ResponseEntity<Map<String, Boolean>> checkEmailDuplicate(@RequestBody DuplicateCheckReqDto request) {
         boolean isDuplicate = authService.isEmailDuplicate(request);
         return ResponseEntity.ok(Collections.singletonMap("isDuplicate", isDuplicate));
     }
@@ -64,10 +66,13 @@ public class AuthController {
     }
 
     /**
-     * 회원가입
+     * 회원가입 및 자동 로그인
      */
     @PostMapping("/signup")
-    public ResponseEntity<SignUpResDto> signUp(@Valid @RequestBody SignUpReqDto signUpReqDto, BindingResult bindingResult) {
+    public ResponseEntity<LoginResDto> signUp(@Valid @RequestBody SignUpReqDto signUpReqDto,
+                                              HttpServletRequest request,
+                                              HttpServletResponse response,
+                                              BindingResult bindingResult) {
         // 유효성 검사 결과 확인
         if (bindingResult.hasErrors()) {
             StringBuilder errorMessage = new StringBuilder();
@@ -75,29 +80,37 @@ public class AuthController {
                     errorMessage.append(error.getDefaultMessage()).append(" ")
             );
         }
-        SignUpResDto signUpResDto = authService.signUp(signUpReqDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(signUpResDto);
+        MemberDto memberDto = authService.signUp(signUpReqDto);
+
+        LoginResDto loginResDto = authService.signUpLogin(memberDto, request, response);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(loginResDto);
     }
 
     /**
      * 로그인
      */
-    @PostMapping("/login")
+    @PostMapping("/login") // TODO 이메일 먼저 보고 토큰을 봐야함
     public ResponseEntity<?> login(@RequestBody EmailLoginReqDto loginReqDto,
-                                             HttpServletRequest request,
-                                             HttpServletResponse response) {
-        // 요청 헤더에서 액세스 토큰 추출
-        String accessToken = getJwtFromRequest(request);
+                                   HttpServletRequest request,
+                                   HttpServletResponse response) {
+            MemberDto memberDto = authService.authenticateMember(loginReqDto);
+        try {
+            String accessToken = getJwtFromRequest(request);
 
-        // 액세스 토큰이 유효한 경우
-        if (StringUtils.hasText(accessToken) && tokenProvider.validateAccessToken(accessToken)) {
-            // 기존의 액세스 토큰과 사용자 정보를 반환
-            LoginResDto loginResDto = authService.handleExistingToken(accessToken);
+            // 액세스 토큰이 유효한 경우
+            if (StringUtils.hasText(accessToken) && tokenProvider.validateAccessToken(accessToken)) {
+                // 기존의 액세스 토큰과 사용자 정보를 반환
+                return ResponseEntity.ok(authService.handleExistingToken(accessToken));
+            }
+            // 액세스 토큰이 없거나 유효하지 않은 경우, 새로운 로그인 처리
+            LoginResDto loginResDto = authService.login(memberDto, request, response);
             return ResponseEntity.ok(loginResDto);
-        }
 
-        LoginResDto loginResDto = authService.login(loginReqDto, request, response);
-        return ResponseEntity.ok(loginResDto);
+        } catch (CustomException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Unauthorized: " + e.getMessage());
+        }
     }
 
     private String getJwtFromRequest(HttpServletRequest request) {
@@ -107,12 +120,17 @@ public class AuthController {
         }
         return null; // 토큰이 없으면 null 반환
     }
+
     /**
      * 리프레시 토큰을 사용하여 액세스 토큰 발급
      */
     @PostMapping("/refresh")
-    public ResponseEntity<LoginResDto> refresh(HttpServletRequest request) {
-        String refreshToken = getRefreshTokenFromCookies(request); // 쿠키에서 리프레시 토큰 추출
+    public ResponseEntity<?> refresh(HttpServletRequest request) {
+        String refreshToken = getRefreshTokenFromCookies(request);
+        if (refreshToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Unauthorized. 토큰이 유효하지 않습니다.");
+        }
         LoginResDto loginResDto = authService.renewAccessTokenWithRefreshToken(refreshToken);
         return ResponseEntity.ok(loginResDto);
     }
@@ -126,16 +144,19 @@ public class AuthController {
                 }
             }
         }
-        return null; // 쿠키가 없으면 null 반환
+        return null;
     }
 
     /**
      * 로그아웃 처리
      */
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@AuthenticationPrincipal MemberDetails memberDetails) {
+    public ResponseEntity<?> logout(@AuthenticationPrincipal MemberDetails memberDetails,
+                                    HttpServletRequest request, HttpServletResponse response) {
         String email = memberDetails.getUsername();
-        authService.logout(email);
-        return ResponseEntity.noContent().build();
+
+        authService.logout(email, request, response);
+
+        return ResponseEntity.ok("로그아웃이 완료되었습니다.");
     }
 }
