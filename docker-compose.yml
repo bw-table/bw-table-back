@@ -27,7 +27,7 @@ services:
     depends_on:
       - db
       - redis
-    restart: on-failure
+    restart: "no"
     networks:
       - app-network
 
