@@ -7,6 +7,8 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
@@ -18,7 +20,13 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     Page<Notification> findByReservation_Restaurant_Member_IdAndStatusOrderByScheduledTimeDesc(
             Long memberId, NotificationStatus status, Pageable pageable);
 
-    // cutoffDate(기준일) 지난 알림 조회
-    List<Notification> findBySentTimeBeforeAndStatus(LocalDateTime cutoffDate, NotificationStatus status);
+    // cutoffDate(기준일) 지난 알림의 ID만 조회
+    @Query("SELECT n.id FROM Notification n WHERE n.sentTime < :cutoffDate AND n.status = :status")
+    Page<Long> findIdsBySentTimeBeforeAndStatus(@Param("cutoffDate") LocalDateTime cutoffDate,
+                                                @Param("status") NotificationStatus status,
+                                                Pageable pageable);
+
+    // 특정 알림 id보다 더 큰 값의 id를 가진 알림 목록 조회
+    List<Notification> findByReservation_Member_IdAndIdGreaterThan(Long id, Long memberId);
 
 }
