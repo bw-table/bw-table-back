@@ -14,11 +14,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.swing.text.html.Option;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -164,7 +162,7 @@ public class RestaurantService {
                 .latitude(reqDto.getLatitude())
                 .longitude(reqDto.getLongitude())
                 .contact(reqDto.getContact())
-                .closedDay(reqDto.getClosedDay())
+//                .closedDay(reqDto.getClosedDay())
                 .link(reqDto.getLink())
                 .info(reqDto.getInfo())
                 .deposit(reqDto.getDeposit())
@@ -179,6 +177,10 @@ public class RestaurantService {
 
         List<OperatingHours> operatingHours = assignOperatingHours(reqDto.getOperatingHours(), restaurant);
         restaurant.setOperatingHours(operatingHours);
+
+        // 휴무일
+        String closedDays = getClosedDays(operatingHours);
+        restaurant.setClosedDay(closedDays);
 
         List<Menu> menuList = assignMenu(menus, restaurant);
         restaurant.setMenus(menuList);
@@ -219,16 +221,22 @@ public class RestaurantService {
 
     // 식당 정보 수정
     // FIXME: 현재 확인용으로 Restaurant 객체 반환하도록 작성 -> 추후 응답객체 변경
-    public Restaurant updateRestaurant(Long id, UpdateReqDto reqDto) {
+    public Restaurant updateRestaurant(Long id,
+                                       UpdateReqDto reqDto,
+                                       MultipartFile[] newImages,
+                                       Map<Long, MultipartFile> newMenuImages) throws IOException {
+
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
 
         if (reqDto.getName() != null) {
             restaurant.setName(reqDto.getName());
         }
+
         if (reqDto.getDescription() != null) {
             restaurant.setDescription(reqDto.getDescription());
         }
+
         if (reqDto.getAddress() != null && !restaurant.getAddress().equals(reqDto.getAddress())) {
             if (restaurantRepository.existsByAddress(reqDto.getAddress())) {
                 throw new RestaurantException("Restaurant with this address already exists");
@@ -296,15 +304,37 @@ public class RestaurantService {
             restaurant.setOperatingHours(operatingHours);
         }
 
-        if (reqDto.getImages() != null && !reqDto.getImages().isEmpty()) {
-            Set<RestaurantImage> images = reqDto.getImages().stream()
-                    .map(imageUrl -> RestaurantImage.builder()
-                            .imageUrl(imageUrl)
-                            .restaurant(restaurant)
-                            .build())
-                    .collect(Collectors.toSet());
+        if (newImages != null && newImages.length > 0) {
+            if (restaurant.getImages() != null && !restaurant.getImages().isEmpty()) {
+                imageUploadService.deleteExistingRestaurantImages(restaurant);
+            }
+
+            Set<RestaurantImage> images = new HashSet<>();
+            List<String> imageUrls = imageUploadService.uploadRestaurantImages(restaurant.getId(), newImages);
+            for (String imageUrl: imageUrls) {
+                images.add(new RestaurantImage(imageUrl, restaurant));
+            }
             restaurant.setImages(images);
             restaurantImageRepository.saveAll(images);
+        }
+
+        if (newMenuImages != null && !newMenuImages.isEmpty()) {
+            for (Map.Entry<Long, MultipartFile> entry: newMenuImages.entrySet()) {
+                Long menuId = entry.getKey();
+                MultipartFile file = entry.getValue();
+
+                Menu menu = restaurant.getMenus().stream()
+                        .filter(m -> m.getId().equals(menuId))
+                        .findFirst()
+                        .orElseThrow(() -> new EntityNotFoundException("Menu not found"));
+
+                if (menu.getImageUrl() != null) {
+                    imageUploadService.deleteMenuImage(restaurant.getId(), menu.getId(), menu.getImageUrl());
+                }
+
+                String imageUrl = imageUploadService.uploadMenuImage(restaurant.getId(), menuId, file);
+                menu.setImageUrl(imageUrl);
+            }
         }
 
         return restaurantRepository.save(restaurant);
@@ -349,6 +379,19 @@ public class RestaurantService {
                         .restaurant(restaurant)
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    private String getClosedDays(List<OperatingHours> operatingHours) {
+        Set<DayOfWeek> allDaysOfWeek = EnumSet.allOf(DayOfWeek.class);
+
+        Set<DayOfWeek> closedDaysSet = new HashSet<>(allDaysOfWeek);
+        for (OperatingHours operatingHour: operatingHours) {
+            closedDaysSet.remove(operatingHour.getDayOfWeek());
+        }
+
+        return closedDaysSet.stream()
+                .map(DayOfWeek::toString)
+                .collect(Collectors.joining(", "));
     }
 
     // 메뉴 설정
@@ -408,6 +451,16 @@ public class RestaurantService {
     public List<RestaurantListDto> getRestaurantsByCategory(String category, Pageable pageable) {
         CategoryType categoryType = convertToCategoryType(category);
 
+        Optional<Category> optionalCategory = categoryRepository.findByCategoryType(categoryType);
+
+        optionalCategory.ifPresent(categoryEntity -> {
+            categoryEntity.setSearchCount(categoryEntity.getSearchCount() + 1);
+            categoryRepository.save(categoryEntity);
+        });
+
+        Category categoryEntity = optionalCategory.orElseThrow(() ->
+                new EntityNotFoundException("Category not found"));
+
         Page<Restaurant> restaurants = restaurantRepository.findByCategory_CategoryType(categoryType, pageable);
 
         return restaurants.stream()
@@ -426,7 +479,17 @@ public class RestaurantService {
 
     // 해시태그로 식당 검색
     public List<RestaurantListDto> getRestaurantsByHashtag(String hashtag, Pageable pageable) {
-        Page<Restaurant> restaurants = restaurantRepository.findByHashtags_NameContaining(hashtag, pageable);
+        Optional<Hashtag> optionalHashtag = hashtagRepository.findByName(hashtag);
+
+        optionalHashtag.ifPresent(hashtagEntity -> {
+            hashtagEntity.setSearchCount(hashtagEntity.getSearchCount() + 1);
+            hashtagRepository.save(hashtagEntity);
+        });
+
+//        Hashtag hashtagEntity = optionalHashtag.orElseThrow(() -> (
+//            new EntityNotFoundException("Hashtag not found")));
+
+        Page<Restaurant> restaurants = restaurantRepository.findByHashtags_Name(hashtag, pageable);
 
         return restaurants.stream()
                 .map(this::convertToDto)

@@ -6,6 +6,13 @@ import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
+import com.zero.bwtableback.restaurant.entity.Restaurant;
+import com.zero.bwtableback.restaurant.entity.RestaurantImage;
+import com.zero.bwtableback.restaurant.entity.Review;
+import com.zero.bwtableback.restaurant.entity.ReviewImage;
+import com.zero.bwtableback.restaurant.repository.MenuRepository;
+import com.zero.bwtableback.restaurant.repository.RestaurantImageRepository;
+import com.zero.bwtableback.restaurant.repository.ReviewImageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -14,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +29,10 @@ public class ImageUploadService {
 
     private final AmazonS3 amazonS3Client;
     private final MemberRepository memberRepository;
+    private final RestaurantImageRepository restaurantImageRepository;
+    private final MenuRepository menuRepository;
+    private final ReviewImageRepository reviewImageRepository;
+
 
     @Value("${cloud.aws.s3.bucket}")
     private String BUCKET_NAME;
@@ -170,5 +182,55 @@ public class ImageUploadService {
         // S3 URL에서 파일 이름 추출
         String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
 //        amazonS3Client.deleteObject(fileName);
+    }
+
+    // 식당 이미지 삭제
+    public void deleteExistingRestaurantImages(Restaurant restaurant) throws IOException {
+        if (restaurant.getImages() != null && restaurant.getImages().isEmpty()) {
+            Set<RestaurantImage> existingImages = restaurant.getImages();
+
+            for (RestaurantImage restaurantImage: existingImages) {
+                String imageUrl = restaurantImage.getImageUrl();
+                String imagePath = getImagePathFromUrl(imageUrl);
+
+                amazonS3Client.deleteObject(BUCKET_NAME, imagePath);
+            }
+
+        restaurantImageRepository.deleteAll(existingImages);
+        }
+    }
+
+    // 메뉴 이미지 삭제
+    public void deleteMenuImage(Long restaurantId, Long menuId, String imageUrl) throws IOException {
+        String imagePath = getImagePathFromUrl(imageUrl);
+
+        amazonS3Client.deleteObject(BUCKET_NAME, imagePath);
+
+        menuRepository.findById(menuId).ifPresent(menu -> {
+            menu.setImageUrl(null);
+            menuRepository.save(menu);
+        });
+    }
+
+    // 리뷰 이미지 삭제
+    public void deleteExistingReviewImages(Review review) throws IOException {
+        Set<ReviewImage> existingImages = review.getImages();
+        for (ReviewImage reviewImage: existingImages) {
+            String imageUrl = reviewImage.getImageUrl();
+            String imagePath = getImagePathFromUrl(imageUrl);
+
+            amazonS3Client.deleteObject(BUCKET_NAME, imagePath);
+        }
+
+        reviewImageRepository.deleteAll(existingImages);
+    }
+
+    // URL에서 파일 경로 추출
+    public String getImagePathFromUrl(String imageUrl) {
+        String baseUrl = "https://" + BUCKET_NAME + ".s3.amazonaws.com/";
+        if (imageUrl.startsWith(baseUrl)) {
+            return imageUrl.substring(baseUrl.length());
+        }
+        return imageUrl;
     }
 }
