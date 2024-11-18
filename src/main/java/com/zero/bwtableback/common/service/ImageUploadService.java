@@ -46,50 +46,51 @@ public class ImageUploadService {
     /**
      * 가게 이미지
      * - 최대 5장
-     * TODO 가게 아이디로 받을 수 있게 설정
      * TODO 순서는 어떻게 보장할지 생각해보기
      */
-    public List<String> uploadRestaurantImages(MultipartFile[] files) throws IOException {
+    public List<String> uploadRestaurantImages(Long restaurantId, MultipartFile[] files) throws IOException {
         validateImageFiles(files, 5);
+
         List<String> fileUrls = new ArrayList<>();
 
-//        for (MultipartFile file : files) {
-//            String fileUrl = uploadFile(file,RESTAURANT_BUCKET_NAME,filepath);
-//            fileUrls.add(fileUrl);
-//        }
-//        return fileUrls;
-        return null;
-    }
-
-    /**
-     * 리뷰 이미지
-     * - 최대 5장
-     * TODO 가게 아이디로 받을 수 있게 설정
-     * TODO 리뷰 아이디로 필요한지 생각
-     * TODO 순서는 어떻게 보장할지 생각해보기
-     */
-    public List<String> uploadReviewImages(MultipartFile[] files) throws IOException {
-        validateImageFiles(files, 5); // 최대 5개 검증
-        List<String> fileUrls = new ArrayList<>();
-
-//        for (MultipartFile file : files) {
-//            String fileUrl = uploadFile(file,RESTAURANT_BUCKET_NAME);
-//            fileUrls.add(fileUrl);
-//        }
-//        return fileUrls;
-        return null;
+        for (MultipartFile file: files) {
+            String fileUrl = uploadFile(file, "restaurant/" + restaurantId + "/main/");
+            fileUrls.add(fileUrl);
+        }
+        return fileUrls;
     }
 
     /**
      * 메뉴 이미지
      * - 최대 1장
-     *  TODO 가게 아이디로 받을 수 있게 설정
      *  TODO 메뉴 아이디 받아야하는지 생각
      */
-    public String uploadMenuImage(MultipartFile file) throws IOException {
-//        validateSingleImageFile(file);
-//        return uploadFile(file,RESTAURANT_BUCKET_NAME);
-        return null;
+    public String uploadMenuImage(Long restaurantId, Long menuId, MultipartFile file) throws IOException {
+        validateSingleImageFile(file);
+
+        String fileUrl = uploadFile(file, "restaurant/" + restaurantId + "/menu/" + menuId + "/");
+
+        return fileUrl;
+    }
+
+    /**
+     * 리뷰 이미지
+     * - 최대 5장
+     * TODO 순서는 어떻게 보장할지 생각해보기
+     */
+    public List<String> uploadReviewImages(Long restaurantId,
+                                           Long reviewId,
+                                           MultipartFile[] files) throws IOException {
+
+        validateImageFiles(files, 5);
+
+        List<String> fileUrls = new ArrayList<>();
+        for (MultipartFile file: files) {
+            String fileUrl = uploadFile(file, "restaurant/" + restaurantId + "/review/" + reviewId + "/");
+            fileUrls.add(fileUrl);
+        }
+
+        return fileUrls;
     }
 
     // S3에 이미지 업로드

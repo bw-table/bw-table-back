@@ -2,6 +2,7 @@ package com.zero.bwtableback.restaurant.service;
 
 import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
 import com.zero.bwtableback.chat.repository.ChatRoomRepository;
+import com.zero.bwtableback.common.service.ImageUploadService;
 import com.zero.bwtableback.restaurant.dto.*;
 import com.zero.bwtableback.restaurant.entity.*;
 import com.zero.bwtableback.restaurant.exception.RestaurantException;
@@ -11,8 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -24,15 +26,15 @@ import java.util.stream.Collectors;
 public class RestaurantService {
 
     private final RestaurantRepository restaurantRepository;
+    private final MenuRepository menuRepository;
     private final CategoryRepository categoryRepository;
     private final FacilityRepository facilityRepository;
     private final HashtagRepository hashtagRepository;
     private final RestaurantImageRepository restaurantImageRepository;
-    private final AnnouncementRepository announcementRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final ImageUploadService imageUploadService;
 
     // 등록
-//    @Transactional
 //    public Restaurant registerRestaurant(RegisterReqDto reqDto) {
 //        reqDto.validate();
 //
@@ -138,8 +140,10 @@ public class RestaurantService {
 //        return savedRestaurant;
 //    }
 
-    @Transactional
-    public Restaurant registerRestaurant(RegisterReqDto reqDto) {
+    public Restaurant registerRestaurant(RegisterReqDto reqDto,
+                                         MultipartFile[] images,
+                                         List<MenuRegisterDto> menus,
+                                         List<MultipartFile> menuImages) throws IOException {
 
         reqDto.validate();
 
@@ -176,8 +180,8 @@ public class RestaurantService {
         List<OperatingHours> operatingHours = assignOperatingHours(reqDto.getOperatingHours(), restaurant);
         restaurant.setOperatingHours(operatingHours);
 
-        List<Menu> menus = assignMenu(reqDto.getMenus(), restaurant);
-        restaurant.setMenus(menus);
+        List<Menu> menuList = assignMenu(menus, restaurant);
+        restaurant.setMenus(menuList);
 
         List<Facility> facilities = assignFacilities(reqDto.getFacilities());
         restaurant.setFacilities(facilities);
@@ -187,19 +191,27 @@ public class RestaurantService {
 
         Restaurant savedRestaurant = restaurantRepository.save(restaurant);
 
-        // 이미지 설정
-        Set<RestaurantImage> images = reqDto.getImages().stream()
-                .map(imageUrl -> RestaurantImage.builder()
-                        .imageUrl(imageUrl)
-                        .restaurant(savedRestaurant)
-                        .build())
-                .collect(Collectors.toSet());
-        savedRestaurant.setImages(images);
+        // 식당 이미지 설정
+        Set<RestaurantImage> restaurantImages = new HashSet<>();
+        if (images != null && images.length > 0) {
 
-        if (images.isEmpty()) {
-            System.out.println("No images to save.");
-        } else {
-            restaurantImageRepository.saveAll(images);
+            List<String> imageUrls = imageUploadService.uploadRestaurantImages(savedRestaurant.getId(), images);
+
+            for (String imageUrl: imageUrls) {
+                RestaurantImage restaurantImage = new RestaurantImage(imageUrl, savedRestaurant);
+                restaurantImages.add(restaurantImage);
+            }
+            restaurantImageRepository.saveAll(restaurantImages);
+        }
+
+        // 메뉴 이미지 설정
+        for (int i = 0; i < menus.size(); i++) {
+            Menu menu = savedRestaurant.getMenus().get(i);
+            if (menuImages != null && menuImages.size() > i) {
+                String menuImageUrl = imageUploadService.uploadMenuImage(savedRestaurant.getId(), menu.getId(), menuImages.get(i));
+                menu.setImageUrl(menuImageUrl);  // 메뉴 이미지 URL 설정
+                menuRepository.save(menu);  // 메뉴 저장
+            }
         }
 
         return savedRestaurant;
@@ -207,7 +219,6 @@ public class RestaurantService {
 
     // 식당 정보 수정
     // FIXME: 현재 확인용으로 Restaurant 객체 반환하도록 작성 -> 추후 응답객체 변경
-    @Transactional
     public Restaurant updateRestaurant(Long id, UpdateReqDto reqDto) {
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
@@ -275,10 +286,10 @@ public class RestaurantService {
             restaurant.setHashtags(hashtags);
         }
 
-        if (reqDto.getMenus() != null) {
-            List<Menu> menus = assignMenu(reqDto.getMenus(), restaurant);
-            restaurant.setMenus(menus);
-        }
+//        if (reqDto.getMenus() != null) {
+//            List<Menu> menus = assignMenu(reqDto.getMenus(), restaurant);
+//            restaurant.setMenus(menus);
+//        }
 
         if (reqDto.getOperatingHours() != null) {
             List<OperatingHours> operatingHours = assignOperatingHours(reqDto.getOperatingHours(), restaurant);
@@ -298,6 +309,19 @@ public class RestaurantService {
 
         return restaurantRepository.save(restaurant);
     }
+
+    // 이미지 업로드
+    // TODO: 보류
+//    public void assignImages(Restaurant restaurant, List<String> imageUrls) {
+//        Set<RestaurantImage> images = imageUrls.stream()
+//                .map(imageUrl -> RestaurantImage.builder()
+//                        .imageUrl(imageUrl)
+//                        .restaurant(restaurant)
+//                        .build())
+//                .collect(Collectors.toSet());
+//
+//        restaurantImageRepository.saveAll(images);
+//    }
 
     // 카테고리 설정
     private Category assignCategory(String categoryType) {
@@ -328,13 +352,12 @@ public class RestaurantService {
     }
 
     // 메뉴 설정
-    private List<Menu> assignMenu(List<MenuDto> menuDto, Restaurant restaurant) {
+    private List<Menu> assignMenu(List<MenuRegisterDto> menuDto, Restaurant restaurant) {
         return menuDto.stream()
                 .map(dto -> Menu.builder()
                         .name(dto.getName())
                         .price(dto.getPrice())
                         .description(dto.getDescription())
-                        .imageUrl(dto.getImageUrl())
                         .restaurant(restaurant)
                         .build())
                 .collect(Collectors.toList());
@@ -360,8 +383,10 @@ public class RestaurantService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 검색
+     */
     // 모든 식당 리스트 검색
-
     public List<RestaurantListDto> getRestaurants(Pageable pageable) {
         Page<Restaurant> restaurants = restaurantRepository.findAll(pageable);
 
@@ -456,8 +481,8 @@ public class RestaurantService {
                 .collect(Collectors.toList());
 
         // 메뉴
-        List<MenuDto> menus = restaurant.getMenus().stream()
-                .map(menu -> new MenuDto(
+        List<MenuDetailDto> menus = restaurant.getMenus().stream()
+                .map(menu -> new MenuDetailDto(
                         menu.getId(),
                         menu.getName(),
                         menu.getPrice(),
