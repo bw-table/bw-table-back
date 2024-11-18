@@ -23,6 +23,7 @@ services:
       KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI}
       S3_BUCKET_NAME: ${S3_BUCKET_NAME}
       IMP_CODE: ${IMP_CODE}
+      EC2_IP: ${EC2_IP}
 
     depends_on:
       - db
