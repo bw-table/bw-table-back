@@ -1,13 +1,11 @@
 package com.zero.bwtableback.reservation.dto;
 
-import static com.zero.bwtableback.common.exception.ErrorCode.INVALID_PEOPLE_COUNT;
-import static com.zero.bwtableback.common.exception.ErrorCode.INVALID_RESERVATION_DATE;
-import static com.zero.bwtableback.common.exception.ErrorCode.INVALID_RESERVATION_TIME;
-
 import com.zero.bwtableback.common.exception.CustomException;
+import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -22,13 +20,13 @@ public record ReservationRequestDto(
 
     public ReservationRequestDto {
         if (numberOfPeople < 1) {
-            throw new CustomException(INVALID_PEOPLE_COUNT);
+            throw new CustomException(ErrorCode.INVALID_PEOPLE_COUNT);
         }
         if (reservationDate.isBefore(LocalDate.now())) {
-            throw new CustomException(INVALID_RESERVATION_DATE);
+            throw new CustomException(ErrorCode.INVALID_RESERVATION_DATE);
         }
         if (reservationTime.isBefore(LocalTime.now())) {
-            throw new CustomException(INVALID_RESERVATION_TIME);
+            throw new CustomException(ErrorCode.INVALID_RESERVATION_TIME);
         }
 
     }
