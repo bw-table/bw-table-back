@@ -69,7 +69,7 @@ class ReservationServiceTest {
         given(member.getId()).willReturn(memberId);
 
         // when
-        PaymentCompleteResDto result = reservationService.confirmReservation(reservationId, restaurantId, memberId);
+        PaymentCompleteResDto result = reservationService.confirmReservation(reservationId, memberId);
 
         // then
         verify(notificationScheduleService).scheduleImmediateNotification(reservation, NotificationType.CONFIRMATION);
@@ -95,7 +95,7 @@ class ReservationServiceTest {
         given(member.getId()).willReturn(memberId);
 
         // when & then
-        assertThatThrownBy(() -> reservationService.confirmReservation(reservationId, restaurantId, memberId))
+        assertThatThrownBy(() -> reservationService.confirmReservation(reservationId, memberId))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_STATUS_CONFIRM);
     }
