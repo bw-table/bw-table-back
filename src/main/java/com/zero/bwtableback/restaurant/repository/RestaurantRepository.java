@@ -1,5 +1,8 @@
 package com.zero.bwtableback.restaurant.repository;
 
+import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.reservation.entity.Reservation;
+import com.zero.bwtableback.restaurant.entity.Category;
 import com.zero.bwtableback.restaurant.entity.CategoryType;
 import com.zero.bwtableback.restaurant.entity.FacilityType;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
@@ -10,6 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -50,4 +54,16 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     List<Restaurant> findRestaurantsNearby(@Param("latitude") double latitude, @Param("longitude") double longitude, @Param("radius") double radius);
 
     List<Restaurant> findByAddressContaining(String region);
+
+    @Query("select r from Restaurant r " +
+            "join Reservation res on res.restaurant = r " +
+            "where res.reservationDate between :startDate and :endDate " +
+            "group by r.id " +
+            "order by count(res) desc")
+    List<Restaurant> findRestaurantsByReservationCountBetweenDates(
+            @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, Pageable pageable);
+
+    List<Restaurant> findByCategory(Category category, Pageable pageable);
+
+
 }

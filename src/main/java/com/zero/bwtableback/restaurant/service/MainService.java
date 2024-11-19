@@ -1,8 +1,12 @@
 package com.zero.bwtableback.restaurant.service;
 
+import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.reservation.entity.Reservation;
+import com.zero.bwtableback.reservation.repository.ReservationRepository;
 import com.zero.bwtableback.restaurant.dto.RestaurantListDto;
 import com.zero.bwtableback.restaurant.entity.*;
 import com.zero.bwtableback.restaurant.repository.AnnouncementRepository;
+import com.zero.bwtableback.restaurant.repository.CategoryRepository;
 import com.zero.bwtableback.restaurant.repository.FacilityRepository;
 import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +14,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,11 +30,26 @@ public class MainService {
 
     private final AnnouncementRepository announcementRepository;
     private final RestaurantRepository restaurantRepository;
-    private final FacilityRepository facilityRepository;
+    private final CategoryRepository categoryRepository;
+    private final ReservationRepository reservationRepository;
 
     // 아이콘
     // 이달의 맛집
-    // TODO 어떤 기준으로 할건지?
+    // 이번달 예약 많은 순 top50
+    public List<RestaurantListDto> getTop50RestaurantsByReservationCountThisMonth(Pageable pageable) {
+        YearMonth currentMonth = YearMonth.from(LocalDate.now());
+        LocalDate firstDayOfMonth = currentMonth.atDay(1);
+        LocalDate lastDayOfMonth = currentMonth.atEndOfMonth();
+
+        // 이번달 예약 많은 순으로 식당 조회
+        List<Restaurant> restaurants =
+                restaurantRepository.findRestaurantsByReservationCountBetweenDates(firstDayOfMonth, lastDayOfMonth, pageable);
+
+        return restaurants.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
 
     // 모임 예약
     // 편의시설에 '대관가능'(EVENT_SPACE) 있는 식당
@@ -42,7 +63,7 @@ public class MainService {
 
     // 스페셜 혜택
     // 이벤트 있는 식당
-    // TODO "놓치면 안되는 혜택 가득!" 탭이랑 동일?
+    // "놓치면 안되는 혜택 가득!" 탭이랑 동일
 
     // 히든플레이스
     // 예약 수 적은 식당
@@ -52,26 +73,6 @@ public class MainService {
         return restaurants.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
-    }
-
-    // 오마카세
-    public List<RestaurantListDto> getRestaurantsByOmakase(Pageable pageable) {
-        return restaurantService.getRestaurantsByCategory(CategoryType.OMAKASE.name(), pageable);
-    }
-
-    // 중식
-    public List<RestaurantListDto> getRestaurantsByChinese(Pageable pageable) {
-        return restaurantService.getRestaurantsByCategory(CategoryType.CHINESE.name(), pageable);
-    }
-
-    // 파인다이닝
-    public List<RestaurantListDto> getRestaurantsByFineDining(Pageable pageable) {
-        return restaurantService.getRestaurantsByCategory(CategoryType.FINE_DINING.name(), pageable);
-    }
-
-    // 파스타
-    public List<RestaurantListDto> getRestaurantsByPasta(Pageable pageable) {
-        return restaurantService.getRestaurantsByMenu("파스타", pageable);
     }
 
     // 어디로 가시나요?
@@ -94,7 +95,7 @@ public class MainService {
                 .collect(Collectors.toList());
     }
 
-    // 놓치면 안되는 혜택 가득!
+    // 놓치면 안되는 혜택 가득! (eventRestaurants)
     // 이벤트 진행중인 식당
     // Announcement 엔티티의 event 필드가 true인 식당
     public List<RestaurantListDto> getRestaurantsWithEvent(Pageable pageable) {
@@ -112,7 +113,7 @@ public class MainService {
                 .collect(Collectors.toList());
     }
 
-    // 방문자 리얼리뷰 Pick
+    // 방문자 리얼리뷰 Pick (reviewRestaurants)
     // 리뷰있는 식당
     public List<RestaurantListDto> getRestaurantsWithReviews(Pageable pageable) {
         List<Restaurant> restaurants = restaurantRepository.findRestaurantsWithReviews();
@@ -122,12 +123,47 @@ public class MainService {
                 .collect(Collectors.toList());
     }
 
-    // TODO 고객님이 좋아할 매장
+    // 고객님이 좋아할 매장 (recommendations)
     // 로그인한 사용자 : 가장 최근 예약한 식당 카테고리로 조회
-    // 로그인하지 않은 사용자 : ?
+    // 로그인하지 않은 사용자 : 인기 카테고리(searchCount 기준)로 조회
+    public List<RestaurantListDto> getRecommendedRestaurants(Pageable pageable, Member member) {
+        if (member != null) { // 로그인한 사용자
+            return getRecommendedRestaurantsForLoggedInUser(member, pageable);
+        } else { // 로그인 하지 않은 사용자
+            return getPopularRestaurants(pageable);
+        }
+    }
 
+    // 로그인한 사용자 : 가장 최근 예약한 식당 카테고리로 조회
+    public List<RestaurantListDto> getRecommendedRestaurantsForLoggedInUser(Member member, Pageable pageable) {
+        Reservation latestReservation = reservationRepository.findTopByMemberOrderByReservationDateDesc(member);
 
-    // 식당 등록 날짜 기준 최신순
+        if (latestReservation == null) {
+            return getPopularRestaurants(pageable);
+        }
+
+        CategoryType category = latestReservation.getRestaurant().getCategory().getCategoryType();
+
+        Page<Restaurant> restaurants = restaurantRepository.findByCategory_CategoryType(category, pageable);
+
+        return restaurants.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    // 로그인하지 않은 사용자 : 인기 카테고리(searchCount 기준)로 조회
+    public List<RestaurantListDto> getPopularRestaurants(Pageable pageable) {
+        Category popularCategory = categoryRepository.findMostpopularCategory();
+
+        List<Restaurant> restaurants = restaurantRepository.findByCategory(popularCategory, pageable);
+
+        return restaurants.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    // 새로 오픈했어요!
+    // 식당 등록 날짜 기준 최신순 (newRestaurants)
     public List<RestaurantListDto> getNewRestaurants(Pageable pageable) {
         List<Restaurant> restaurants = restaurantRepository.findAllByOrderByCreatedAtDesc(pageable);
 
@@ -146,39 +182,13 @@ public class MainService {
     }
 
     // 모든 정보를 한 데이터로 합치기
-    public Map<String, List<RestaurantListDto>> getMainPageData(Pageable pageable) {
+    public Map<String, List<RestaurantListDto>> getMainPageData(Pageable pageable, Member member) {
         Map<String, List<RestaurantListDto>> result = new HashMap<>();
 
-        // TODO 아이콘 리스트들은 메인페이지 데이터에 바로 보이지 않기 때문에 필요없지 않나?
-        // 아이콘
-//        result.put("이달의 맛집", null);
-//        result.put("모임 예약", getRestaurantsWithEventSpace(pageable));
-//        result.put("스페셜 혜택", getRestaurantsWithEvent(pageable));
-//        result.put("히든플레이스", getRestaurantsByReservationCountDesc(pageable));
-//        result.put("오마카세", getRestaurantsByOmakase(pageable));
-//        result.put("중식", getRestaurantsByChinese(pageable));
-//        result.put("파인다이닝", getRestaurantsByFineDining(pageable));
-//        result.put("파스타", getRestaurantsByPasta(pageable));
-//
-//        // 어디로 가시나요?
-//        Map<String, List<RestaurantListDto>> whereToGo = new HashMap<>();
-//
-//        // 내주변
-//        if (latitude != null && longitude != null) {
-//            whereToGo.put("내주변", getRestaurantsNearby(latitude, longitude, 10.0)); // 10km 반경
-//        }
-//
-//        // 지역별
-//        if (region != null && !region.isEmpty()) {
-//            whereToGo.put("지역별", getRestaurantsByRegion(region));
-//        }
-//
-//        result.put("어디로 가시나요?", whereToGo);
-
-        result.put("놓치면 안되는 혜택 가득!", getRestaurantsWithEvent(pageable));
-        result.put("방문자 리얼리뷰 Pick", getRestaurantsWithReviews(pageable));
-        result.put("고객님이 좋아할 매장", null);
-        result.put("새로 오픈했어요!", getNewRestaurants(pageable));
+        result.put("eventRestaurants", getRestaurantsWithEvent(pageable));
+        result.put("reviewRestaurants", getRestaurantsWithReviews(pageable));
+        result.put("recommendations", getRecommendedRestaurants(pageable, member));
+        result.put("newRestaurants", getNewRestaurants(pageable));
 
         return result;
     }

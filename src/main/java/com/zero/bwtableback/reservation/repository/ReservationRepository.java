@@ -25,5 +25,5 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long>,
 
     List<Reservation> findByRestaurantIdAndReservationDate(Long restaurantId, LocalDate reservationDate);
 
-
+    Reservation findTopByMemberOrderByReservationDateDesc(Member member);
 }
