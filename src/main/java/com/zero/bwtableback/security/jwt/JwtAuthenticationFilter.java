@@ -62,9 +62,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isSecuredEndpoint(HttpServletRequest request) {
-        // 인증이 필요한 엔드포인트 목록을 정의하고 확인하는 로직
+        // FIXME 인증이 필요한 엔드포인트 목록을 정의하고 확인하는 로직
         String path = request.getRequestURI();
-        return path.startsWith("/api/auth/refresh") || path.equals("/api/member");
+        return path.startsWith("/api/test/test") || path.equals("/test/test");
     }
 
     private String getJwtFromRequest(HttpServletRequest request) {

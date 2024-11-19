@@ -31,4 +31,8 @@ public class Category {
     @OneToMany(mappedBy = "category")
     @JsonIgnore
     private List<Restaurant> restaurants;
+
+    public void setSearchCount(int i) {
+        this.searchCount = i;
+    }
 }

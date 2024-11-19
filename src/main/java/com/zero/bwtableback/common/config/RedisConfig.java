@@ -1,6 +1,7 @@
 package com.zero.bwtableback.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -19,9 +20,12 @@ public class RedisConfig {
         this.objectMapper = objectMapper;
     }
 
+    @Value("${REDIS_HOST}")
+    private String redisHost;
+
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        return new LettuceConnectionFactory("localhost", 6379);
+        return new LettuceConnectionFactory(redisHost, 6379);
     }
 
     @Bean

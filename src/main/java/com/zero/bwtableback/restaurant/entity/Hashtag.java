@@ -34,4 +34,8 @@ public class Hashtag {
     public Hashtag(String name) {
         this.name = name;
     }
+
+    public void setSearchCount(int i) {
+        this.searchCount = i;
+    }
 }

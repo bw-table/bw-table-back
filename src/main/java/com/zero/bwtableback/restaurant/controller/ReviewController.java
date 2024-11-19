@@ -5,18 +5,23 @@ import com.zero.bwtableback.restaurant.dto.ReviewReqDto;
 import com.zero.bwtableback.restaurant.dto.ReviewResDto;
 import com.zero.bwtableback.restaurant.dto.ReviewUpdateReqDto;
 import com.zero.bwtableback.restaurant.service.ReviewService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/restaurants")
 @RequiredArgsConstructor
+@Slf4j
 public class ReviewController {
 
     private final ReviewService reviewService;
@@ -24,18 +29,29 @@ public class ReviewController {
     // 리뷰 작성
     @PostMapping("/{restaurantId}/review/new")
     public ResponseEntity<ReviewResDto> createReview(@PathVariable Long restaurantId,
-                                                     @RequestBody @Valid ReviewReqDto reqDto) {
-        ReviewResDto resDto = reviewService.createReview(restaurantId, reqDto);
+                                                     @RequestPart(value = "review") ReviewReqDto reqDto,
+                                                     @RequestPart(value = "images", required = false) MultipartFile[] images) throws IOException {
+//        reqDto = new ReviewReqDto(reqDto.getContent(), reqDto.getRating(), images);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(resDto);
+        // 이미지 배열이 제대로 전달됐는지 확인
+        if (images != null && images.length > 0) {
+            log.info("Number of images uploaded: " + images.length);
+        } else {
+            log.warn("No images uploaded.");
+        }
+
+        ReviewResDto resDto = reviewService.createReview(restaurantId, reqDto, images);
+
+        return ResponseEntity.ok(resDto);
     }
 
     // 리뷰 수정
     @PutMapping("/{restaurantId}/reviews/{reviewId}")
     public ResponseEntity<ReviewResDto> updateReview(@PathVariable Long restaurantId,
                                                      @PathVariable Long reviewId,
-                                                     @RequestBody ReviewUpdateReqDto reqDto) {
-        ReviewResDto response = reviewService.updateReview(reviewId, restaurantId, reqDto);
+                                                     @RequestPart(value = "review") ReviewUpdateReqDto reqDto,
+                                                     @RequestPart(value = "images", required = false) MultipartFile[] images) throws IOException {
+        ReviewResDto response = reviewService.updateReview(reviewId, restaurantId, reqDto, images);
 
         return ResponseEntity.ok(response);
     }
@@ -44,9 +60,19 @@ public class ReviewController {
     @DeleteMapping("/{restaurantId}/reviews/{reviewId}")
     public ResponseEntity<String> deleteReview(@PathVariable Long restaurantId,
                                                @PathVariable Long reviewId) {
-        reviewService.deleteReview(reviewId, restaurantId);
+        try {
+            return reviewService.deleteReview(reviewId, restaurantId);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Review or Restaurant not found");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error occurred during deleting review");
+        }
 
-        return ResponseEntity.ok("Review deleted successfully");
     }
 
     // 식당 리뷰 목록 조회

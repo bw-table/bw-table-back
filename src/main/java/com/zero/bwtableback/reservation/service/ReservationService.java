@@ -335,7 +335,7 @@ public class ReservationService {
         }
 
         if (statusUpdateDto.reservationStatus() == null) {
-//          FIXME  throw new CustomException(ErrorCode.INVALID_RESERVATION_STATUS);
+            throw new CustomException(ErrorCode.INVALID_RESERVATION_STATUS);
         }
 
         ReservationStatus newStatus = statusUpdateDto.reservationStatus();
@@ -343,10 +343,15 @@ public class ReservationService {
         return switch (newStatus) {
             case CUSTOMER_CANCELED -> handleCustomerCanceledStatus(reservation);
             case OWNER_CANCELED -> handleOwnerCanceledStatus(reservation);
+
 //            case NO_SHOW -> handleNoShowStatus(reservation);
 //            case VISITED -> handleVisitedStatus(reservation);
 //          FIXME  default -> throw new CustomException(ErrorCode.INVALID_RESERVATION_STATUS);
             default -> throw new RuntimeException("INVALID_RESERVATION_STATUS");
+//            case NO_SHOW -> handleNoShowStatus(reservation);
+//            case VISITED -> handleVisitedStatus(reservation);
+//            default ->
+//                    throw new CustomException(ErrorCode.INVALID_RESERVATION_STATUS);
         };
     }
 
@@ -388,12 +393,12 @@ public class ReservationService {
     }
 
     // VISITED 상태 처리
-    public ReservationResDto handleVisitedStatus(Long reservationId, Long memberId)  {
+    public ReservationResDto handleVisitedStatus(Long reservationId, Long memberId) {
         Reservation reservation = findReservationById(reservationId);
         Member member = findMemberById(memberId);
 
         // 예약된 가게가 사장님 소유 여부 확인
-        if(reservation.getRestaurant().getId() != member.getRestaurant().getId()){
+        if (reservation.getRestaurant().getId() != member.getRestaurant().getId()) {
             throw new CustomException(ErrorCode.INVALID_STATUS_VISITED);
         }
 
@@ -417,7 +422,7 @@ public class ReservationService {
         Member member = findMemberById(memberId);
 
         // 예약된 가게가 사장님 소유 여부 확인
-        if(reservation.getRestaurant().getId() != member.getRestaurant().getId()){
+        if (reservation.getRestaurant().getId() != member.getRestaurant().getId()) {
             throw new CustomException(ErrorCode.INVALID_STATUS_VISITED);
         }
 

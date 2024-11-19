@@ -20,7 +20,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     Page<Restaurant> findByCategory_CategoryType(CategoryType type, Pageable pageable);
 
-    Page<Restaurant> findByHashtags_NameContaining(String hashtag, Pageable pageable);
+    Page<Restaurant> findByHashtags_Name(String hashtag, Pageable pageable);
 
     Page<Restaurant> findByMenus_NameContaining(String menu, Pageable pageable);
 

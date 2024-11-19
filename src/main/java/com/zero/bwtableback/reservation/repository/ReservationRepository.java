@@ -1,19 +1,24 @@
 package com.zero.bwtableback.reservation.repository;
 
+import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.reservation.entity.Reservation;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
+import com.zero.bwtableback.reservation.entity.ReservationStatus;
+import com.zero.bwtableback.restaurant.entity.Restaurant;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface ReservationRepository extends JpaRepository<Reservation, Long>, JpaSpecificationExecutor<Reservation> {
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Optional;
 
-    List<Reservation> findByReservationDate(LocalDate reservationDate);
+public interface ReservationRepository extends JpaRepository<Reservation, Long> {
+
+    @Query("SELECT r FROM Reservation r WHERE r.reservationDate = :date")
+    List<Reservation> findReservationsByDate(@Param("date") LocalDate date);
 
     Page<Reservation> findByMemberId(Long memberId, Pageable pageable);
 
@@ -26,9 +31,11 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long>,
             "AND r.reservationDate = :reservationDate " +
             "AND r.reservationTime = :reservationTime " +
             "AND r.reservationStatus = 'CONFIRMED'")
-    int countReservedPeopleByRestaurantAndDateTime(
+            int countReservedPeopleByRestaurantAndDateTime(
             @Param("restaurantId") Long restaurantId,
             @Param("reservationDate") LocalDate reservationDate,
             @Param("reservationTime") LocalTime reservationTime
     );
+    Optional<Reservation> findByMemberAndRestaurantAndReservationStatus(
+            Member member, Restaurant restaurant, ReservationStatus reservationStatus);
 }

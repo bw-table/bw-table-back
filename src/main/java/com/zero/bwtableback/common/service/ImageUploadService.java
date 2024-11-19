@@ -6,6 +6,13 @@ import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
+import com.zero.bwtableback.restaurant.entity.Restaurant;
+import com.zero.bwtableback.restaurant.entity.RestaurantImage;
+import com.zero.bwtableback.restaurant.entity.Review;
+import com.zero.bwtableback.restaurant.entity.ReviewImage;
+import com.zero.bwtableback.restaurant.repository.MenuRepository;
+import com.zero.bwtableback.restaurant.repository.RestaurantImageRepository;
+import com.zero.bwtableback.restaurant.repository.ReviewImageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -14,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +29,10 @@ public class ImageUploadService {
 
     private final AmazonS3 amazonS3Client;
     private final MemberRepository memberRepository;
+    private final RestaurantImageRepository restaurantImageRepository;
+    private final MenuRepository menuRepository;
+    private final ReviewImageRepository reviewImageRepository;
+
 
     @Value("${cloud.aws.s3.bucket}")
     private String BUCKET_NAME;
@@ -46,50 +58,51 @@ public class ImageUploadService {
     /**
      * 가게 이미지
      * - 최대 5장
-     * TODO 가게 아이디로 받을 수 있게 설정
      * TODO 순서는 어떻게 보장할지 생각해보기
      */
-    public List<String> uploadRestaurantImages(MultipartFile[] files) throws IOException {
+    public List<String> uploadRestaurantImages(Long restaurantId, MultipartFile[] files) throws IOException {
         validateImageFiles(files, 5);
+
         List<String> fileUrls = new ArrayList<>();
 
-//        for (MultipartFile file : files) {
-//            String fileUrl = uploadFile(file,RESTAURANT_BUCKET_NAME,filepath);
-//            fileUrls.add(fileUrl);
-//        }
-//        return fileUrls;
-        return null;
-    }
-
-    /**
-     * 리뷰 이미지
-     * - 최대 5장
-     * TODO 가게 아이디로 받을 수 있게 설정
-     * TODO 리뷰 아이디로 필요한지 생각
-     * TODO 순서는 어떻게 보장할지 생각해보기
-     */
-    public List<String> uploadReviewImages(MultipartFile[] files) throws IOException {
-        validateImageFiles(files, 5); // 최대 5개 검증
-        List<String> fileUrls = new ArrayList<>();
-
-//        for (MultipartFile file : files) {
-//            String fileUrl = uploadFile(file,RESTAURANT_BUCKET_NAME);
-//            fileUrls.add(fileUrl);
-//        }
-//        return fileUrls;
-        return null;
+        for (MultipartFile file: files) {
+            String fileUrl = uploadFile(file, "restaurant/" + restaurantId + "/main/");
+            fileUrls.add(fileUrl);
+        }
+        return fileUrls;
     }
 
     /**
      * 메뉴 이미지
      * - 최대 1장
-     *  TODO 가게 아이디로 받을 수 있게 설정
      *  TODO 메뉴 아이디 받아야하는지 생각
      */
-    public String uploadMenuImage(MultipartFile file) throws IOException {
-//        validateSingleImageFile(file);
-//        return uploadFile(file,RESTAURANT_BUCKET_NAME);
-        return null;
+    public String uploadMenuImage(Long restaurantId, Long menuId, MultipartFile file) throws IOException {
+        validateSingleImageFile(file);
+
+        String fileUrl = uploadFile(file, "restaurant/" + restaurantId + "/menu/" + menuId + "/");
+
+        return fileUrl;
+    }
+
+    /**
+     * 리뷰 이미지
+     * - 최대 5장
+     * TODO 순서는 어떻게 보장할지 생각해보기
+     */
+    public List<String> uploadReviewImages(Long restaurantId,
+                                           Long reviewId,
+                                           MultipartFile[] files) throws IOException {
+
+        validateImageFiles(files, 5);
+
+        List<String> fileUrls = new ArrayList<>();
+        for (MultipartFile file: files) {
+            String fileUrl = uploadFile(file, "restaurant/" + restaurantId + "/review/" + reviewId + "/");
+            fileUrls.add(fileUrl);
+        }
+
+        return fileUrls;
     }
 
     // S3에 이미지 업로드
@@ -169,5 +182,55 @@ public class ImageUploadService {
         // S3 URL에서 파일 이름 추출
         String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
 //        amazonS3Client.deleteObject(fileName);
+    }
+
+    // 식당 이미지 삭제
+    public void deleteExistingRestaurantImages(Restaurant restaurant) throws IOException {
+        if (restaurant.getImages() != null && restaurant.getImages().isEmpty()) {
+            Set<RestaurantImage> existingImages = restaurant.getImages();
+
+            for (RestaurantImage restaurantImage: existingImages) {
+                String imageUrl = restaurantImage.getImageUrl();
+                String imagePath = getImagePathFromUrl(imageUrl);
+
+                amazonS3Client.deleteObject(BUCKET_NAME, imagePath);
+            }
+
+        restaurantImageRepository.deleteAll(existingImages);
+        }
+    }
+
+    // 메뉴 이미지 삭제
+    public void deleteMenuImage(Long restaurantId, Long menuId, String imageUrl) throws IOException {
+        String imagePath = getImagePathFromUrl(imageUrl);
+
+        amazonS3Client.deleteObject(BUCKET_NAME, imagePath);
+
+        menuRepository.findById(menuId).ifPresent(menu -> {
+            menu.setImageUrl(null);
+            menuRepository.save(menu);
+        });
+    }
+
+    // 리뷰 이미지 삭제
+    public void deleteExistingReviewImages(Review review) throws IOException {
+        Set<ReviewImage> existingImages = review.getImages();
+        for (ReviewImage reviewImage: existingImages) {
+            String imageUrl = reviewImage.getImageUrl();
+            String imagePath = getImagePathFromUrl(imageUrl);
+
+            amazonS3Client.deleteObject(BUCKET_NAME, imagePath);
+        }
+
+        reviewImageRepository.deleteAll(existingImages);
+    }
+
+    // URL에서 파일 경로 추출
+    public String getImagePathFromUrl(String imageUrl) {
+        String baseUrl = "https://" + BUCKET_NAME + ".s3.amazonaws.com/";
+        if (imageUrl.startsWith(baseUrl)) {
+            return imageUrl.substring(baseUrl.length());
+        }
+        return imageUrl;
     }
 }

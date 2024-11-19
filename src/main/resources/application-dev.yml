@@ -8,9 +8,7 @@ spring:
     api:
       key: ${IMP_API_KEY}
       secret: ${IMP_API_SECRET}
-  config:
-    activate:
-      on-profile: dev
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/bwtable-mysql?useSSL=false&serverTimezone=Asia/Seoul&useUnicode=true&characterEncoding=utf8&allowPublicKeyRetrieval=true
@@ -21,12 +19,13 @@ spring:
       defer-datasource-initialization: true
       ddl-auto: update
     show-sql: true
-#  sql:  // data.sql 을 위한 설정
-#    init: create
-#      mode: always
+
+  #  sql:  // data.sql 을 위한 설정
+  #    init: create
+  #      mode: always
   data:
     redis:
-      host: redis
+      host: ${REDIS_HOST}
       port: 6379
   jwt:
     secret: ${JWT_SECRET:your-256-bit-secret-key-default} # HS512 알고리즘을 사용할 경우, 비밀 키는 최소 512비트(64바이트) 이상
