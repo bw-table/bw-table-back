@@ -32,6 +32,7 @@ public class MainService {
     private final RestaurantRepository restaurantRepository;
     private final CategoryRepository categoryRepository;
     private final ReservationRepository reservationRepository;
+    private final RestaurantSearchService restaurantSearchService;
 
     // 아이콘
     // 이달의 맛집
@@ -54,7 +55,7 @@ public class MainService {
     // 모임 예약
     // 편의시설에 '대관가능'(EVENT_SPACE) 있는 식당
     public List<RestaurantListDto> getRestaurantsWithEventSpace(Pageable pageable) {
-        List<Restaurant> restaurants = restaurantService.getRestaurantsByFacility(FacilityType.EVENT_SPACE, pageable);
+        List<Restaurant> restaurants = restaurantSearchService.getRestaurantsByFacility(FacilityType.EVENT_SPACE, pageable);
 
         return restaurants.stream()
                 .map(this::convertToDto)

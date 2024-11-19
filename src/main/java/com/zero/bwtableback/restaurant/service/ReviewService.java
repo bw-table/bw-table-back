@@ -46,7 +46,6 @@ public class ReviewService {
     private final ReviewImageRepository reviewImageRepository;
     private final ImageUploadService imageUploadService;
     private final MemberRepository memberRepository;
-    private final ReservationRepository reservationRepository;
 
     // 리뷰 작성
     public ReviewResDto createReview(Long restaurantId, ReviewReqDto reqDto, MultipartFile[] images) throws IOException {

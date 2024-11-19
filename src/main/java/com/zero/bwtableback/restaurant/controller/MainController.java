@@ -6,6 +6,7 @@ import com.zero.bwtableback.restaurant.dto.RestaurantListDto;
 import com.zero.bwtableback.restaurant.entity.CategoryType;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.service.MainService;
+import com.zero.bwtableback.restaurant.service.RestaurantSearchService;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,7 +26,7 @@ import java.util.Map;
 public class MainController {
 
     private final MainService mainService;
-    private final RestaurantService restaurantService;
+    private final RestaurantSearchService restaurantSearchService;
 
     // 아이콘
     // 이달의 맛집
@@ -64,7 +65,7 @@ public class MainController {
     // 오마카세
     @GetMapping("/omakase")
     public ResponseEntity<List<RestaurantListDto>> getRestaurantsByOmakase(Pageable pageable) {
-        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByCategory("OMAKASE", pageable);
+        List<RestaurantListDto> restaurants = restaurantSearchService.getRestaurantsByCategory("OMAKASE", pageable);
 
         return ResponseEntity.ok(restaurants);
     }
@@ -72,7 +73,7 @@ public class MainController {
     // 중식
     @GetMapping("/chinese")
     public ResponseEntity<List<RestaurantListDto>> getRestaurantsByChinese(Pageable pageable) {
-        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByCategory("CHINESE", pageable);
+        List<RestaurantListDto> restaurants = restaurantSearchService.getRestaurantsByCategory("CHINESE", pageable);
 
         return ResponseEntity.ok(restaurants);
     }
@@ -80,7 +81,7 @@ public class MainController {
     // 파인다이닝
     @GetMapping("/fine-dining")
     public ResponseEntity<List<RestaurantListDto>> getRestaurantsByFineDining(Pageable pageable) {
-        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByCategory("FINE_DINING", pageable);
+        List<RestaurantListDto> restaurants = restaurantSearchService.getRestaurantsByCategory("FINE_DINING", pageable);
 
         return ResponseEntity.ok(restaurants);
     }
@@ -88,7 +89,7 @@ public class MainController {
     // 파스타
     @GetMapping("/pasta")
     public ResponseEntity<List<RestaurantListDto>> getRestaurantsByPasta(Pageable pageable) {
-        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByMenu("파스타", pageable);
+        List<RestaurantListDto> restaurants = restaurantSearchService.getRestaurantsByMenu("파스타", pageable);
 
         return ResponseEntity.ok(restaurants);
     }

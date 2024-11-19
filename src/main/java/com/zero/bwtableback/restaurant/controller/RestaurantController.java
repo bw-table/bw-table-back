@@ -3,10 +3,10 @@ package com.zero.bwtableback.restaurant.controller;
 import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
 import com.zero.bwtableback.common.service.ImageUploadService;
 import com.zero.bwtableback.restaurant.dto.*;
-import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.exception.RestaurantException;
 import com.zero.bwtableback.restaurant.service.AnnouncementService;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
+import com.zero.bwtableback.restaurant.service.RestaurantSearchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -27,6 +27,7 @@ public class RestaurantController {
 
     private final RestaurantService restaurantService;
     private final AnnouncementService announcementService;
+    private final RestaurantSearchService restaurantSearchService;
     private final ImageUploadService imageUploadService;
 
     // 식당 등록
@@ -99,7 +100,7 @@ public class RestaurantController {
     // 모든 식당 조회
     @GetMapping
     public ResponseEntity<List<RestaurantListDto>> getRestaurants(Pageable pageable) {
-        List<RestaurantListDto> restaurantList = restaurantService.getRestaurants(pageable);
+        List<RestaurantListDto> restaurantList = restaurantSearchService.getRestaurants(pageable);
         return ResponseEntity.ok(restaurantList);
     }
 
@@ -108,7 +109,7 @@ public class RestaurantController {
     public ResponseEntity<List<RestaurantListDto>> getRestaurantByName(
             @RequestParam String name,
             Pageable pageable) {
-        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByName(name, pageable);
+        List<RestaurantListDto> restaurants = restaurantSearchService.getRestaurantsByName(name, pageable);
         return ResponseEntity.ok(restaurants);
     }
 
@@ -117,7 +118,7 @@ public class RestaurantController {
     public ResponseEntity<List<RestaurantListDto>> getRestaurantsByCategory(
             @RequestParam String category,
             Pageable pageable) {
-        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByCategory(category, pageable);
+        List<RestaurantListDto> restaurants = restaurantSearchService.getRestaurantsByCategory(category, pageable);
         return ResponseEntity.ok(restaurants);
     }
 
@@ -126,7 +127,7 @@ public class RestaurantController {
     public ResponseEntity<List<RestaurantListDto>> getRestaurantsByMenu(
             @RequestParam String menu,
             Pageable pageable) {
-        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByMenu(menu, pageable);
+        List<RestaurantListDto> restaurants = restaurantSearchService.getRestaurantsByMenu(menu, pageable);
         return ResponseEntity.ok(restaurants);
     }
 
@@ -135,14 +136,14 @@ public class RestaurantController {
     public ResponseEntity<List<RestaurantListDto>> getRestaurantsByHashtag(
             @RequestParam String hashtag,
             Pageable pageable) {
-        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByHashtag(hashtag, pageable);
+        List<RestaurantListDto> restaurants = restaurantSearchService.getRestaurantsByHashtag(hashtag, pageable);
         return ResponseEntity.ok(restaurants);
     }
 
     // 해시태그 자동완성
     @GetMapping("/search/hashtags/suggestions")
     public ResponseEntity<List<String>> getHashtagSuggestions(@RequestParam String hashtag) {
-        List<String> suggestions = restaurantService.getHashtagSuggestions(hashtag);
+        List<String> suggestions = restaurantSearchService.getHashtagSuggestions(hashtag);
         return ResponseEntity.ok(suggestions);
     }
 
