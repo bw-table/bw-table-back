@@ -3,6 +3,8 @@ package com.zero.bwtableback.restaurant.service;
 import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
 import com.zero.bwtableback.chat.repository.ChatRoomRepository;
 import com.zero.bwtableback.common.service.ImageUploadService;
+import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.restaurant.dto.*;
 import com.zero.bwtableback.restaurant.entity.*;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -141,11 +144,12 @@ public class RestaurantService {
 //    }
 
     public RestaurantResDto registerRestaurant(RestaurantReqDto reqDto,
-                                         MultipartFile[] images,
-                                         List<MenuRegisterDto> menus,
-                                         List<MultipartFile> menuImages) throws IOException {
+                                               MultipartFile[] images,
+                                               List<MenuRegisterDto> menus,
+                                               List<MultipartFile> menuImages,
+                                               Member member) throws IOException {
 
-        reqDto.validate();  // TODO 간단한 테스트 후 삭제 예정
+//        reqDto.validate();  // TODO 간단한 테스트 후 삭제 예정
 
 //        Member member = memberRepository.findById(memberId)
 //                .orElseThrow(() -> new EntityNotFoundException("Member not found"));
@@ -182,6 +186,7 @@ public class RestaurantService {
                 .menus(new ArrayList<>())
                 .facilities(new ArrayList<>())
                 .hashtags(new ArrayList<>())
+                .member(member)
                 .build();
 
         List<OperatingHours> operatingHours = assignOperatingHours(reqDto.getOperatingHours(), restaurant);

@@ -2,6 +2,7 @@ package com.zero.bwtableback.restaurant.controller;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.restaurant.dto.ReviewInfoDto;
 import com.zero.bwtableback.restaurant.dto.ReviewReqDto;
 import com.zero.bwtableback.restaurant.dto.ReviewResDto;
@@ -14,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,10 +32,12 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     // 리뷰 작성
+    @PreAuthorize("hasRole('GUEST')")
     @PostMapping("/{restaurantId}/review/new")
     public ResponseEntity<ReviewResDto> createReview(@PathVariable Long restaurantId,
                                                      @RequestPart(value = "review") ReviewReqDto reqDto,
-                                                     @RequestPart(value = "images", required = false) MultipartFile[] images) throws IOException {
+                                                     @RequestPart(value = "images", required = false) MultipartFile[] images,
+                                                     @AuthenticationPrincipal Member member) throws IOException {
 //        reqDto = new ReviewReqDto(reqDto.getContent(), reqDto.getRating(), images);
 
         // 이미지 배열이 제대로 전달됐는지 확인
@@ -42,29 +47,33 @@ public class ReviewController {
             log.warn("No images uploaded.");
         }
 
-        ReviewResDto resDto = reviewService.createReview(restaurantId, reqDto, images);
+        ReviewResDto resDto = reviewService.createReview(restaurantId, reqDto, images, member);
 
         return ResponseEntity.ok(resDto);
     }
 
     // 리뷰 수정
+    @PreAuthorize("hasRole('GUEST')")
     @PutMapping("/{restaurantId}/reviews/{reviewId}")
     public ResponseEntity<ReviewResDto> updateReview(@PathVariable Long restaurantId,
                                                      @PathVariable Long reviewId,
                                                      @RequestPart(value = "review") ReviewUpdateReqDto reqDto,
-                                                     @RequestPart(value = "images", required = false) MultipartFile[] images) throws IOException {
+                                                     @RequestPart(value = "images", required = false) MultipartFile[] images,
+                                                     @AuthenticationPrincipal Member member) throws IOException {
 
-        ReviewResDto response = reviewService.updateReview(reviewId, restaurantId, reqDto, images);
+        ReviewResDto response = reviewService.updateReview(reviewId, restaurantId, reqDto, images, member);
 
         return ResponseEntity.ok(response);
     }
 
     // 리뷰 삭제
+    @PreAuthorize("hasRole('GUEST')")
     @DeleteMapping("/{restaurantId}/reviews/{reviewId}")
     public ResponseEntity<String> deleteReview(@PathVariable Long restaurantId,
-                                               @PathVariable Long reviewId) {
+                                               @PathVariable Long reviewId,
+                                               @AuthenticationPrincipal Member member) {
         try {
-            return reviewService.deleteReview(reviewId, restaurantId);
+            return reviewService.deleteReview(reviewId, restaurantId, member);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Review or Restaurant not found");
@@ -75,7 +84,6 @@ public class ReviewController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error occurred during deleting review");
         }
-
     }
 
     // 식당 리뷰 목록 조회

@@ -2,17 +2,22 @@ package com.zero.bwtableback.restaurant.controller;
 
 import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
 import com.zero.bwtableback.common.service.ImageUploadService;
+import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.restaurant.dto.*;
 import com.zero.bwtableback.restaurant.exception.RestaurantException;
 import com.zero.bwtableback.restaurant.service.AnnouncementService;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
 import com.zero.bwtableback.restaurant.service.RestaurantSearchService;
+import com.zero.bwtableback.security.MemberDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -54,18 +59,21 @@ public class RestaurantController {
 //        }
 //    }
 
+    @PreAuthorize("hasrole('OWNER')")
     @PostMapping("/new")
     public ResponseEntity<?> registerRestaurant(
-                                @RequestPart("restaurant") RestaurantReqDto reqDto,
-                                @RequestPart("images") MultipartFile[] images,
-                                @RequestPart("menus") List<MenuRegisterDto> menus,
-                                @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages) {
+            @RequestPart("restaurant") RestaurantReqDto reqDto,
+            @RequestPart("images") MultipartFile[] images,
+            @RequestPart("menus") List<MenuRegisterDto> menus,
+            @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
+            @AuthenticationPrincipal Member member) {
+
         try {
             reqDto.setImages(images);
             reqDto.setMenus(menus);
 
             RestaurantResDto savedRestaurant =
-                    restaurantService.registerRestaurant(reqDto, images, menus, menuImages);
+                    restaurantService.registerRestaurant(reqDto, images, menus, menuImages, member);
 
             return ResponseEntity.ok(savedRestaurant);
         } catch (RestaurantException e) {
@@ -84,13 +92,16 @@ public class RestaurantController {
     }
 
     // 식당 정보 수정
+    @PreAuthorize("hasrole('OWNER')")
     @PutMapping("/{id}")
     public ResponseEntity<RestaurantResDto> updateRestaurant(
             @PathVariable("id") Long restaurantId,
             @RequestPart("restaurant") UpdateReqDto reqDto,
             @RequestPart(value = "images", required = false) MultipartFile[] images,
-            @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages)
+            @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
+            @AuthenticationPrincipal Member member)
                                                     throws IOException {
+
         RestaurantResDto updatedRestaurant =
                 restaurantService.updateRestaurant(restaurantId, reqDto, images, menuImages);
 
@@ -155,6 +166,7 @@ public class RestaurantController {
     }
 
     // 공지 생성
+    @PreAuthorize("hasrole('OWNER')")
     @PostMapping("/{restaurantId}/announcements")
     public ResponseEntity<AnnouncementResDto> createAnnouncement(@PathVariable Long restaurantId,
                                                                  @RequestBody AnnouncementReqDto reqDto) {

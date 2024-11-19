@@ -28,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -48,10 +49,10 @@ public class ReviewService {
     private final MemberRepository memberRepository;
 
     // 리뷰 작성
-    public ReviewResDto createReview(Long restaurantId, ReviewReqDto reqDto, MultipartFile[] images) throws IOException {
-
-        Member member = memberRepository.findById(reqDto.getMemberId())
-                .orElseThrow(() -> new EntityNotFoundException("Member not found with id: " + reqDto.getMemberId()));
+    public ReviewResDto createReview(Long restaurantId,
+                                     ReviewReqDto reqDto,
+                                     MultipartFile[] images,
+                                     Member member) throws IOException {
 
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found with id: " + restaurantId));
@@ -136,13 +137,17 @@ public class ReviewService {
     }
 
     // 리뷰 수정
-    // TODO: 작성일 3일 이내에만 수정 가능하도록 하는 코드 추가
     public ReviewResDto updateReview(Long reviewId,
                                      Long restaurantId,
                                      ReviewUpdateReqDto reqDto,
-                                     MultipartFile[] images) throws IOException {
+                                     MultipartFile[] images,
+                                     Member member) throws IOException {
 
         Review review = findRestaurantAndReview(reviewId, restaurantId);
+
+        if (!review.getMember().equals(member)) {
+            throw new AccessDeniedException("You can only update your own reviews");
+        }
 
         // 리뷰 작성일 기준 3일 이내에만 수정 가능
         LocalDate reviewDate = review.getCreatedAt().toLocalDate();
@@ -202,13 +207,27 @@ public class ReviewService {
     }
 
     // 리뷰 삭제
-    public ResponseEntity<String> deleteReview(Long reviewId, Long restaurantId) {
+    public ResponseEntity<String> deleteReview(Long reviewId, Long restaurantId, Member member) {
         Review review = findRestaurantAndReview(reviewId, restaurantId);
+
+        if (!review.getMember().equals(member)) {
+            if (!isRestaurantOwner(member, restaurantId)) {
+                throw new AccessDeniedException("Reviews only can be deleted by owners and writers");
+            }
+        }
 
         reviewRepository.delete(review);
         reviewImageRepository.deleteByReviewId(reviewId);
 
         return ResponseEntity.ok("Review deleted successfully");
+    }
+
+    // 특정 식당의 사장님인지 확인
+    private boolean isRestaurantOwner(Member member, Long restaurantId) {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
+
+        return restaurant.getMember().equals(member);
     }
 
     // 레스토랑, 리뷰 검증
