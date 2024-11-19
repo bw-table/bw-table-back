@@ -11,13 +11,12 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @Configuration
 public class RedisConfig {
 
-    @Value("${EC2_IP}")
+    @Value("${REDIS_HOST}")
     private String redisHost;
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        // dev
-        return new LettuceConnectionFactory("redis", 6379);
+        return new LettuceConnectionFactory(redisHost, 6379);
     }
 
     @Bean
