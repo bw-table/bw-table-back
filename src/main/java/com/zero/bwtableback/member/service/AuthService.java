@@ -96,14 +96,14 @@ public class AuthService {
     }
 
     /**
-     * FIXME 사용자 로그인: 필요없다면 삭제
-     *
-     * @return accessToken, MemberDto, restaurantId(nullable)
+     * 로그인
      */
     public LoginResDto login(MemberDto memberDto, HttpServletRequest request, HttpServletResponse response) {
 
         String accessToken = tokenProvider.createAccessToken(memberDto.getEmail(), memberDto.getRole());
         String refreshToken = tokenProvider.createRefreshToken(memberDto.getId().toString());
+
+        // 회원 상태 조회
 
         // HttpOnly 쿠키에 리프레시 토큰 저장
         saveRefreshTokenToCookie(refreshToken, response);
@@ -113,6 +113,7 @@ public class AuthService {
 
         // 레스토랑 ID 조회 (사장님일 경우)
         Long restaurantId = getRestaurantIdIfOwner(memberDto);
+
 
         return new LoginResDto(accessToken, memberDto, restaurantId);
     }
@@ -217,4 +218,11 @@ public class AuthService {
         cookie.setMaxAge(0);
         response.addCookie(cookie);
     }
+
+    /**
+     * 사용자 회원탈퇴
+     *
+     * 로그아웃 처리 후
+     * TODO INACTIVE로 변경 (소프트삭제)
+     */
 }

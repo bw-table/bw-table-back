@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class PaymentResDto {
+public class PaymentReqDto {
     private String reservationToken; // 예약 토큰
 //    private String applyNum;      // 신청 번호
 //    private String bankName;      // 은행 이름 (null 가능)

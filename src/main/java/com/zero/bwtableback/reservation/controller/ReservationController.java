@@ -1,15 +1,20 @@
 package com.zero.bwtableback.reservation.controller;
 
+import com.siot.IamportRestClient.response.Payment;
 import com.zero.bwtableback.chat.service.ChatService;
+import com.zero.bwtableback.common.exception.CustomException;
+import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.payment.PaymentService;
-import com.zero.bwtableback.reservation.dto.*;
+import com.zero.bwtableback.payment.entity.PaymentStatus;
+import com.zero.bwtableback.reservation.dto.PaymentReqDto;
+import com.zero.bwtableback.reservation.dto.ReservationCompleteResDto;
+import com.zero.bwtableback.reservation.dto.ReservationCreateReqDto;
 import com.zero.bwtableback.reservation.service.ReservationService;
 import com.zero.bwtableback.restaurant.dto.ReservationAvailabilityDto;
 import com.zero.bwtableback.security.MemberDetails;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -22,8 +27,9 @@ import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-@RequiredArgsConstructor
+@Slf4j
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/reservations")
 public class ReservationController {
 
@@ -62,13 +68,16 @@ public class ReservationController {
      * 4. 채팅방을 생성하고 Redis에서 임시 예약 정보를 삭제
      *
      * @return 결제 완료 페이지에 보여질 정보 반환
+     *
+     * 결제 검증 - 예약 가능 이원 차감 -
      */
     @PostMapping("/complete")
-    public ResponseEntity<?> completeReservation(@RequestBody PaymentResDto paymentResDto,
+    public ResponseEntity<?> completeReservation(@RequestBody PaymentReqDto paymentReqDto,
                                                  @AuthenticationPrincipal MemberDetails memberDetails) {
-        ReservationCreateReqDto reservationInfo = reservationService.getReservationInfo(paymentResDto.getReservationToken());
+        ReservationCreateReqDto reservationInfo = reservationService.getReservationInfo(paymentReqDto.getReservationToken());
+        Payment payment = paymentService.verifyPayment(paymentReqDto);
 
-        if (paymentService.verifyPaymentAndSave(paymentResDto)) {
+        if ("paid".equals(payment.getStatus())) {
             String lockKey = "lock:reservation:" + reservationInfo.restaurantId() + ":" + reservationInfo.reservationDate() + ":" + reservationInfo.reservationTime();
             RLock lock = redissonClient.getLock(lockKey);
 
@@ -76,11 +85,12 @@ public class ReservationController {
             try {
                 if (lock.tryLock(5, TimeUnit.SECONDS)) {
                     try {
-                        // DB 예약 가능 인원 수 차감 및 예약 정보 저장
-                        response = reservationService.reduceReservedCount(reservationInfo, memberDetails.getUsername());
-
+                        // DB 예약 가능 인원 수 차감
+                        reservationService.reduceReservedCount(reservationInfo, memberDetails.getUsername());
+                        // 예약 정보 저장
+                        response = reservationService.saveReservation(reservationInfo, memberDetails.getMemberId());
                         // Redis에서 임시 예약 정보 삭제
-                        redisTemplate.delete("reservation:token:" + paymentResDto.getReservationToken());
+                        redisTemplate.delete("reservation:token:" + paymentReqDto.getReservationToken());
                     } finally {
                         lock.unlock(); // 락 해제
                     }
@@ -88,7 +98,11 @@ public class ReservationController {
                         // 채팅방 생성
                         chatService.createChatRoom(response.getReservation());
 
-                        // TODO 예약 확정 알림 전송
+                        // 예약 확정 알림 전송 및 스케줄링
+                        reservationService.emitNotification(response.getReservation().reservationId());
+
+                        // 결제 정보 저장
+                        paymentService.verifiedPaymentSave(payment, response);
                     }
                     return ResponseEntity.ok(response);
                 } else {
@@ -99,8 +113,6 @@ public class ReservationController {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("예약 처리 중 오류가 발생했습니다.");
             }
         } else {
-            // TODO 결제 실패 시 처리
-            // TODO 예약 실패 알림 전송
             // 결제 실패 시 예약 가능 인원수 복구
             reservationService.restoreReservedCount(reservationInfo);
             return ResponseEntity.badRequest().body("결제 확인에 실패했습니다.");
@@ -111,6 +123,7 @@ public class ReservationController {
      * 예약 취소
      * - 채팅방 비활성화
      * - 예약 상태 변경(GUEST_CANCELED/OWNER_CANCELED)
+     * - 알림
      */
     @PutMapping("/{reservationId}/cancel")
     @Operation(summary = "예약 취소", description = "주어진 예약 ID로 예약을 취소합니다.")
@@ -118,8 +131,13 @@ public class ReservationController {
                                                @AuthenticationPrincipal MemberDetails memberDetails) {
         try {
             return ResponseEntity.ok(reservationService.cancelReservation(reservationId, memberDetails.getMemberId()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("예약 취소 중 오류가 발생했습니다.");
+        } catch (CustomException e) {
+            return ResponseEntity.status(e.getErrorCode().getHttpStatus())
+                    .body(e.getMessage());
+        } catch (IOException e) {
+            log.error("예약 취소 중 예상치 못한 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body((ErrorCode.INTERNAL_SERVER_ERROR));
         }
     }
 
@@ -132,7 +150,7 @@ public class ReservationController {
 //        return reservationService.updateReservationStatus(statusUpdateDto, reservationId, memberDetails.getMemberId());
 //    }
 
-    @PutMapping("/{reservationId}/visited")
+    @PutMapping("/{reservationId}/visit")
     @Operation(summary = "사장님의 방문 처리", description = "주어진 예약 ID로 방문 처리를 합니다.")
     public ResponseEntity<?> handleVisited(
             @PathVariable Long reservationId,

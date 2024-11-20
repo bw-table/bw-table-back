@@ -37,7 +37,7 @@ public class PaymentEntity {
     private String receiptUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "store_id")
+    @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
 
     @ManyToOne(fetch = FetchType.LAZY)

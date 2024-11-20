@@ -43,7 +43,6 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
                 }
             }
         }
-        System.out.println(message);
         return message;
     }
 }

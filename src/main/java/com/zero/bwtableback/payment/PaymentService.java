@@ -8,9 +8,14 @@ import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.payment.entity.PaymentEntity;
 import com.zero.bwtableback.payment.entity.PaymentStatus;
-import com.zero.bwtableback.reservation.dto.PaymentResDto;
+import com.zero.bwtableback.reservation.dto.PaymentReqDto;
+import com.zero.bwtableback.reservation.dto.ReservationCompleteResDto;
+import com.zero.bwtableback.reservation.dto.ReservationCreateReqDto;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
+import com.zero.bwtableback.restaurant.dto.RestaurantResDto;
+import com.zero.bwtableback.restaurant.entity.Restaurant;
+import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,36 +39,42 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final ReservationRepository reservationRepository;
+    private final RestaurantRepository restaurantRepository;
 
-
-    public boolean verifyPaymentAndSave(PaymentResDto paymentResDto) {
-        // TODO Payment 레코드에 회원 아이디,가게아이디,예약아이디
+    /**
+     * 아임포트에 대한 결제 검증
+     */
+    public Payment verifyPayment(PaymentReqDto paymentReqDto) {
         try {
             this.iamportClient = new IamportClient(apiKey, secretKey);
             // 아임포트 API를 통해 결제 정보 조회
-            IamportResponse<Payment> iamportResponse = iamportClient.paymentByImpUid(paymentResDto.getImpUid());
+            IamportResponse<Payment> iamportResponse = iamportClient.paymentByImpUid(paymentReqDto.getImpUid());
 
             // 응답에서 결제 정보가 있는지 확인
             if (iamportResponse.getResponse() != null) {
                 Payment payment = iamportResponse.getResponse();
-                PaymentEntity paymentEntity = convertToPaymentEntity(payment);
-                paymentRepository.save(paymentEntity);
+                System.out.println(PaymentStatus.PAID + payment.getStatus());
                 // 결제 상태 체크
-                if (!PaymentStatus.PAID.equals(paymentEntity.getStatus())) {
-                    return false;
+                if (!"paid".equals(payment.getStatus())) {
+                    throw new CustomException(ErrorCode.PAYMENT_NOT_COMPLETED);
                 }
-                return true;
+                return payment;
             } else {
                 log.error("결제 정보가 없습니다.");
-                return false;
+                throw new CustomException(ErrorCode.PAYMENT_NOT_FOUND);
             }
         } catch (Exception e) {
             log.error("결제 검증 중 오류가 발생했습니다: " + e.getMessage());
-            return false;
+            throw new CustomException(ErrorCode.PAYMENT_VERIFY_ERROR);
         }
     }
 
-    private PaymentEntity convertToPaymentEntity(Payment payment) {
+    public void verifiedPaymentSave(Payment payment, ReservationCompleteResDto response){
+        PaymentEntity paymentEntity = convertToPaymentEntity(payment, response);
+        paymentRepository.save(paymentEntity);
+    }
+
+    private PaymentEntity convertToPaymentEntity(Payment payment, ReservationCompleteResDto response) {
         PaymentEntity paymentEntity = new PaymentEntity();
         paymentEntity.setImpUid(payment.getImpUid());
         paymentEntity.setMerchantUid(payment.getMerchantUid());
@@ -77,12 +88,30 @@ public class PaymentService {
         paymentEntity.setStatus(PaymentStatus.valueOf(payment.getStatus().toUpperCase())); // 결제 상태
         paymentEntity.setPaidAt(payment.getPaidAt());
         paymentEntity.setReceiptUrl(payment.getReceiptUrl());
+        paymentEntity.setReservation(findReservationById(response.getReservation().reservationId()));
+        paymentEntity.setRestaurant(findRestaurantById(response.getReservation().restaurantId()));
 
         return paymentEntity;
     }
 
+    public Reservation findReservationById(Long reservationId) {
+        return reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new CustomException(ErrorCode.RESERVATION_NOT_FOUND));
+    }
+
+    private Restaurant findRestaurantById(Long restaurantId) {
+        return restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new CustomException(ErrorCode.RESTAURANT_NOT_FOUND));
+    }
+
     /**
      * 결제된 예약금 환불
+     *
+     * PAID 인지 확인하기
+     * 환불 규정
+     * 1일전 환불 불가
+     * 2일전 50%
+     * 3일전 100%
      */
     public void refundReservationDeposit(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
@@ -99,7 +128,7 @@ public class PaymentService {
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-type", "application/json");
             conn.setRequestProperty("Accept", "application/json");
-            conn.setDoOutput(true);
+            conn.setDoOutput(true); // OutputStream으로 데이터 전달
 
             JsonObject json = new JsonObject();
             json.addProperty("reason", "방문 완료");
@@ -112,14 +141,20 @@ public class PaymentService {
                 bw.flush();
             }
 
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"))) {
-                String responseLine;
-                StringBuilder response = new StringBuilder();
-                while ((responseLine = br.readLine()) != null) {
-                    response.append(responseLine);
-                }
-                System.out.println("Response: " + response.toString());
-            }
+            // FIXME 아임포트 응답 오류 해결
+//            try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"))) {
+//                System.out.println(br);
+//                String responseLine;
+//                StringBuilder response = new StringBuilder();
+//                while ((responseLine = br.readLine()) != null) {
+//                    response.append(responseLine);
+//                }
+//                System.out.println("Response: " + response.toString());
+//            }
+            PaymentEntity payment = paymentRepository.findByReservationId(reservationId)
+                    .orElseThrow(()-> new CustomException(ErrorCode.PAYMENT_NOT_FOUND));
+
+            payment.setStatus(PaymentStatus.REFUNDED);
 
         } catch (IOException e) {
             throw new CustomException(ErrorCode.PAYMENT_PROCESSING_ERROR);
