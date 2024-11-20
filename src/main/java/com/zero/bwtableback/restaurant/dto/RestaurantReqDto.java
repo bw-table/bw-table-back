@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.List;
 @Setter
 @Builder
 @AllArgsConstructor
-public class RegisterReqDto {
+public class RestaurantReqDto {
 
     @NotNull(message = "Name must not be null")
     private String name;
@@ -49,13 +50,13 @@ public class RegisterReqDto {
     private String impCode;
 
     @NotNull(message = "Menu must not be null")
-    private List<MenuDto> menus;
+    private List<MenuRegisterDto> menus;
 
     @NotNull(message = "OperatingHours must not be null")
     private List<OperatingHoursDto> operatingHours;
 
     @NotNull(message = "Images must not be null")
-    private List<String> images;
+    private MultipartFile[] images;
 
     private List<String> facilities;
 

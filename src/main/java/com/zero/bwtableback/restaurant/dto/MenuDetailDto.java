@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class MenuDto {
+public class MenuDetailDto { // 식당 상세 조회 시 사용
 
     private Long id;
     private String name;

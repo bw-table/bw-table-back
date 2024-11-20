@@ -1,6 +1,5 @@
 package com.zero.bwtableback.restaurant.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.util.List;
@@ -22,8 +21,9 @@ public class UpdateReqDto {
     private String impCode;
     private String category;
     private List<OperatingHoursDto> operatingHours;
-    private List<MenuDto> menus;
+    private List<MenuUpdateDto> menus;
     private List<String> facilities;
     private List<String> hashtags;
-    private List<String> images;
+//    private List<String> images;
+    private List<Long> imageIdsToDelete;
 }

@@ -65,11 +65,6 @@ public class MemberController {
      */
 
     /**
-     * FIXME 회원 프로필 이미지 이름 엔드포인트 변경하기
-     */
-
-
-    /**
      * 이메일 회원 비밀번호 변경
      */
 
@@ -127,37 +122,6 @@ public class MemberController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
-    // FIXME 가게, 리뷰 참고용 (여러 장)
-//    @PostMapping("/upload-files")
-//    public ResponseEntity<Map<String, List<String>>> uploadFiles(@RequestParam("files") MultipartFile[] files) {
-//        List<String> fileUrls = new ArrayList<>();
-//
-//        for (int i = 0; i < files.length; i++) {
-//            MultipartFile file = files[i];
-//            try {
-//                // 파일 이름 생성
-//                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-//
-//                // S3에 파일 업로드
-//                String fileUrl = memberService.uploadFile(fileName, file.getInputStream(), file.getSize());
-//                fileUrls.add(fileUrl); // 업로드한 파일 URL 추가
-//
-//                // 파일 순서 확인
-//                System.out.println("Uploaded file index: " + i + ", URL: " + fileUrl);
-//
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-//            }
-//        }
-//
-//        // JSON 응답 생성
-//        Map<String, List<String>> response = new HashMap<>();
-//        response.put("fileUrls", fileUrls);
-//
-//        return ResponseEntity.ok(response);
-//    }
 
     /**
      * 이미지 수정

@@ -1,5 +1,6 @@
 package com.zero.bwtableback.restaurant.repository;
 
+import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.entity.Review;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,4 +16,5 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     // 가게 아이디 기준 정렬
     Page<Review> findByMemberIdOrderByRestaurantId(Long memberId, Pageable pageable);
 
+    List<Review> findByRestaurant(Restaurant restaurant);
 }

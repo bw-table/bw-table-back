@@ -1,24 +1,28 @@
 package com.zero.bwtableback.restaurant.controller;
 
 import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
-import com.zero.bwtableback.chat.service.ChatService;
+import com.zero.bwtableback.common.service.ImageUploadService;
+import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.restaurant.dto.*;
-import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.exception.RestaurantException;
 import com.zero.bwtableback.restaurant.service.AnnouncementService;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
-import jakarta.validation.Valid;
+import com.zero.bwtableback.restaurant.service.RestaurantSearchService;
+import com.zero.bwtableback.security.MemberDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
+import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/restaurants")
@@ -28,11 +32,13 @@ public class RestaurantController {
 
     private final RestaurantService restaurantService;
     private final AnnouncementService announcementService;
+    private final RestaurantSearchService restaurantSearchService;
+    private final ImageUploadService imageUploadService;
 
     // 식당 등록
     // TODO: 식당 등록 후 응답형식 결정 필요
 //    @PostMapping("/new")
-//    public ResponseEntity<?> registerRestaurant(@RequestBody @Valid RegisterReqDto reqDto) {
+//    public ResponseEntity<?> registerRestaurant(@RequestBody RegisterReqDto reqDto) {
 //
 //        try {
 //            Restaurant savedRestaurant = restaurantService.registerRestaurant(reqDto);
@@ -53,38 +59,51 @@ public class RestaurantController {
 //        }
 //    }
 
+    @PreAuthorize("hasrole('OWNER')")
     @PostMapping("/new")
-    public ResponseEntity<?> registerRestaurant(@RequestBody @Valid RegisterReqDto reqDto) {
-        // TODO: 유효성 검사 오류 발생 시 처리
-//    if (bindingResult.hasErrors()) {
-//        Map<String, String> errorResponse = new HashMap<>();
-//        bindingResult.getFieldErrors().forEach(error ->
-//                errorResponse.put(error.getField(), error.getDefaultMessage())
-//        );
-//
-//        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-//    }
+    public ResponseEntity<?> registerRestaurant(
+            @RequestPart("restaurant") RestaurantReqDto reqDto,
+            @RequestPart("images") MultipartFile[] images,
+            @RequestPart("menus") List<MenuRegisterDto> menus,
+            @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
+            @AuthenticationPrincipal Member member) {
 
         try {
-            Restaurant savedRestaurant = restaurantService.registerRestaurant(reqDto);
+            reqDto.setImages(images);
+            reqDto.setMenus(menus);
 
-            // 직접 Restaurant 객체를 반환
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedRestaurant);
+            RestaurantResDto savedRestaurant =
+                    restaurantService.registerRestaurant(reqDto, images, menus, menuImages, member);
+
+            return ResponseEntity.ok(savedRestaurant);
         } catch (RestaurantException e) {
+            // 레스토랑 등록 실패
             log.error("Error registering restaurant", e);
-
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("message", e.getMessage());
-
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (IOException e) {
+            // 파일 업로드 or IO 관련 오류
+            log.error("File upload error", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File upload failed");
+        } catch (Exception e) {
+            // 예상치 못한 예외
+            log.error("버킷 존재 X", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Unexpected error occurred");
         }
     }
 
     // 식당 정보 수정
+    @PreAuthorize("hasrole('OWNER')")
     @PutMapping("/{id}")
-    public ResponseEntity<Restaurant> updateRestaurant(@PathVariable("id") Long restaurantId,
-                                                       @RequestBody UpdateReqDto reqDto) {
-        Restaurant updatedRestaurant = restaurantService.updateRestaurant(restaurantId, reqDto);
+    public ResponseEntity<RestaurantResDto> updateRestaurant(
+            @PathVariable("id") Long restaurantId,
+            @RequestPart("restaurant") UpdateReqDto reqDto,
+            @RequestPart(value = "images", required = false) MultipartFile[] images,
+            @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
+            @AuthenticationPrincipal Member member)
+                                                    throws IOException {
+
+        RestaurantResDto updatedRestaurant =
+                restaurantService.updateRestaurant(restaurantId, reqDto, images, menuImages);
 
         return ResponseEntity.ok(updatedRestaurant);
     }
@@ -92,7 +111,7 @@ public class RestaurantController {
     // 모든 식당 조회
     @GetMapping
     public ResponseEntity<List<RestaurantListDto>> getRestaurants(Pageable pageable) {
-        List<RestaurantListDto> restaurantList = restaurantService.getRestaurants(pageable);
+        List<RestaurantListDto> restaurantList = restaurantSearchService.getRestaurants(pageable);
         return ResponseEntity.ok(restaurantList);
     }
 
@@ -101,7 +120,7 @@ public class RestaurantController {
     public ResponseEntity<List<RestaurantListDto>> getRestaurantByName(
             @RequestParam String name,
             Pageable pageable) {
-        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByName(name, pageable);
+        List<RestaurantListDto> restaurants = restaurantSearchService.getRestaurantsByName(name, pageable);
         return ResponseEntity.ok(restaurants);
     }
 
@@ -110,7 +129,7 @@ public class RestaurantController {
     public ResponseEntity<List<RestaurantListDto>> getRestaurantsByCategory(
             @RequestParam String category,
             Pageable pageable) {
-        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByCategory(category, pageable);
+        List<RestaurantListDto> restaurants = restaurantSearchService.getRestaurantsByCategory(category, pageable);
         return ResponseEntity.ok(restaurants);
     }
 
@@ -119,7 +138,7 @@ public class RestaurantController {
     public ResponseEntity<List<RestaurantListDto>> getRestaurantsByMenu(
             @RequestParam String menu,
             Pageable pageable) {
-        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByMenu(menu, pageable);
+        List<RestaurantListDto> restaurants = restaurantSearchService.getRestaurantsByMenu(menu, pageable);
         return ResponseEntity.ok(restaurants);
     }
 
@@ -128,14 +147,14 @@ public class RestaurantController {
     public ResponseEntity<List<RestaurantListDto>> getRestaurantsByHashtag(
             @RequestParam String hashtag,
             Pageable pageable) {
-        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByHashtag(hashtag, pageable);
+        List<RestaurantListDto> restaurants = restaurantSearchService.getRestaurantsByHashtag(hashtag, pageable);
         return ResponseEntity.ok(restaurants);
     }
 
     // 해시태그 자동완성
     @GetMapping("/search/hashtags/suggestions")
     public ResponseEntity<List<String>> getHashtagSuggestions(@RequestParam String hashtag) {
-        List<String> suggestions = restaurantService.getHashtagSuggestions(hashtag);
+        List<String> suggestions = restaurantSearchService.getHashtagSuggestions(hashtag);
         return ResponseEntity.ok(suggestions);
     }
 
@@ -147,6 +166,7 @@ public class RestaurantController {
     }
 
     // 공지 생성
+    @PreAuthorize("hasrole('OWNER')")
     @PostMapping("/{restaurantId}/announcements")
     public ResponseEntity<AnnouncementResDto> createAnnouncement(@PathVariable Long restaurantId,
                                                                  @RequestBody AnnouncementReqDto reqDto) {

@@ -16,14 +16,14 @@ public enum ErrorCode {
 
     MISSING_BUSINESS_NUMBER(HttpStatus.BAD_REQUEST, "사업자등록번호는 사장님 역할에 필수입니다."),
 
-    USER_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 이메일입니다."),
+    USER_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 존재하는 회원입니다."),
     EMAIL_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 이메일입니다."),
     NICKNAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 닉네임입니다."),
     PHONE_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 전화번호입니다."),
     BUSINESS_NUMBER_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 사업자등록번호입니다."),
 
     // 인증 관련 오류
-    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 유효하지 않습니다."),
+    INVALID_CREDENTIALS(HttpStatus.FORBIDDEN, "이메일 또는 비밀번호가 유효하지 않습니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
 
     // 토큰 관련 오류
@@ -42,6 +42,7 @@ public enum ErrorCode {
     RESERVATION_FULL(HttpStatus.CONFLICT, "해당 시간대 예약이 마감되었습니다."),
 
     // 예약 상태 변경 관련 오류
+    INVALID_RESERVATION_STATUS(HttpStatus.BAD_REQUEST, "유효하지 않은 예약 상태입니다."),
     INVALID_STATUS_CONFIRM(HttpStatus.CONFLICT, "이미 확정되었거나, 취소, 노쇼, 방문 완료된 예약은 다시 확정할 수 없습니다."),
     INVALID_STATUS_CUSTOMER_CANCEL(HttpStatus.CONFLICT, "고객 취소는 확정된 예약에 대해서만 가능합니다."),
     INVALID_STATUS_OWNER_CANCEL(HttpStatus.CONFLICT, "가게 취소는 확정된 예약에 대해서만 가능합니다."),
@@ -57,6 +58,8 @@ public enum ErrorCode {
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "알림을 찾을 수 없습니다."),
     NOTIFICATION_ALREADY_SENT(HttpStatus.BAD_REQUEST, "이미 전송된 알림입니다."),
     NOTIFICATION_SCHEDULED_TIME_NOT_REACHED(HttpStatus.BAD_REQUEST, "예정된 전송 시간이 아닙니다."),
+    NOTIFICATION_SEND_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "알림 전송에 실패했습니다."),
+    JSON_PARSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "알림 데이터 JSON 파싱 작업이 실패했습니다."),
 
     // 이미지 업로드 관련 오류
     FILE_UPLOAD_FAILED(HttpStatus.BAD_REQUEST, "파일 업로드에 실패했습니다."),

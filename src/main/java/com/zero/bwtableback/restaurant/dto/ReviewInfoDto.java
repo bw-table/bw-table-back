@@ -27,6 +27,10 @@ public class ReviewInfoDto {
     private LocalDateTime updatedAt;
     private Long restaurantId;
 
+    private Long memberId;
+    private String memberProfileImage;
+    private String memberNickname;
+
     public static ReviewInfoDto fromEntity(Review review) {
         return ReviewInfoDto.builder()
                 .id(review.getId())
@@ -38,6 +42,9 @@ public class ReviewInfoDto {
                 .createdAt(review.getCreatedAt())
                 .updatedAt(review.getUpdatedAt())
                 .restaurantId(review.getRestaurant().getId())
+                .memberId(review.getMember().getId())
+                .memberProfileImage(review.getMember().getProfileImage())
+                .memberNickname(review.getMember().getNickname())
                 .build();
     }
 }

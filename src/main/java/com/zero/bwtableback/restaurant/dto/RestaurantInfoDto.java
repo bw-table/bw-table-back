@@ -31,7 +31,7 @@ public class RestaurantInfoDto {
     private String info;
     private int deposit;
     private List<String> images;
-    private List<MenuDto> menus;
+    private List<MenuDetailDto> menus;
     private List<String> facilities;
     private List<String> hashtags;
     private List<OperatingHoursDto> operatingHours;

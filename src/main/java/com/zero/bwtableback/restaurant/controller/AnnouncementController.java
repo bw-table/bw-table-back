@@ -6,16 +6,18 @@ import com.zero.bwtableback.restaurant.dto.AnnouncementUpdateReqDto;
 import com.zero.bwtableback.restaurant.service.AnnouncementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/announcements")
+@RequestMapping("/api/restaurants/announcements")
 @RequiredArgsConstructor
 public class AnnouncementController {
 
     private final AnnouncementService announcementService;
 
     // 공지 수정
+    @PreAuthorize("hasrole('OWNER')")
     @PutMapping("/{announcementId}")
     public ResponseEntity<AnnouncementResDto> updateAnnouncement(@PathVariable Long announcementId,
                                                                     @RequestBody AnnouncementUpdateReqDto reqDto) {
@@ -25,6 +27,7 @@ public class AnnouncementController {
     }
 
     // 공지 삭제
+    @PreAuthorize("hasrole('OWNER')")
     @DeleteMapping("/{announcementId}")
     public ResponseEntity<String> deleteAnnouncement(@PathVariable Long announcementId) {
 
