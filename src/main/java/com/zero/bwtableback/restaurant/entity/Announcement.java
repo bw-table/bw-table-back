@@ -26,5 +26,4 @@ public class Announcement extends BaseEntity {
     @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
 
-
 }

@@ -12,4 +12,6 @@ import java.util.List;
 public interface AnnouncementRepository extends JpaRepository<Announcement, Long> {
 
     Page<Announcement> findByRestaurantId(Long restaurantId, Pageable pageable);
+
+    List<Announcement> findByEventTrue();
 }

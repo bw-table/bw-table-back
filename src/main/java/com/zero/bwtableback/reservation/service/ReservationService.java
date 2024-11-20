@@ -24,6 +24,11 @@ import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import com.zero.bwtableback.restaurant.repository.TimeslotSettingRepository;
 import com.zero.bwtableback.restaurant.repository.WeekdaySettingRepository;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
+
+import java.time.LocalDate;
+import java.util.List;
+
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -460,5 +465,20 @@ public class ReservationService {
     private boolean canCancelReservation(LocalDate
                                                  reservationDate, LocalDate currentDate) {
         return !reservationDate.minusDays(3).isBefore(currentDate);
+    }
+
+    /**
+     * 예약 대시보드
+     * 특정 식당의 예약 내역 조회
+     */
+    public List<Reservation> getReservationByRestaurant(Long restaurantId, LocalDate reservationDate) {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
+
+        if (reservationDate != null) {
+            return reservationRepository.findByRestaurantIdAndReservationDate(restaurantId, reservationDate);
+        }
+
+        return reservationRepository.findByRestaurantId(restaurantId);
     }
 }

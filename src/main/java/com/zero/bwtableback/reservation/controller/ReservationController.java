@@ -5,10 +5,10 @@ import com.zero.bwtableback.chat.service.ChatService;
 import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.payment.PaymentService;
-import com.zero.bwtableback.payment.entity.PaymentStatus;
 import com.zero.bwtableback.reservation.dto.PaymentReqDto;
 import com.zero.bwtableback.reservation.dto.ReservationCompleteResDto;
 import com.zero.bwtableback.reservation.dto.ReservationCreateReqDto;
+import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.service.ReservationService;
 import com.zero.bwtableback.restaurant.dto.ReservationAvailabilityDto;
 import com.zero.bwtableback.security.MemberDetails;
@@ -18,12 +18,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -174,4 +177,17 @@ public class ReservationController {
 //            @AuthenticationPrincipal MemberDetails memberDetails) {
 //        return reservationService.confirmReservation(reservationId, restaurantId, memberDetails.getMemberId());
 //    }
+
+    /**
+     * 예약 대시보드
+     * 특정 식당의 예약 내역 조회
+     */
+    @GetMapping("/restaurants/{restaurantId}")
+    public ResponseEntity<List<Reservation>> getReservationsByRestaurantId(@PathVariable Long restaurantId,
+                                                                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+
+        List<Reservation> reservations = reservationService.getReservationByRestaurant(restaurantId, date);
+
+        return ResponseEntity.ok(reservations);
+    }
 }

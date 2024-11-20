@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-
 @Getter
 @Builder
 @AllArgsConstructor

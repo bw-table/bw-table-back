@@ -11,5 +11,5 @@ public class ReviewUpdateReqDto {
 
     private String content;
     private Integer rating;
-    private List<String> images;
+    private List<Long> imageIdsToDelete; // 삭제할 이미지 id 리스트
 }

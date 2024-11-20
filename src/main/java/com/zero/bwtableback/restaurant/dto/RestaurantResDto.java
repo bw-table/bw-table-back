@@ -25,7 +25,6 @@ public class RestaurantResDto {
     private final List<FacilityType> facilities; // 시설 리스트
     private final List<String> hashtags; // 해시태그 리스트
 
-    // fromEntity 메서드
     public static RestaurantResDto fromEntity(Restaurant restaurant) {
         return new RestaurantResDto(
                 restaurant.getId(),
@@ -54,4 +53,3 @@ public class RestaurantResDto {
         );
     }
 }
-
