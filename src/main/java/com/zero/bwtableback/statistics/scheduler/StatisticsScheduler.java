@@ -9,8 +9,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component
 @RequiredArgsConstructor
+@Component
 public class StatisticsScheduler {
 
     private final JobLauncher jobLauncher;
