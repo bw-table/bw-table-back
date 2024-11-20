@@ -6,12 +6,16 @@ import com.zero.bwtableback.reservation.dto.PaymentDto;
 import com.zero.bwtableback.reservation.dto.ReservationCreateReqDto;
 import com.zero.bwtableback.reservation.dto.ReservationResDto;
 import com.zero.bwtableback.reservation.dto.ReservationUpdateReqDto;
+import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.entity.ReservationStatus;
 import com.zero.bwtableback.reservation.service.ReservationService;
 import com.zero.bwtableback.security.MemberDetails;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
+
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -99,4 +103,16 @@ public class ReservationController {
         return reservationService.updateReservationStatus(statusUpdateDto, reservationId, memberDetails.getMemberId());
     }
 
+    /**
+     * 예약 대시보드
+     * 특정 식당의 예약 내역 조회
+     */
+    @GetMapping("/restaurants/{restaurantId}")
+    public ResponseEntity<List<Reservation>> getReservationsByRestaurantId(@PathVariable Long restaurantId,
+                                                                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+
+        List<Reservation> reservations = reservationService.getReservationByRestaurant(restaurantId, date);
+
+        return ResponseEntity.ok(reservations);
+    }
 }

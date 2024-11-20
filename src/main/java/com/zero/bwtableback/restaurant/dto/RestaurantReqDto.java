@@ -15,7 +15,7 @@ import java.util.List;
 @Setter
 @Builder
 @AllArgsConstructor
-public class RegisterReqDto {
+public class RestaurantReqDto {
 
     @NotNull(message = "Name must not be null")
     private String name;

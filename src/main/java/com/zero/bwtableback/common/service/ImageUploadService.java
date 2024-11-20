@@ -1,18 +1,17 @@
 package com.zero.bwtableback.common.service;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
-import com.zero.bwtableback.restaurant.entity.Restaurant;
-import com.zero.bwtableback.restaurant.entity.RestaurantImage;
-import com.zero.bwtableback.restaurant.entity.Review;
-import com.zero.bwtableback.restaurant.entity.ReviewImage;
+import com.zero.bwtableback.restaurant.entity.*;
 import com.zero.bwtableback.restaurant.repository.MenuRepository;
 import com.zero.bwtableback.restaurant.repository.RestaurantImageRepository;
 import com.zero.bwtableback.restaurant.repository.ReviewImageRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -75,7 +74,6 @@ public class ImageUploadService {
     /**
      * 메뉴 이미지
      * - 최대 1장
-     *  TODO 메뉴 아이디 받아야하는지 생각
      */
     public String uploadMenuImage(Long restaurantId, Long menuId, MultipartFile file) throws IOException {
         validateSingleImageFile(file);
@@ -185,44 +183,33 @@ public class ImageUploadService {
     }
 
     // 식당 이미지 삭제
-    public void deleteExistingRestaurantImages(Restaurant restaurant) throws IOException {
-        if (restaurant.getImages() != null && restaurant.getImages().isEmpty()) {
-            Set<RestaurantImage> existingImages = restaurant.getImages();
+    public void deleteRestaurantImage(Long imageId) {
+        RestaurantImage image = restaurantImageRepository.findById(imageId)
+                .orElseThrow(() -> new EntityNotFoundException("Restaurant image not found"));
 
-            for (RestaurantImage restaurantImage: existingImages) {
-                String imageUrl = restaurantImage.getImageUrl();
-                String imagePath = getImagePathFromUrl(imageUrl);
+        deleteFileFromS3(image.getImageUrl());
 
-                amazonS3Client.deleteObject(BUCKET_NAME, imagePath);
-            }
-
-        restaurantImageRepository.deleteAll(existingImages);
-        }
+        restaurantImageRepository.delete(image);
     }
 
     // 메뉴 이미지 삭제
-    public void deleteMenuImage(Long restaurantId, Long menuId, String imageUrl) throws IOException {
-        String imagePath = getImagePathFromUrl(imageUrl);
+    public void deleteMenuImage(Long restaurantId, Long menuId) throws IOException {
+        Menu menu = menuRepository.findById(menuId)
+                .orElseThrow(() -> new EntityNotFoundException("Menu not found"));
 
-        amazonS3Client.deleteObject(BUCKET_NAME, imagePath);
+        deleteFileFromS3(menu.getImageUrl());
 
-        menuRepository.findById(menuId).ifPresent(menu -> {
-            menu.setImageUrl(null);
-            menuRepository.save(menu);
-        });
+        menuRepository.deleteMenuImageByRestaurantAndMenuId(restaurantId, menuId);
     }
 
     // 리뷰 이미지 삭제
-    public void deleteExistingReviewImages(Review review) throws IOException {
-        Set<ReviewImage> existingImages = review.getImages();
-        for (ReviewImage reviewImage: existingImages) {
-            String imageUrl = reviewImage.getImageUrl();
-            String imagePath = getImagePathFromUrl(imageUrl);
+    public void deleteReviewImageFile(Long imageId) {
+        ReviewImage image = reviewImageRepository.findById(imageId)
+                .orElseThrow(() -> new EntityNotFoundException("Review image not found"));
 
-            amazonS3Client.deleteObject(BUCKET_NAME, imagePath);
-        }
+        deleteFileFromS3(image.getImageUrl());
 
-        reviewImageRepository.deleteAll(existingImages);
+        reviewImageRepository.delete(image);
     }
 
     // URL에서 파일 경로 추출
@@ -232,5 +219,10 @@ public class ImageUploadService {
             return imageUrl.substring(baseUrl.length());
         }
         return imageUrl;
+    }
+
+    // URL에서 파일 이름 추출
+    private String getFileNameFromUrl(String imageUrl) {
+        return imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
     }
 }

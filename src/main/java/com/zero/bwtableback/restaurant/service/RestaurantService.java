@@ -3,6 +3,7 @@ package com.zero.bwtableback.restaurant.service;
 import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
 import com.zero.bwtableback.chat.repository.ChatRoomRepository;
 import com.zero.bwtableback.common.service.ImageUploadService;
+import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.restaurant.dto.*;
 import com.zero.bwtableback.restaurant.entity.*;
 import com.zero.bwtableback.restaurant.exception.RestaurantException;
@@ -14,7 +15,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,8 +31,10 @@ public class RestaurantService {
     private final RestaurantImageRepository restaurantImageRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ImageUploadService imageUploadService;
+    private final MemberRepository memberRepository;
 
     // 등록
+    // TODO 테스트 끝나면 응답형식 RegisterResDto로 수정 예정
 //    public Restaurant registerRestaurant(RegisterReqDto reqDto) {
 //        reqDto.validate();
 //
@@ -138,12 +140,19 @@ public class RestaurantService {
 //        return savedRestaurant;
 //    }
 
-    public Restaurant registerRestaurant(RegisterReqDto reqDto,
+    public RestaurantResDto registerRestaurant(RestaurantReqDto reqDto,
                                          MultipartFile[] images,
                                          List<MenuRegisterDto> menus,
                                          List<MultipartFile> menuImages) throws IOException {
 
-        reqDto.validate();
+        reqDto.validate();  // TODO 간단한 테스트 후 삭제 예정
+
+//        Member member = memberRepository.findById(memberId)
+//                .orElseThrow(() -> new EntityNotFoundException("Member not found"));
+//
+//        if (member.getRole() != Role.OWNER) {
+//            throw new AccessDeniedException("Only owners can register restaurants");
+//        }
 
         if (restaurantRepository.existsByAddress(reqDto.getAddress())) {
             throw new RestaurantException("Restaurant with this address already exists.");
@@ -216,15 +225,19 @@ public class RestaurantService {
             }
         }
 
-        return savedRestaurant;
+        return new RestaurantResDto(
+                savedRestaurant.getId(),
+                savedRestaurant.getName(),
+                "Restaurant registered successfully"
+        );
     }
 
     // 식당 정보 수정
     // FIXME: 현재 확인용으로 Restaurant 객체 반환하도록 작성 -> 추후 응답객체 변경
-    public Restaurant updateRestaurant(Long id,
-                                       UpdateReqDto reqDto,
-                                       MultipartFile[] newImages,
-                                       Map<Long, MultipartFile> newMenuImages) throws IOException {
+    public RestaurantResDto updateRestaurant(Long id,
+                                             UpdateReqDto reqDto,
+                                             MultipartFile[] newImages,
+                                             List<MultipartFile> newMenuImages) throws IOException {
 
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
@@ -294,22 +307,24 @@ public class RestaurantService {
             restaurant.setHashtags(hashtags);
         }
 
-//        if (reqDto.getMenus() != null) {
-//            List<Menu> menus = assignMenu(reqDto.getMenus(), restaurant);
-//            restaurant.setMenus(menus);
-//        }
-
         if (reqDto.getOperatingHours() != null) {
             List<OperatingHours> operatingHours = assignOperatingHours(reqDto.getOperatingHours(), restaurant);
             restaurant.setOperatingHours(operatingHours);
         }
 
-        if (newImages != null && newImages.length > 0) {
-            if (restaurant.getImages() != null && !restaurant.getImages().isEmpty()) {
-                imageUploadService.deleteExistingRestaurantImages(restaurant);
-            }
+        updateMenu(restaurant, reqDto, newMenuImages);
 
+        // 삭제할 이미지 처리
+        if (reqDto.getImageIdsToDelete() != null && !reqDto.getImageIdsToDelete().isEmpty()) {
+            for (Long imageId: reqDto.getImageIdsToDelete()) {
+                imageUploadService.deleteRestaurantImage(imageId);
+            }
+        }
+
+        // 새로운 이미지 처리
+        if (newImages != null && newImages.length > 0) {
             Set<RestaurantImage> images = new HashSet<>();
+
             List<String> imageUrls = imageUploadService.uploadRestaurantImages(restaurant.getId(), newImages);
             for (String imageUrl: imageUrls) {
                 images.add(new RestaurantImage(imageUrl, restaurant));
@@ -318,40 +333,67 @@ public class RestaurantService {
             restaurantImageRepository.saveAll(images);
         }
 
-        if (newMenuImages != null && !newMenuImages.isEmpty()) {
-            for (Map.Entry<Long, MultipartFile> entry: newMenuImages.entrySet()) {
-                Long menuId = entry.getKey();
-                MultipartFile file = entry.getValue();
-
-                Menu menu = restaurant.getMenus().stream()
-                        .filter(m -> m.getId().equals(menuId))
-                        .findFirst()
-                        .orElseThrow(() -> new EntityNotFoundException("Menu not found"));
-
-                if (menu.getImageUrl() != null) {
-                    imageUploadService.deleteMenuImage(restaurant.getId(), menu.getId(), menu.getImageUrl());
-                }
-
-                String imageUrl = imageUploadService.uploadMenuImage(restaurant.getId(), menuId, file);
-                menu.setImageUrl(imageUrl);
-            }
-        }
-
-        return restaurantRepository.save(restaurant);
+        Restaurant updatedRestaurant = restaurantRepository.save(restaurant);
+        return new RestaurantResDto(
+                updatedRestaurant.getId(),
+                updatedRestaurant.getName(),
+                "Restaurant updated successfully"
+        );
     }
 
-    // 이미지 업로드
-    // TODO: 보류
-//    public void assignImages(Restaurant restaurant, List<String> imageUrls) {
-//        Set<RestaurantImage> images = imageUrls.stream()
-//                .map(imageUrl -> RestaurantImage.builder()
-//                        .imageUrl(imageUrl)
-//                        .restaurant(restaurant)
-//                        .build())
-//                .collect(Collectors.toSet());
-//
-//        restaurantImageRepository.saveAll(images);
-//    }
+    // 메뉴 수정
+    public void updateMenu(Restaurant restaurant, UpdateReqDto reqDto, List<MultipartFile> menuImages) throws IOException {
+        for (int i = 0; i < reqDto.getMenus().size(); i++) {
+            MenuUpdateDto menuDto = reqDto.getMenus().get(i);
+            Menu menu = restaurant.getMenus().stream()
+                    .filter(m -> m.getId().equals(menuDto.getId()))
+                    .findFirst()
+                    .orElseThrow(() -> new EntityNotFoundException("Menu not found"));
+
+            Menu updatedMenu = menu;
+
+            // 메뉴 정보 수정
+            if (menuDto.getName() != null && !menuDto.getName().equals(menu.getName())) {
+                updatedMenu = updatedMenu.toBuilder().name(menuDto.getName()).build();
+            }
+
+            if (menuDto.getPrice() != null && !menuDto.getPrice().equals(menu.getPrice())) {
+                updatedMenu = updatedMenu.toBuilder().price(menuDto.getPrice()).build();
+            }
+
+            if (menuDto.getDescription() != null && !menuDto.getDescription().equals(menu.getDescription())) {
+                updatedMenu = updatedMenu.toBuilder().description(menuDto.getDescription()).build();
+            }
+
+            menuRepository.save(updatedMenu);
+
+            // 기존 메뉴 이미지 삭제
+            if (menuDto.getDeleteImage() != null && menuDto.getDeleteImage()) {
+                if (menu.getImageUrl() != null) {
+                    imageUploadService.deleteMenuImage(restaurant.getId(), menu.getId());
+                    menu.setImageUrl(null);
+                    menuRepository.save(menu); // 변경된 내용 저장
+                }
+            }
+
+            // 새로운 메뉴 이미지 추가
+            if (menuImages != null && !menuImages.isEmpty() && menuImages.size() > i) {
+                MultipartFile menuImage = menuImages.get(i);
+
+                if (menuImage != null) {
+                    // 기존 이미지 삭제
+                    if (menu.getImageUrl() != null) {
+                        imageUploadService.deleteMenuImage(restaurant.getId(), menu.getId());
+                    }
+
+                    // 새 이미지 업로드
+                    String newImageUrl = imageUploadService.uploadMenuImage(restaurant.getId(), menu.getId(), menuImage);
+                    menu.setImageUrl(newImageUrl);
+                    menuRepository.save(menu);
+                }
+            }
+        }
+    }
 
     // 카테고리 설정
     private Category assignCategory(String categoryType) {
@@ -529,6 +571,12 @@ public class RestaurantService {
         }
     }
 
+    // 특정 편의시설을 가진 식당 조회
+    public List<Restaurant> getRestaurantsByFacility(FacilityType facilityType, Pageable pageable) {
+        // 'EVENT_SPACE' 시설을 가진 Facility를 가진 식당들을 찾아 반환
+        return restaurantRepository.findByFacilities_FacilityType(facilityType, pageable);
+    }
+
     // 식당 상세정보 조회
     public RestaurantInfoDto getRestaurantById(Long id) {
         Restaurant restaurant = restaurantRepository.findById(id)
@@ -597,7 +645,10 @@ public class RestaurantService {
                                 .collect(Collectors.toList()),
                         review.getCreatedAt(),
                         review.getUpdatedAt(),
-                        review.getRestaurant().getId()))
+                        review.getRestaurant().getId(),
+                        review.getMember().getId(),
+                        review.getMember().getProfileImage(),
+                        review.getMember().getNickname()))
                 .collect(Collectors.toList());
 
         return RestaurantInfoDto.builder()
@@ -632,4 +683,5 @@ public class RestaurantService {
         return chatRoomRepository.findByRestaurantId(restaurantId, pageable)
                 .map(ChatRoomCreateResDto::fromEntity);
     }
+
 }

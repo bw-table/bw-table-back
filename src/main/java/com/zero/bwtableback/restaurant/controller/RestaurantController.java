@@ -18,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/restaurants")
@@ -55,32 +54,29 @@ public class RestaurantController {
 //    }
 
     @PostMapping("/new")
-    public ResponseEntity<?> registerRestaurant(@RequestPart("restaurant") RegisterReqDto reqDto,
-                                                @RequestPart("images") MultipartFile[] images,
-                                                @RequestPart("menus") List<MenuRegisterDto> menus,
-                                                @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages) {
-        // TODO: 유효성 검사 오류 발생 시 처리 로직 추가
+    public ResponseEntity<?> registerRestaurant(
+                                @RequestPart("restaurant") RestaurantReqDto reqDto,
+                                @RequestPart("images") MultipartFile[] images,
+                                @RequestPart("menus") List<MenuRegisterDto> menus,
+                                @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages) {
         try {
-            // 레스토랑과 관련된 이미지 및 메뉴 등록 처리
             reqDto.setImages(images);
             reqDto.setMenus(menus);
 
-            // 레스토랑 등록 및 메뉴 처리
-            Restaurant savedRestaurant = restaurantService.registerRestaurant(reqDto, images, menus, menuImages);
+            RestaurantResDto savedRestaurant =
+                    restaurantService.registerRestaurant(reqDto, images, menus, menuImages);
 
-            // 성공적으로 등록된 레스토랑 반환
             return ResponseEntity.ok(savedRestaurant);
-
         } catch (RestaurantException e) {
-            // 레스토랑 등록 실패 시, 예외 처리
+            // 레스토랑 등록 실패
             log.error("Error registering restaurant", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (IOException e) {
-            // 파일 업로드 또는 IO 관련 오류 처리
+            // 파일 업로드 or IO 관련 오류
             log.error("File upload error", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File upload failed");
         } catch (Exception e) {
-            // 예상치 못한 예외 처리
+            // 예상치 못한 예외
             log.error("버킷 존재 X", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Unexpected error occurred");
         }
@@ -88,13 +84,14 @@ public class RestaurantController {
 
     // 식당 정보 수정
     @PutMapping("/{id}")
-    public ResponseEntity<Restaurant> updateRestaurant(
+    public ResponseEntity<RestaurantResDto> updateRestaurant(
             @PathVariable("id") Long restaurantId,
             @RequestPart("restaurant") UpdateReqDto reqDto,
             @RequestPart(value = "images", required = false) MultipartFile[] images,
-            @RequestPart(value = "menuImages", required = false) Map<Long, MultipartFile> menuImages)
+            @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages)
                                                     throws IOException {
-        Restaurant updatedRestaurant = restaurantService.updateRestaurant(restaurantId, reqDto, images, menuImages);
+        RestaurantResDto updatedRestaurant =
+                restaurantService.updateRestaurant(restaurantId, reqDto, images, menuImages);
 
         return ResponseEntity.ok(updatedRestaurant);
     }

@@ -1,6 +1,7 @@
 package com.zero.bwtableback.restaurant.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.zero.bwtableback.common.BaseEntity;
 import com.zero.bwtableback.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,7 +16,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Entity
 @Table(name = "restaurant")
-public class Restaurant {
+public class Restaurant extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
