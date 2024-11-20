@@ -73,6 +73,11 @@ public enum ErrorCode {
     PAYMENT_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "결제가 완료되지 않았습니다."),
     PAYMENT_PROCESSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "결제 처리 중 오류가 발생했습니다. 다시 시도해 주세요."),
     PAYMENT_VERIFY_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "결제 검증 중 오류가 발생했습니다."),
+
+    // 이미지 업로드 관련 오류
+    FILE_UPLOAD_FAILED(HttpStatus.BAD_REQUEST, "파일 업로드에 실패했습니다."),
+    FILE_DELETE_FAILED(HttpStatus.BAD_REQUEST, "파일 삭제에 실패하였습니다."),
+
     // 기타 오류
     UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");

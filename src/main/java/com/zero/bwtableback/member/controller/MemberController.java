@@ -68,11 +68,6 @@ public class MemberController {
      */
 
     /**
-     * FIXME 회원 프로필 이미지 이름 엔드포인트 변경하기
-     */
-
-
-    /**
      * 이메일 회원 비밀번호 변경
      */
 
@@ -122,7 +117,7 @@ public class MemberController {
     /**
      * 프로필 이미지 업로드 (S3)
      */
-    @PostMapping("/profile-image")
+    @PostMapping("/me/profile-image")
     public ResponseEntity<Map<String, String>> uploadFile(@AuthenticationPrincipal MemberDetails memberDetails,
                                                           @RequestParam("file") MultipartFile file) {
         if (memberDetails == null) {
@@ -131,7 +126,7 @@ public class MemberController {
         String email = memberDetails.getUsername();
 
         try {
-            String fileUrl = imageUploadService.uploadProfileImage(file, email);
+            String fileUrl = imageUploadService.uploadProfileImage(file, memberDetails.getMemberId());
 
             Map<String, String> response = new HashMap<>();
             response.put("imageUrl", fileUrl);
@@ -147,9 +142,23 @@ public class MemberController {
 
     /**
      * 이미지 수정
+     * 기존 이미지 삭제 (S3)
+     * 새로운 이미지 업로드 (S3)
      */
+    @PutMapping("/me/profile-image")
+    public ResponseEntity<?> updateProfileImage(@AuthenticationPrincipal MemberDetails memberDetails,
+                                                @RequestParam("file") MultipartFile file) throws IOException {
+        return ResponseEntity.ok(imageUploadService.updateProfileImage(file, memberDetails.getMemberId()));
+    }
 
     /**
-     * TODO 이미지 삭제
+     * 이미지 삭제
+     * S3 이미지 삭제
+     * DB에서 삭제
      */
+    @DeleteMapping("/me/profile-image")
+    public ResponseEntity<?> removeProfileImage(@AuthenticationPrincipal MemberDetails memberDetails) throws IOException {
+        imageUploadService.deleteFileFromDB(memberDetails.getMemberId());
+        return ResponseEntity.noContent().build();
+    }
 }
