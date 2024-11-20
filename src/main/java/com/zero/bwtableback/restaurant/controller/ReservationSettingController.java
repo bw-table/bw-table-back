@@ -22,6 +22,8 @@ public class ReservationSettingController {
             @PathVariable Long restaurantId,
             @RequestBody ReservationSettingReqDto reqDto) {
 
+        reqDto.setRestaurantId(restaurantId);
+
         ReservationSettingResDto resDto = reservationSettingService.createReservationSetting(reqDto);
         return ResponseEntity.ok(resDto);
     }
