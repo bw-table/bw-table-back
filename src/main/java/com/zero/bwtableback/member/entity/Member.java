@@ -47,6 +47,10 @@ public class Member extends BaseEntity {
     @Column(nullable = false)
     private Role role; // 역할 (GUEST(손님), OWNER(사장님))
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Status status; // TODO 로그인 시 막기
+
     @Column(name = "business_number")
     private String businessNumber; // 사업자등록번호 (예시:"123-01-11111")
 
@@ -72,6 +76,7 @@ public class Member extends BaseEntity {
                 .role(role)
                 .email(form.getEmail().toLowerCase(Locale.ROOT))
                 .password(encodedPassword) // 암호화된 비밀번호 사용
+                .status(Status.ACTIVE)
                 .name(form.getName())
                 .nickname(form.getNickname())
                 .phone(form.getPhone());

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ReservationSettingRepository extends JpaRepository<ReservationSetting, Long> {
@@ -23,4 +24,9 @@ public interface ReservationSettingRepository extends JpaRepository<ReservationS
             @Param("endDate") LocalDate endDate);
 
     List<ReservationSetting> findByRestaurantId(Long restaurantId);
+
+    @Query("SELECT rs FROM ReservationSetting rs WHERE rs.restaurantId = :restaurantId " +
+            "AND :reservationDate BETWEEN rs.startDate AND rs.endDate")
+    Optional<ReservationSetting> findByRestaurantIdAndDateRange(@Param("restaurantId") Long restaurantId,
+                                                                @Param("reservationDate") LocalDate reservationDate);
 }

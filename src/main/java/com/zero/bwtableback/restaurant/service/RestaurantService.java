@@ -12,6 +12,7 @@ import com.zero.bwtableback.restaurant.exception.RestaurantException;
 import com.zero.bwtableback.restaurant.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,9 @@ public class RestaurantService {
     private final ChatRoomRepository chatRoomRepository;
     private final ImageUploadService imageUploadService;
     private final MemberRepository memberRepository;
+
+    @Value("${IMP_CODE}")
+    private String impCode;
 
     // 등록
     // TODO 테스트 끝나면 응답형식 RegisterResDto로 수정 예정
@@ -143,7 +147,7 @@ public class RestaurantService {
 //        return savedRestaurant;
 //    }
 
-    public RestaurantResDto registerRestaurant(RestaurantReqDto reqDto,
+    public RestaurantRegisterResDto registerRestaurant(RestaurantReqDto reqDto,
                                                MultipartFile[] images,
                                                List<MenuRegisterDto> menus,
                                                List<MultipartFile> menuImages,
@@ -179,7 +183,7 @@ public class RestaurantService {
                 .link(reqDto.getLink())
                 .info(reqDto.getInfo())
                 .deposit(reqDto.getDeposit())
-                .impCode(reqDto.getImpCode())
+                .impCode(impCode)
                 .category(category)
                 .images(new HashSet<>())
                 .operatingHours(new ArrayList<>())
@@ -230,7 +234,7 @@ public class RestaurantService {
             }
         }
 
-        return new RestaurantResDto(
+        return new RestaurantRegisterResDto(
                 savedRestaurant.getId(),
                 savedRestaurant.getName(),
                 "Restaurant registered successfully"
@@ -239,7 +243,7 @@ public class RestaurantService {
 
     // 식당 정보 수정
     // FIXME: 현재 확인용으로 Restaurant 객체 반환하도록 작성 -> 추후 응답객체 변경
-    public RestaurantResDto updateRestaurant(Long id,
+    public RestaurantRegisterResDto updateRestaurant(Long id,
                                              UpdateReqDto reqDto,
                                              MultipartFile[] newImages,
                                              List<MultipartFile> newMenuImages) throws IOException {
@@ -339,7 +343,7 @@ public class RestaurantService {
         }
 
         Restaurant updatedRestaurant = restaurantRepository.save(restaurant);
-        return new RestaurantResDto(
+        return new RestaurantRegisterResDto(
                 updatedRestaurant.getId(),
                 updatedRestaurant.getName(),
                 "Restaurant updated successfully"

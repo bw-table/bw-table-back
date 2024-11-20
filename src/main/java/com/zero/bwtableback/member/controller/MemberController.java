@@ -51,9 +51,12 @@ public class MemberController {
      * JWT 토큰으로 현재 사용자 인증
      */
     @GetMapping("/me")
-    public MemberDto getMyInfo(@AuthenticationPrincipal MemberDetails memberDetails) {
+    public ResponseEntity<?> getMyInfo(@AuthenticationPrincipal MemberDetails memberDetails) {
+        if (memberDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         String email = memberDetails.getUsername();
-        return memberService.getMyInfo(email);
+        return ResponseEntity.ok(memberService.getMyInfo(email));
     }
 
     /**'
@@ -74,6 +77,9 @@ public class MemberController {
     @GetMapping("/me/reservations")
     public ResponseEntity<Page<ReservationResDto>> getMyReservations(Pageable pageable,
                                                                      @AuthenticationPrincipal MemberDetails memberDetails) {
+        if (memberDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         String email = memberDetails.getUsername();
 
         return ResponseEntity.ok(memberService.getMyReservations(pageable, email));
@@ -85,6 +91,9 @@ public class MemberController {
     @GetMapping("me/reviews")
     public ResponseEntity<Page<ReviewInfoDto>> getMyReviews(Pageable pageable,
                                                             @AuthenticationPrincipal MemberDetails memberDetails) {
+        if (memberDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         String email = memberDetails.getUsername();
         return ResponseEntity.ok(memberService.getMyReviews(pageable, email));
     }
@@ -95,6 +104,9 @@ public class MemberController {
     @GetMapping("/me/chats")
     public ResponseEntity<Page<ChatRoomCreateResDto>> getMyChats(Pageable pageable,
                                                                  @AuthenticationPrincipal MemberDetails memberDetails) {
+        if (memberDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         String email = memberDetails.getUsername();
 
         Page<ChatRoomCreateResDto> rooms = memberService.getMyChatRooms(pageable, email);
@@ -108,6 +120,11 @@ public class MemberController {
     @PostMapping("/me/profile-image")
     public ResponseEntity<Map<String, String>> uploadFile(@AuthenticationPrincipal MemberDetails memberDetails,
                                                           @RequestParam("file") MultipartFile file) {
+        if (memberDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        String email = memberDetails.getUsername();
+
         try {
             String fileUrl = imageUploadService.uploadProfileImage(file, memberDetails.getMemberId());
 

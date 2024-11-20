@@ -20,6 +20,8 @@ import com.zero.bwtableback.reservation.repository.ReservationRepository;
 import com.zero.bwtableback.restaurant.dto.RestaurantInfoDto;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
+
+import java.io.IOException;
 import java.time.LocalDate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -67,7 +69,7 @@ class ReservationServiceTest {
         given(member.getId()).willReturn(memberId);
 
         // when
-        PaymentCompleteResDto result = reservationService.confirmReservation(reservationId, restaurantId, memberId);
+        PaymentCompleteResDto result = reservationService.confirmReservation(reservationId, memberId);
 
         // then
         verify(notificationScheduleService).scheduleImmediateNotification(reservation, NotificationType.CONFIRMATION);
@@ -93,14 +95,14 @@ class ReservationServiceTest {
         given(member.getId()).willReturn(memberId);
 
         // when & then
-        assertThatThrownBy(() -> reservationService.confirmReservation(reservationId, restaurantId, memberId))
+        assertThatThrownBy(() -> reservationService.confirmReservation(reservationId, memberId))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_STATUS_CONFIRM);
     }
 
     @DisplayName("예약일 3일 전일 경우 고객이 예약을 취소할 수 있다")
     @Test
-    void givenConfirmedReservation_whenCustomerCancelWithin3Days_thenCancelSuccessfully() {
+    void givenConfirmedReservation_whenCustomerCancelWithin3Days_thenCancelSuccessfully() throws IOException {
         // given
         Long reservationId = 1L;
         Long restaurantId = 2L;

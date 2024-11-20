@@ -13,7 +13,6 @@ public enum ErrorCode {
     INVALID_PASSWORD_FORMAT(HttpStatus.BAD_REQUEST, "비밀번호는 최소 8자 이상이며 대문자, 소문자, 숫자 및 특수문자를 포함해야 합니다."),
     INVALID_PHONE_NUMBER(HttpStatus.BAD_REQUEST, "유효하지 않은 전화번호 형식입니다."),
     INVALID_BUSINESS_NUMBER(HttpStatus.BAD_REQUEST, "유효하지 않은 사업자등록번호 형식입니다."),
-
     MISSING_BUSINESS_NUMBER(HttpStatus.BAD_REQUEST, "사업자등록번호는 사장님 역할에 필수입니다."),
 
     USER_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 존재하는 회원입니다."),
@@ -21,6 +20,9 @@ public enum ErrorCode {
     NICKNAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 닉네임입니다."),
     PHONE_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 전화번호입니다."),
     BUSINESS_NUMBER_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 사업자등록번호입니다."),
+
+    // 식당 관련 오류
+    RESTAURANT_OWNERSHIP_MISMATCH(HttpStatus.FORBIDDEN,"레스토랑 소유권이 일치하지 않습니다."),
 
     // 인증 관련 오류
     INVALID_CREDENTIALS(HttpStatus.FORBIDDEN, "이메일 또는 비밀번호가 유효하지 않습니다."),
@@ -34,6 +36,11 @@ public enum ErrorCode {
     INVALID_PEOPLE_COUNT(HttpStatus.BAD_REQUEST, "인원 설정은 최소 한 명입니다."),
     INVALID_RESERVATION_DATE(HttpStatus.BAD_REQUEST, "현재보다 과거의 날짜는 예약이 불가합니다."),
     INVALID_RESERVATION_TIME(HttpStatus.BAD_REQUEST, "현재보다 과거의 시간은 예약이 불가합니다."),
+
+    // 예약 설정 관련 에러 코드
+    RESERVATION_SETTING_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 레스토랑의 유효한 예약 설정을 찾을 수 없습니다."),
+    WEEKDAY_SETTING_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 날짜의 요일 설정을 찾을 수 없습니다."),
+    TIMESLOT_SETTING_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 시간대의 예약 설정을 찾을 수 없습니다."),
 
     // 예약 내역 조회 관련 오류
     RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 예약을 찾을 수 없습니다."),
@@ -61,9 +68,16 @@ public enum ErrorCode {
     NOTIFICATION_SEND_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "알림 전송에 실패했습니다."),
     JSON_PARSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "알림 데이터 JSON 파싱 작업이 실패했습니다."),
 
+    // 결제 관련 오류
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "결제 정보가 존재하지 않습니다."),
+    PAYMENT_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "결제가 완료되지 않았습니다."),
+    PAYMENT_PROCESSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "결제 처리 중 오류가 발생했습니다. 다시 시도해 주세요."),
+    PAYMENT_VERIFY_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "결제 검증 중 오류가 발생했습니다."),
+
     // 이미지 업로드 관련 오류
     FILE_UPLOAD_FAILED(HttpStatus.BAD_REQUEST, "파일 업로드에 실패했습니다."),
     FILE_DELETE_FAILED(HttpStatus.BAD_REQUEST, "파일 삭제에 실패하였습니다."),
+
     // 기타 오류
     UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");

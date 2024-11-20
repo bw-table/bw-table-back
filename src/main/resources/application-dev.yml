@@ -8,6 +8,7 @@ spring:
     api:
       key: ${IMP_API_KEY}
       secret: ${IMP_API_SECRET}
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/bwtable-mysql?useSSL=false&serverTimezone=Asia/Seoul&useUnicode=true&characterEncoding=utf8&allowPublicKeyRetrieval=true
@@ -18,6 +19,7 @@ spring:
       defer-datasource-initialization: true
       ddl-auto: update
     show-sql: true
+
   #  sql:  // data.sql 을 위한 설정
   #    init: create
   #      mode: always

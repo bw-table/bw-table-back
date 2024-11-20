@@ -100,8 +100,8 @@ public class ChatService {
     /**
      * 특정 채팅방 비활성화
      */
-    public void inactivateChatRoom(Long chatRoomId) {
-        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
+    public void inactivateChatRoom(Long reservationId) {
+        ChatRoom chatRoom = chatRoomRepository.findByReservationId(reservationId)
                 .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
         chatRoom.setStatus(ChatRoomStatus.INACTIVE);
