@@ -207,7 +207,7 @@ public class ReviewService {
     }
 
     // 리뷰 삭제
-    public ResponseEntity<String> deleteReview(Long reviewId, Long restaurantId, Member member) {
+    public ResponseEntity<String> deleteReview(Long reviewId, Long restaurantId, Member member) throws AccessDeniedException {
         Review review = findRestaurantAndReview(reviewId, restaurantId);
 
         if (!review.getMember().equals(member)) {
