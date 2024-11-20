@@ -4,6 +4,11 @@ import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.entity.ReservationStatus;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import com.zero.bwtableback.reservation.entity.ReservationStatus;
+import com.zero.bwtableback.restaurant.entity.Restaurant;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -46,4 +51,50 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     List<Reservation> findByRestaurantIdAndReservationDate(Long restaurantId, LocalDate reservationDate);
 
     Reservation findTopByMemberOrderByReservationDateDesc(Member member);
+
+    // 일별 예약 조회
+    @Query("""
+                SELECT r.reservationDate, COUNT(r)
+                FROM Reservation r
+                WHERE r.restaurant.id = :restaurantId
+                  AND r.reservationDate BETWEEN :startDate AND :endDate
+                  AND r.reservationStatus = 'VISITED'
+                GROUP BY r.reservationDate
+            """)
+    List<Object[]> aggregateDailyStatistics(Long restaurantId, LocalDate startDate, LocalDate endDate);
+
+    // 주별 예약 조회
+    @Query("""
+                SELECT FUNCTION('YEARWEEK', r.reservationDate), COUNT(r)
+                FROM Reservation r
+                WHERE r.restaurant.id = :restaurantId
+                  AND r.reservationDate BETWEEN :startDate AND :endDate
+                  AND r.reservationStatus = 'VISITED'
+                GROUP BY FUNCTION('YEARWEEK', r.reservationDate)
+            """)
+    List<Object[]> aggregateWeeklyStatistics(Long restaurantId, LocalDate startDate, LocalDate endDate);
+
+    // 월별 예약 조회
+    @Query("""
+                SELECT FUNCTION('YEAR_MONTH', r.reservationDate), COUNT(r)
+                FROM Reservation r
+                WHERE r.restaurant.id = :restaurantId
+                  AND r.reservationDate BETWEEN :startDate AND :endDate
+                  AND r.reservationStatus = 'VISITED'
+                GROUP BY FUNCTION('YEAR_MONTH', r.reservationDate)
+            """)
+    List<Object[]> aggregateMonthlyStatistics(Long restaurantId, LocalDate startDate, LocalDate endDate);
+
+    // 인기 시간대 조회
+    @Query("""
+                SELECT r.reservationTime, COUNT(r)
+                FROM Reservation r
+                WHERE r.restaurant.id = :restaurantId
+                  AND r.reservationDate BETWEEN :startDate AND :endDate
+                  AND r.reservationStatus = 'VISITED'
+                GROUP BY r.reservationTime
+                ORDER BY COUNT(r) DESC
+            """)
+    List<Object[]> aggregateTimeSlotStatistics(Long restaurantId, LocalDate startDate, LocalDate endDate);
+
 }
