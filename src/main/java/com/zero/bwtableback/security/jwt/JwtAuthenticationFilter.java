@@ -1,6 +1,7 @@
 package com.zero.bwtableback.security.jwt;
 
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -20,57 +21,44 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws IOException {
+            throws ServletException, IOException {
         try {
             String accessToken = getJwtFromRequest(request);
             String refreshToken = request.getHeader("refreshToken");
 
-            if (StringUtils.hasText(accessToken)) {
+            if (StringUtils.hasText(accessToken)) { // 빈 문자열도 체크
                 if (tokenProvider.validateAccessToken(accessToken)) {
+                    // 액세스 토큰이 유효한 경우 인증 처리
                     Authentication authentication = tokenProvider.getAuthentication(accessToken);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                } else if (StringUtils.hasText(refreshToken)) {
-                    try {
-                        if (tokenProvider.validateRefreshToken(refreshToken)) {
-                            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "ACCESS_TOKEN_EXPIRED");
-                            return;
-                        }
-                    } catch (RuntimeException e) {
-                        sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "INVALID_REFRESH_TOKEN");
-                        return;
-                    }
+                } else if (StringUtils.hasText(refreshToken) && tokenProvider.validateRefreshToken(refreshToken)) {
+                    // 액세스 토큰은 만료되었지만 리프레시 토큰이 유효한 경우
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setHeader("Token-Expired", "true");
+                    return;
                 } else {
-                    sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "INVALID_ACCESS_TOKEN");
+                    // 액세스 토큰이 유효하지 않고, 리프레시 토큰도 없거나 유효하지 않은 경우
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     return;
                 }
-            } else if (StringUtils.hasText(refreshToken)) {
-                try {
-                    if (tokenProvider.validateRefreshToken(refreshToken)) {
-                        sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "ACCESS_TOKEN_REQUIRED");
-                        return;
-                    }
-                } catch (RuntimeException e) {
-                    sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "INVALID_REFRESH_TOKEN");
-                    return;
-                }
-            } else if (isSecuredEndpoint(request)) {
-                sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "NO_TOKEN");
+            } else if (StringUtils.hasText(refreshToken) && tokenProvider.validateRefreshToken(refreshToken)) {
+                // 액세스 토큰은 없지만 리프레시 토큰이 유효한 경우
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setHeader("Token-Expired", "true");
                 return;
+            } else {
+                // 액세스 토큰과 리프레시 토큰 모두 없는 경우
+                // 인증이 필요한 엔드포인트인지 확인
+                if (isSecuredEndpoint(request)) {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    return;
+                }
             }
-
-            filterChain.doFilter(request, response);
         } catch (Exception ex) {
             logger.error("Could not set user authentication in security context", ex);
-            sendErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "AUTHENTICATION_ERROR");
         }
-    }
 
-    private void sendErrorResponse(HttpServletResponse response, int status, String errorCode) throws IOException {
-        response.setStatus(status);
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        String jsonResponse = String.format("{\"error\": \"%s\"}", errorCode);
-        response.getWriter().write(jsonResponse);
+        filterChain.doFilter(request, response);
     }
 
     private boolean isSecuredEndpoint(HttpServletRequest request) {

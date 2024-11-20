@@ -68,8 +68,6 @@ public class ReservationController {
      * 4. 채팅방을 생성하고 Redis에서 임시 예약 정보를 삭제
      *
      * @return 결제 완료 페이지에 보여질 정보 반환
-     *
-     * 결제 검증 - 예약 가능 이원 차감 -
      */
     @PostMapping("/complete")
     public ResponseEntity<?> completeReservation(@RequestBody PaymentReqDto paymentReqDto,
@@ -123,7 +121,8 @@ public class ReservationController {
      * 예약 취소
      * - 채팅방 비활성화
      * - 예약 상태 변경(GUEST_CANCELED/OWNER_CANCELED)
-     * - 알림
+     * - 예약 취소 알림
+     * - 환불 규정에 따른 환불
      */
     @PutMapping("/{reservationId}/cancel")
     @Operation(summary = "예약 취소", description = "주어진 예약 ID로 예약을 취소합니다.")
