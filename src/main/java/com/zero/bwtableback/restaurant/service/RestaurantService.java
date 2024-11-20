@@ -3,6 +3,8 @@ package com.zero.bwtableback.restaurant.service;
 import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
 import com.zero.bwtableback.chat.repository.ChatRoomRepository;
 import com.zero.bwtableback.common.service.ImageUploadService;
+import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.restaurant.dto.*;
 import com.zero.bwtableback.restaurant.entity.*;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -141,11 +144,12 @@ public class RestaurantService {
 //    }
 
     public RestaurantResDto registerRestaurant(RestaurantReqDto reqDto,
-                                         MultipartFile[] images,
-                                         List<MenuRegisterDto> menus,
-                                         List<MultipartFile> menuImages) throws IOException {
+                                               MultipartFile[] images,
+                                               List<MenuRegisterDto> menus,
+                                               List<MultipartFile> menuImages,
+                                               Member member) throws IOException {
 
-        reqDto.validate();  // TODO 간단한 테스트 후 삭제 예정
+//        reqDto.validate();  // TODO 간단한 테스트 후 삭제 예정
 
 //        Member member = memberRepository.findById(memberId)
 //                .orElseThrow(() -> new EntityNotFoundException("Member not found"));
@@ -182,6 +186,7 @@ public class RestaurantService {
                 .menus(new ArrayList<>())
                 .facilities(new ArrayList<>())
                 .hashtags(new ArrayList<>())
+                .member(member)
                 .build();
 
         List<OperatingHours> operatingHours = assignOperatingHours(reqDto.getOperatingHours(), restaurant);
@@ -466,115 +471,6 @@ public class RestaurantService {
                             return hashtagRepository.save(newHashtag);
                         }))
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * 검색
-     */
-    // 모든 식당 리스트 검색
-    public List<RestaurantListDto> getRestaurants(Pageable pageable) {
-        Page<Restaurant> restaurants = restaurantRepository.findAll(pageable);
-
-        return restaurants.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-    }
-
-    // 이름으로 식당 검색
-    public List<RestaurantListDto> getRestaurantsByName(String name, Pageable pageable) {
-        Page<Restaurant> restaurants = restaurantRepository.findByNameContainingIgnoreCase(name, pageable);
-
-        return restaurants.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-    }
-
-    // 업종으로 식당 검색
-    public List<RestaurantListDto> getRestaurantsByCategory(String category, Pageable pageable) {
-        CategoryType categoryType = convertToCategoryType(category);
-
-        Optional<Category> optionalCategory = categoryRepository.findByCategoryType(categoryType);
-
-        optionalCategory.ifPresent(categoryEntity -> {
-            categoryEntity.setSearchCount(categoryEntity.getSearchCount() + 1);
-            categoryRepository.save(categoryEntity);
-        });
-
-        Category categoryEntity = optionalCategory.orElseThrow(() ->
-                new EntityNotFoundException("Category not found"));
-
-        Page<Restaurant> restaurants = restaurantRepository.findByCategory_CategoryType(categoryType, pageable);
-
-        return restaurants.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-    }
-
-    // 메뉴로 식당 검색
-    public List<RestaurantListDto> getRestaurantsByMenu(String menu, Pageable pageable) {
-        Page<Restaurant> restaurants = restaurantRepository.findByMenus_NameContaining(menu, pageable);
-
-        return restaurants.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-    }
-
-    // 해시태그로 식당 검색
-    public List<RestaurantListDto> getRestaurantsByHashtag(String hashtag, Pageable pageable) {
-        Optional<Hashtag> optionalHashtag = hashtagRepository.findByName(hashtag);
-
-        optionalHashtag.ifPresent(hashtagEntity -> {
-            hashtagEntity.setSearchCount(hashtagEntity.getSearchCount() + 1);
-            hashtagRepository.save(hashtagEntity);
-        });
-
-//        Hashtag hashtagEntity = optionalHashtag.orElseThrow(() -> (
-//            new EntityNotFoundException("Hashtag not found")));
-
-        Page<Restaurant> restaurants = restaurantRepository.findByHashtags_Name(hashtag, pageable);
-
-        return restaurants.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-    }
-
-    // 해시태그 자동완성
-    public List<String> getHashtagSuggestions(String hashtag) {
-        List<Hashtag> hashtags = hashtagRepository.findTop10ByNameStartingWithIgnoreCase(hashtag);
-
-        return hashtags.stream()
-                .map(Hashtag::getName)
-                .collect(Collectors.toList());
-    }
-
-    // Restaurant -> dto로 변환하는 헬퍼 메서드
-    private RestaurantListDto convertToDto(Restaurant restaurant) {
-        return new RestaurantListDto(
-                restaurant.getId(),
-                restaurant.getName(),
-                restaurant.getAddress(),
-                restaurant.getCategory() != null ? restaurant.getCategory().getCategoryType().name() : null,
-                restaurant.getAverageRating()
-        );
-    }
-
-    // category String -> categoryType enum 으로 변환하는 헬퍼 메서드
-    private CategoryType convertToCategoryType(String category) {
-        if (category == null) {
-            throw new IllegalArgumentException("Category must not be null");
-        }
-
-        try {
-            return CategoryType.valueOf(category.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid category type: " + category);
-        }
-    }
-
-    // 특정 편의시설을 가진 식당 조회
-    public List<Restaurant> getRestaurantsByFacility(FacilityType facilityType, Pageable pageable) {
-        // 'EVENT_SPACE' 시설을 가진 Facility를 가진 식당들을 찾아 반환
-        return restaurantRepository.findByFacilities_FacilityType(facilityType, pageable);
     }
 
     // 식당 상세정보 조회

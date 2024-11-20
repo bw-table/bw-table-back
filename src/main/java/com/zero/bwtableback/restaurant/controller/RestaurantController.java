@@ -2,17 +2,22 @@ package com.zero.bwtableback.restaurant.controller;
 
 import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
 import com.zero.bwtableback.common.service.ImageUploadService;
+import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.restaurant.dto.*;
-import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.exception.RestaurantException;
 import com.zero.bwtableback.restaurant.service.AnnouncementService;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
+import com.zero.bwtableback.restaurant.service.RestaurantSearchService;
+import com.zero.bwtableback.security.MemberDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,6 +32,7 @@ public class RestaurantController {
 
     private final RestaurantService restaurantService;
     private final AnnouncementService announcementService;
+    private final RestaurantSearchService restaurantSearchService;
     private final ImageUploadService imageUploadService;
 
     // 식당 등록
@@ -53,18 +59,21 @@ public class RestaurantController {
 //        }
 //    }
 
+    @PreAuthorize("hasrole('OWNER')")
     @PostMapping("/new")
     public ResponseEntity<?> registerRestaurant(
-                                @RequestPart("restaurant") RestaurantReqDto reqDto,
-                                @RequestPart("images") MultipartFile[] images,
-                                @RequestPart("menus") List<MenuRegisterDto> menus,
-                                @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages) {
+            @RequestPart("restaurant") RestaurantReqDto reqDto,
+            @RequestPart("images") MultipartFile[] images,
+            @RequestPart("menus") List<MenuRegisterDto> menus,
+            @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
+            @AuthenticationPrincipal Member member) {
+
         try {
             reqDto.setImages(images);
             reqDto.setMenus(menus);
 
             RestaurantResDto savedRestaurant =
-                    restaurantService.registerRestaurant(reqDto, images, menus, menuImages);
+                    restaurantService.registerRestaurant(reqDto, images, menus, menuImages, member);
 
             return ResponseEntity.ok(savedRestaurant);
         } catch (RestaurantException e) {
@@ -83,13 +92,16 @@ public class RestaurantController {
     }
 
     // 식당 정보 수정
+    @PreAuthorize("hasrole('OWNER')")
     @PutMapping("/{id}")
     public ResponseEntity<RestaurantResDto> updateRestaurant(
             @PathVariable("id") Long restaurantId,
             @RequestPart("restaurant") UpdateReqDto reqDto,
             @RequestPart(value = "images", required = false) MultipartFile[] images,
-            @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages)
+            @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
+            @AuthenticationPrincipal Member member)
                                                     throws IOException {
+
         RestaurantResDto updatedRestaurant =
                 restaurantService.updateRestaurant(restaurantId, reqDto, images, menuImages);
 
@@ -99,7 +111,7 @@ public class RestaurantController {
     // 모든 식당 조회
     @GetMapping
     public ResponseEntity<List<RestaurantListDto>> getRestaurants(Pageable pageable) {
-        List<RestaurantListDto> restaurantList = restaurantService.getRestaurants(pageable);
+        List<RestaurantListDto> restaurantList = restaurantSearchService.getRestaurants(pageable);
         return ResponseEntity.ok(restaurantList);
     }
 
@@ -108,7 +120,7 @@ public class RestaurantController {
     public ResponseEntity<List<RestaurantListDto>> getRestaurantByName(
             @RequestParam String name,
             Pageable pageable) {
-        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByName(name, pageable);
+        List<RestaurantListDto> restaurants = restaurantSearchService.getRestaurantsByName(name, pageable);
         return ResponseEntity.ok(restaurants);
     }
 
@@ -117,7 +129,7 @@ public class RestaurantController {
     public ResponseEntity<List<RestaurantListDto>> getRestaurantsByCategory(
             @RequestParam String category,
             Pageable pageable) {
-        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByCategory(category, pageable);
+        List<RestaurantListDto> restaurants = restaurantSearchService.getRestaurantsByCategory(category, pageable);
         return ResponseEntity.ok(restaurants);
     }
 
@@ -126,7 +138,7 @@ public class RestaurantController {
     public ResponseEntity<List<RestaurantListDto>> getRestaurantsByMenu(
             @RequestParam String menu,
             Pageable pageable) {
-        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByMenu(menu, pageable);
+        List<RestaurantListDto> restaurants = restaurantSearchService.getRestaurantsByMenu(menu, pageable);
         return ResponseEntity.ok(restaurants);
     }
 
@@ -135,14 +147,14 @@ public class RestaurantController {
     public ResponseEntity<List<RestaurantListDto>> getRestaurantsByHashtag(
             @RequestParam String hashtag,
             Pageable pageable) {
-        List<RestaurantListDto> restaurants = restaurantService.getRestaurantsByHashtag(hashtag, pageable);
+        List<RestaurantListDto> restaurants = restaurantSearchService.getRestaurantsByHashtag(hashtag, pageable);
         return ResponseEntity.ok(restaurants);
     }
 
     // 해시태그 자동완성
     @GetMapping("/search/hashtags/suggestions")
     public ResponseEntity<List<String>> getHashtagSuggestions(@RequestParam String hashtag) {
-        List<String> suggestions = restaurantService.getHashtagSuggestions(hashtag);
+        List<String> suggestions = restaurantSearchService.getHashtagSuggestions(hashtag);
         return ResponseEntity.ok(suggestions);
     }
 
@@ -154,6 +166,7 @@ public class RestaurantController {
     }
 
     // 공지 생성
+    @PreAuthorize("hasrole('OWNER')")
     @PostMapping("/{restaurantId}/announcements")
     public ResponseEntity<AnnouncementResDto> createAnnouncement(@PathVariable Long restaurantId,
                                                                  @RequestBody AnnouncementReqDto reqDto) {
