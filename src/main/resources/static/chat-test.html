@@ -44,25 +44,76 @@
     const jwtToken = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJndWVzdEBleGFtcGxlLmNvbSIsInJvbGUiOiJHVUVTVCIsImlhdCI6MTczMjE4NTIyNCwiZXhwIjoxNzMyMTg3MDI0fQ.dujJAliFhXzXT996jcpDlRvu5Ubd_zs85GalEWHCrdNB1i27lTH8m5z02hXR75sPnf36x6SlIAl6a-d7cf5skQ'; // JWT 토큰
 
     function connect() {
-        const socket = new SockJS('/ws'); // WebSocket 엔드포인트
+        const socket = new SockJS('/ws');
         stompClient = Stomp.over(socket);
 
-        // Authorization 헤더에 JWT 토큰 추가
         const headers = {
-            'Authorization': 'Bearer ' + jwtToken // JWT 토큰 추가
+            'Authorization': 'Bearer ' + jwtToken
         };
 
         stompClient.connect(headers, function (frame) {
             console.log('Connected: ' + frame);
 
-            // 채팅방 구독
             stompClient.subscribe(`/topic/chatrooms/${chatRoomId}`, function (message) {
-                const msg = JSON.parse(message.body); // JSON 문자열을 객체로 변환
-                console.log("Received message:", msg); // 응답값 콘솔에 출력
-                showMessage(msg); // 화면에 메시지 표시
+                const msg = JSON.parse(message.body);
+                console.log("Received message:", msg);
+                showMessage(msg);
             });
+
+            // WebSocket 연결 후 이전 메시지 조회
+            fetchPreviousMessages();
         }, function (error) {
             console.error('Connection error:', error);
+        });
+    }
+
+    function fetchPreviousMessages() {
+        fetch(`/api/chats/${chatRoomId}/messages`, {
+            headers: {
+                'Authorization': 'Bearer ' + jwtToken
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                const messagesDiv = document.getElementById('messages');
+                messagesDiv.innerHTML = ''; // 기존 메시지 초기화
+                data.content.forEach(msg => showMessage(msg));
+            })
+            .catch(error => console.error('Error fetching messages:', error));
+    }
+
+    function showMessage(message) {
+        const messagesDiv = document.getElementById('messages');
+        const timestamp = formatTimestamp(message.timestamp);
+        messagesDiv.innerHTML += `
+        <div>
+            <strong>${message.nickname}:</strong>
+            ${message.content}
+            <small>(${timestamp})</small>
+        </div>`;
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function formatTimestamp(timestamp) {
+        // timestamp 배열을 Date 객체로 변환
+        const date = new Date(
+            timestamp[0], // 년
+            timestamp[1] - 1, // 월 (JavaScript에서는 0부터 시작)
+            timestamp[2], // 일
+            timestamp[3], // 시
+            timestamp[4], // 분
+            timestamp[5], // 초
+            timestamp[6] / 1000000 // 나노초를 밀리초로 변환
+        );
+
+        // 원하는 형식으로 날짜 포맷팅
+        return date.toLocaleString('ko-KR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
         });
     }
 
