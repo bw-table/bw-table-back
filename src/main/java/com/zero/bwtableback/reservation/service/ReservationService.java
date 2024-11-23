@@ -490,7 +490,7 @@ public class ReservationService {
         List<Reservation> reservations = reservationRepository.findAllByMemberIdAndReservationStatus(
                 memberId, ReservationStatus.CONFIRMED
         );
-        
+
         // 채팅방 삭제
         for (Reservation reservation : reservations) {
             handleCustomerCancel(reservation);
