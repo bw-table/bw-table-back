@@ -90,7 +90,7 @@ public class AuthController {
     /**
      * 로그인
      */
-    @PostMapping("/login") // TODO 이메일 먼저 보고 토큰을 봐야함
+    @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody EmailLoginReqDto loginReqDto,
                                    HttpServletRequest request,
                                    HttpServletResponse response) {
