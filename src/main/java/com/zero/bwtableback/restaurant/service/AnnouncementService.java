@@ -28,11 +28,9 @@ public class AnnouncementService {
     private final RestaurantRepository restaurantRepository;
 
     // 공지 생성
-    public AnnouncementResDto createAnnouncement(AnnouncementReqDto reqDto, Member member)
-                                                                                throws AccessDeniedException {
+    public AnnouncementResDto createAnnouncement(AnnouncementReqDto reqDto, Member member) throws AccessDeniedException {
 
-        Restaurant restaurant = restaurantRepository.findById(reqDto.getRestaurantId())
-                .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
+        Restaurant restaurant = findRestaurant(reqDto.getRestaurantId());
 
         if (!restaurant.getMember().getId().equals(member.getId())) {
             throw new AccessDeniedException("You can only create announcement for your own restaurant");
@@ -58,19 +56,10 @@ public class AnnouncementService {
 
     // 공지 수정
     public AnnouncementResDto updateAnnouncement(Long restaurantId, Long announcementId, AnnouncementUpdateReqDto reqDto, Member member) throws AccessDeniedException {
-        Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
+        Restaurant restaurant = findRestaurant(restaurantId);
+        Announcement announcement = findAnnouncement(announcementId);
 
-        Announcement announcement = announcementRepository.findById(announcementId)
-                .orElseThrow(() -> new EntityNotFoundException("Announcement not found"));
-
-        if (!restaurant.getMember().getId().equals(member.getId())) {
-            throw new AccessDeniedException("You can only update your own announcements");
-        }
-
-        if (!announcement.getRestaurant().equals(restaurant)) {
-            throw new AccessDeniedException("This announcement does not belong to the given restaurant");
-        }
+        validateOwnerAndAnnouncementBelongsToRestaurant(restaurant, announcement, member);
 
         Announcement updatedAnnouncement = announcement.toBuilder()
                 .title(reqDto.getTitle() != null ? reqDto.getTitle() : announcement.getTitle())
@@ -91,30 +80,18 @@ public class AnnouncementService {
 
     // 공지 삭제
     public void deleteAnnouncement(Long restaurantId, Long announcementId, Member member) throws AccessDeniedException {
-        Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
+        Restaurant restaurant = findRestaurant(restaurantId);
+        Announcement announcement = findAnnouncement(announcementId);
 
-        Announcement announcement = announcementRepository.findById(announcementId)
-                .orElseThrow(() -> new EntityNotFoundException("Announcement not found"));
-
-        if (!restaurant.getMember().getId().equals(member.getId())) {
-            throw new AccessDeniedException("You can only delete your own announcements");
-        }
-
-        if (!announcement.getRestaurant().equals(restaurant)) {
-            throw new AccessDeniedException("This announcement does not belong to the given restaurant");
-        }
+        validateOwnerAndAnnouncementBelongsToRestaurant(restaurant, announcement, member);
 
         announcementRepository.delete(announcement);
     }
 
     // 공지 상세 조회
     public AnnouncementDetailDto getAnnouncementById(Long restaurantId, Long announcementId) throws AccessDeniedException {
-        Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
-
-        Announcement announcement = announcementRepository.findById(announcementId)
-                .orElseThrow(() -> new EntityNotFoundException("Announcement not found"));
+        Restaurant restaurant = findRestaurant(restaurantId);
+        Announcement announcement = findAnnouncement(announcementId);
 
         if (!announcement.getRestaurant().equals(restaurant)) {
             throw new AccessDeniedException("This announcement does not belong to the given restaurant");
@@ -145,4 +122,23 @@ public class AnnouncementService {
         );
     }
 
+    private Restaurant findRestaurant(Long restaurantId) {
+        return restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
+    }
+
+    private Announcement findAnnouncement(Long announcementId) {
+        return announcementRepository.findById(announcementId)
+                .orElseThrow(() -> new EntityNotFoundException("Announcement not found"));
+    }
+
+    private void validateOwnerAndAnnouncementBelongsToRestaurant(Restaurant restaurant, Announcement announcement, Member member) throws AccessDeniedException {
+        if (!restaurant.getMember().getId().equals(member.getId())) {
+            throw new AccessDeniedException("You can only access your own announcements");
+        }
+
+        if (!announcement.getRestaurant().equals(restaurant)) {
+            throw new AccessDeniedException("This announcement does not belong to the given restaurant");
+        }
+    }
 }

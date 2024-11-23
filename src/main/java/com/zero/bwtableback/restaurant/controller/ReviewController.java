@@ -39,18 +39,17 @@ public class ReviewController {
                                                      @RequestPart(value = "review") ReviewReqDto reqDto,
                                                      @RequestPart(value = "images", required = false) MultipartFile[] images,
                                                      @AuthenticationPrincipal MemberDetails memberDetails) throws IOException {
-//        reqDto = new ReviewReqDto(reqDto.getContent(), reqDto.getRating(), images);
-
-        System.out.println("멤버id: " + memberDetails.getMemberId());
 
         // 이미지 배열이 제대로 전달됐는지 확인
-        if (images != null && images.length > 0) {
-            log.info("Number of images uploaded: " + images.length);
-        } else {
-            log.warn("No images uploaded.");
-        }
+        // FIXME 테스트용
+//        if (images != null && images.length > 0) {
+//            log.info("Number of images uploaded: " + images.length);
+//        } else {
+//            log.warn("No images uploaded.");
+//        }
 
-        ReviewResDto resDto = reviewService.createReview(restaurantId, reqDto, images, memberDetails);
+        Member member = memberDetails.getMember();
+        ReviewResDto resDto = reviewService.createReview(restaurantId, reqDto, images, member);
 
         return ResponseEntity.ok(resDto);
     }
@@ -64,7 +63,8 @@ public class ReviewController {
                                                      @RequestPart(value = "images", required = false) MultipartFile[] images,
                                                      @AuthenticationPrincipal MemberDetails memberDetails) throws IOException {
 
-        ReviewResDto response = reviewService.updateReview(reviewId, restaurantId, reqDto, images, memberDetails);
+        Member member = memberDetails.getMember();
+        ReviewResDto response = reviewService.updateReview(reviewId, restaurantId, reqDto, images, member);
 
         return ResponseEntity.ok(response);
     }
@@ -75,8 +75,10 @@ public class ReviewController {
     public ResponseEntity<String> deleteReview(@PathVariable Long restaurantId,
                                                @PathVariable Long reviewId,
                                                @AuthenticationPrincipal MemberDetails memberDetails) {
+
+        Member member = memberDetails.getMember();
         try {
-            return reviewService.deleteReview(reviewId, restaurantId, memberDetails);
+            return reviewService.deleteReview(reviewId, restaurantId, member);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Review or Restaurant not found");
