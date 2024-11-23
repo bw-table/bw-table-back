@@ -1,4 +1,4 @@
-package com.zero.bwtableback.service;
+package com.zero.bwtableback.auth.service;
 
 import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;

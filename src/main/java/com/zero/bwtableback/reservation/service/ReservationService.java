@@ -246,7 +246,6 @@ public class ReservationService {
             log.error("Error emitting notification for reservation: {}", reservationId, e);
             throw new CustomException(ErrorCode.NOTIFICATION_SEND_FAILED);
         }
-
     }
 
     /**

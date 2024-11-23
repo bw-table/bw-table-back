@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'groovy'
     id 'org.springframework.boot' version '3.3.5'
     id 'io.spring.dependency-management' version '1.1.6'
 }
@@ -41,6 +42,9 @@ dependencies {
     implementation 'org.springframework.data:spring-data-envers'
 
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+
+    implementation 'org.codehaus.groovy:groovy-all:3.0.9'
+    testImplementation 'org.ngrinder:ngrinder-groovy:3.5.5'
 
     implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
 
