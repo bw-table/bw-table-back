@@ -54,8 +54,7 @@ public class AnnouncementController {
 
     // 공지 수정
     @PreAuthorize("hasrole('OWNER')")
-    @PutMapping("/{restaurantId}" +
-            "/announcements/{announcementId}")
+    @PutMapping("/{restaurantId}/announcements/{announcementId}")
     public ResponseEntity<AnnouncementResDto> updateAnnouncement(@PathVariable Long restaurantId,
                                                                  @PathVariable Long announcementId,
                                                                  @RequestBody AnnouncementUpdateReqDto reqDto,

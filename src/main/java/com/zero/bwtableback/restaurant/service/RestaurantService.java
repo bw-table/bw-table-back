@@ -38,130 +38,16 @@ public class RestaurantService {
     private final MemberRepository memberRepository;
 
     // 등록
-    // TODO 테스트 끝나면 응답형식 RegisterResDto로 수정 예정
-//    public Restaurant registerRestaurant(RegisterReqDto reqDto) {
-//        reqDto.validate();
-//
-//        // 카테고리 설정
-//        Category category = null;
-//        if (reqDto.getCategory() != null) {
-//            try {
-//                CategoryType categoryType = CategoryType.valueOf(reqDto.getCategory().toUpperCase());
-//                category = categoryRepository.findByCategoryType(categoryType)
-//                        .orElseThrow(() -> new EntityNotFoundException("Category not found"));
-//            } catch (IllegalArgumentException e) {
-//                throw new RestaurantException("Invalid category type provided: " + reqDto.getCategory());
-//            }
-//        }
-//
-//        // 주소, 연락처 중복 체크
-//        if (restaurantRepository.existsByAddress(reqDto.getAddress())) {
-//            throw new RestaurantException("Restaurant with this address already exists.");
-//        }
-//        if (restaurantRepository.existsByContact(reqDto.getContact())) {
-//            throw new RestaurantException("Restaurant with this contact number already exists.");
-//        }
-//
-//        // 레스토랑 객체 생성
-//        Restaurant restaurant = Restaurant.builder()
-//                .name(reqDto.getName())
-//                .description(reqDto.getDescription())
-//                .address(reqDto.getAddress())
-//                .contact(reqDto.getContact())
-//                .closedDay(reqDto.getClosedDay())
-//                .link(reqDto.getLink())
-//                .info(reqDto.getInfo())
-//                .deposit(reqDto.getDeposit())
-//                .category(category)
-//                .images(new HashSet<>())
-//                .operatingHours(new ArrayList<>())
-//                .menus(new ArrayList<>())
-//                .facilities(new ArrayList<>())
-//                .hashtags(new ArrayList<>())
-//                .build();
-//
-//        // 영업시간 설정
-//        List<OperatingHours> operatingHours = reqDto.getOperatingHours().stream()
-//                .map(hoursDto -> OperatingHours.builder()
-//                        .dayOfWeek(hoursDto.getDayOfWeek())
-//                        .openingTime(hoursDto.getOpeningTime())
-//                        .closingTime(hoursDto.getClosingTime())
-//                        .restaurant(restaurant)
-//                        .build())
-//                .collect(Collectors.toList());
-//        restaurant.setOperatingHours(operatingHours);
-//
-//        // 메뉴 설정
-//        List<Menu> menus = reqDto.getMenus().stream()
-//                .map(menuDto -> Menu.builder()
-//                        .name(menuDto.getName())
-//                        .price(menuDto.getPrice())
-//                        .description(menuDto.getDescription())
-//                        .imageUrl(menuDto.getImageUrl())
-//                        .restaurant(restaurant)
-//                        .build())
-//                .collect(Collectors.toList());
-//        restaurant.setMenus(menus);
-//
-//        // 편의시설 설정
-//        List<Facility> facilities =  reqDto.getFacilities().stream()
-//                .map(facilityType -> {
-//                    FacilityType type = FacilityType.valueOf(facilityType);
-//                    return facilityRepository.findByFacilityType(type)
-//                            .orElseThrow(() -> new EntityNotFoundException("Facility not found"));
-//                })
-//                .collect(Collectors.toList());
-//        restaurant.setFacilities(facilities);
-//
-//        // 해시태그 설정
-//        List<Hashtag> hashtags = reqDto.getHashtags().stream()
-//                .map(tag -> hashtagRepository.findByName(tag)
-//                        .orElseGet(() -> {
-//                            Hashtag newHashtag = new Hashtag(tag);
-//                            return hashtagRepository.save(newHashtag);
-//                        }))
-//                .collect(Collectors.toList());
-//        restaurant.setHashtags(hashtags);
-//
-//        // 레스토랑 저장
-//        Restaurant savedRestaurant = restaurantRepository.save(restaurant);
-//
-//        // 이미지 설정
-//        Set<RestaurantImage> images = reqDto.getImages().stream()
-//                .map(imageUrl -> RestaurantImage.builder()
-//                        .imageUrl(imageUrl)
-//                        .restaurant(savedRestaurant)
-//                        .build())
-//                .collect(Collectors.toSet());
-//        savedRestaurant.setImages(images);
-//
-//        if (images.isEmpty()) {
-//            System.out.println("No images to save.");
-//        } else {
-//            restaurantImageRepository.saveAll(images);
-//        }
-//
-//        return savedRestaurant;
-//    }
-
     public RestaurantResDto registerRestaurant(RestaurantReqDto reqDto,
                                                MultipartFile[] images,
                                                List<MenuRegisterDto> menus,
                                                List<MultipartFile> menuImages,
-                                               MemberDetails memberDetails) throws IOException {
-
-//        reqDto.validate();  // TODO 간단한 테스트 후 삭제 예정
-
-//        Member member = memberRepository.findById(memberId)
-//                .orElseThrow(() -> new EntityNotFoundException("Member not found"));
-//
-//        if (member.getRole() != Role.OWNER) {
-//            throw new AccessDeniedException("Only owners can register restaurants");
-//        }
+                                               Member member) throws IOException {
 
         if (restaurantRepository.existsByAddress(reqDto.getAddress())) {
             throw new RestaurantException("Restaurant with this address already exists.");
         }
+
         if (restaurantRepository.existsByContact(reqDto.getContact())) {
             throw new RestaurantException("Restaurant with this contact number already exists.");
         }
@@ -186,7 +72,7 @@ public class RestaurantService {
                 .menus(new ArrayList<>())
                 .facilities(new ArrayList<>())
                 .hashtags(new ArrayList<>())
-                .member(memberDetails.getMember())
+                .member(member)
                 .build();
 
         List<OperatingHours> operatingHours = assignOperatingHours(reqDto.getOperatingHours(), restaurant);
@@ -238,14 +124,18 @@ public class RestaurantService {
     }
 
     // 식당 정보 수정
-    // FIXME: 현재 확인용으로 Restaurant 객체 반환하도록 작성 -> 추후 응답객체 변경
     public RestaurantResDto updateRestaurant(Long id,
                                              UpdateReqDto reqDto,
                                              MultipartFile[] newImages,
-                                             List<MultipartFile> newMenuImages) throws IOException {
+                                             List<MultipartFile> newMenuImages,
+                                             Member member) throws IOException {
 
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
+
+        if (!restaurant.getMember().getId().equals(member.getId())) {
+            throw new AccessDeniedException("You can only update your own restaurant");
+        }
 
         if (reqDto.getName() != null) {
             restaurant.setName(reqDto.getName());

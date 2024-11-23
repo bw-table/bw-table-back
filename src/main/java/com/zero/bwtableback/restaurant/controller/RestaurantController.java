@@ -37,30 +37,6 @@ public class RestaurantController {
     private final ImageUploadService imageUploadService;
 
     // 식당 등록
-    // TODO: 식당 등록 후 응답형식 결정 필요
-//    @PostMapping("/new")
-//    public ResponseEntity<?> registerRestaurant(@RequestBody RegisterReqDto reqDto) {
-//
-//        try {
-//            Restaurant savedRestaurant = restaurantService.registerRestaurant(reqDto);
-//
-//            RegisterResDto resDto = new RegisterResDto(
-//                    savedRestaurant.getId(),
-//                    savedRestaurant.getName(),
-//                    "Restaurant registered successfully"
-//            );
-//            return ResponseEntity.status(HttpStatus.CREATED).body(resDto);
-//        } catch (RestaurantException e) {
-//            log.error("Error registering restaurant", e);
-//
-//            Map<String, String> errorResponse = new HashMap<>();
-
-//            errorResponse.put("message", e.getMessage());
-//
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-//        }
-//    }
-
     @PreAuthorize("hasrole('OWNER')")
     @PostMapping("/new")
     public ResponseEntity<?> registerRestaurant(
@@ -70,12 +46,14 @@ public class RestaurantController {
             @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
             @AuthenticationPrincipal MemberDetails memberDetails) {
 
+        Member member = memberDetails.getMember();
+
         try {
             reqDto.setImages(images);
             reqDto.setMenus(menus);
 
             RestaurantResDto savedRestaurant =
-                    restaurantService.registerRestaurant(reqDto, images, menus, menuImages, memberDetails);
+                    restaurantService.registerRestaurant(reqDto, images, menus, menuImages, member);
 
             return ResponseEntity.ok(savedRestaurant);
         } catch (RestaurantException e) {
@@ -101,11 +79,13 @@ public class RestaurantController {
             @RequestPart("restaurant") UpdateReqDto reqDto,
             @RequestPart(value = "images", required = false) MultipartFile[] images,
             @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
-            @AuthenticationPrincipal Member member)
+            @AuthenticationPrincipal MemberDetails memberDetails)
                                                     throws IOException {
 
+        Member member = memberDetails.getMember();
+
         RestaurantResDto updatedRestaurant =
-                restaurantService.updateRestaurant(restaurantId, reqDto, images, menuImages);
+                restaurantService.updateRestaurant(restaurantId, reqDto, images, menuImages, member);
 
         return ResponseEntity.ok(updatedRestaurant);
     }
@@ -166,8 +146,6 @@ public class RestaurantController {
         RestaurantInfoDto infoDto = restaurantService.getRestaurantById(id);
         return ResponseEntity.ok(infoDto);
     }
-
-
 
     // 특정 식당의 모든 채팅방 조회
     @GetMapping("/{restaurantId}/chats")
