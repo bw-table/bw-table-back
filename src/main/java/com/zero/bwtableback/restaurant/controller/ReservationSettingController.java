@@ -52,7 +52,7 @@ public class ReservationSettingController {
     public ResponseEntity<ReservationSettingDetailDto> getReservationSettingById(
                                                                 @PathVariable Long restaurantId,
                                                                 @PathVariable Long reservationSettingId,
-                                                                @AuthenticationPrincipal MemberDetails memberDetails) {
+                                                                @AuthenticationPrincipal MemberDetails memberDetails) throws AccessDeniedException {
 
         Member member = memberDetails.getMember();
 

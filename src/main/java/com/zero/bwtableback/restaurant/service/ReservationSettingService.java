@@ -31,12 +31,8 @@ public class ReservationSettingService {
     // 예약 설정 등록
     public ReservationSettingResDto createReservationSetting(ReservationSettingReqDto reqDto, Member member) throws AccessDeniedException {
 
-        Restaurant restaurant = restaurantRepository.findById(reqDto.getRestaurantId())
-                .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
-
-        if (!restaurant.getMember().getId().equals(member.getId())) {
-            throw new AccessDeniedException("Only the owner of this restaurant can access this service");
-        }
+        Restaurant restaurant = getRestaurantById(reqDto.getRestaurantId());
+        checkRestaurantOwner(restaurant, member);
 
         // 기간 겹치는지 체크
         boolean isOverlap = reservationSettingRepository.existsByRestaurantIdAndOverlappingDates(
@@ -85,8 +81,8 @@ public class ReservationSettingService {
     // 특정 레스토랑의 모든 예약 설정 조회
     public List<ReservationSettingDetailDto> getReservationSettingByRestaurantId(Long restaurantId, Member member) throws AccessDeniedException {
 
-        Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new IllegalArgumentException("Restaurant not found"));
+        Restaurant restaurant = getRestaurantById(restaurantId);
+        checkRestaurantOwner(restaurant, member);
 
         if (!restaurant.getMember().getId().equals(member.getId())) {
             throw new AccessDeniedException("Only the owner of this restaurant can access this service");
@@ -100,9 +96,9 @@ public class ReservationSettingService {
     }
 
     // 예약설정 id로 예약 설정 조회
-    public ReservationSettingDetailDto getReservationSettingById(Long reservationSettingId, Long restaurantId, Member member) {
-        Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
+    public ReservationSettingDetailDto getReservationSettingById(Long reservationSettingId, Long restaurantId, Member member) throws AccessDeniedException {
+        Restaurant restaurant = getRestaurantById(restaurantId);
+        checkRestaurantOwner(restaurant, member);
 
         ReservationSetting reservationSetting = reservationSettingRepository.findById(reservationSettingId)
                 .orElseThrow(() -> new EntityNotFoundException("Reservation setting not found"));
@@ -148,12 +144,8 @@ public class ReservationSettingService {
         ReservationSetting reservationSetting = reservationSettingRepository.findById(reservationSettingId)
                 .orElseThrow(() -> new EntityNotFoundException("ReservationSetting not found"));
 
-        Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new IllegalArgumentException("Restaurant not found"));
-
-        if (!restaurant.getMember().getId().equals(member.getId())) {
-            throw new AccessDeniedException("Only the owner of this restaurant can access this service");
-        }
+        Restaurant restaurant = getRestaurantById(restaurantId);
+        checkRestaurantOwner(restaurant, member);
 
         List<WeekdaySetting> weekdaySettings = reservationSetting.getWeekdaySettings();
         if (!weekdaySettings.isEmpty()) {
@@ -165,4 +157,14 @@ public class ReservationSettingService {
         reservationSettingRepository.delete(reservationSetting);
     }
 
+    private Restaurant getRestaurantById(Long restaurantId) {
+        return restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
+    }
+
+    private void checkRestaurantOwner(Restaurant restaurant, Member member) throws AccessDeniedException {
+        if (!restaurant.getMember().getId().equals(member.getId())) {
+            throw new AccessDeniedException("Only the owner of this restaurant can access this service");
+        }
+    }
 }
