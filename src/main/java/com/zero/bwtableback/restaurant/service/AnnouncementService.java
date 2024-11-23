@@ -1,5 +1,6 @@
 package com.zero.bwtableback.restaurant.service;
 
+import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.restaurant.dto.AnnouncementDetailDto;
 import com.zero.bwtableback.restaurant.dto.AnnouncementReqDto;
 import com.zero.bwtableback.restaurant.dto.AnnouncementResDto;
@@ -8,12 +9,14 @@ import com.zero.bwtableback.restaurant.entity.Announcement;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.repository.AnnouncementRepository;
 import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
+import com.zero.bwtableback.security.MemberDetails;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,9 +28,15 @@ public class AnnouncementService {
     private final RestaurantRepository restaurantRepository;
 
     // 공지 생성
-    public AnnouncementResDto createAnnouncement(AnnouncementReqDto reqDto) {
+    public AnnouncementResDto createAnnouncement(AnnouncementReqDto reqDto, Member member)
+                                                                                throws AccessDeniedException {
+
         Restaurant restaurant = restaurantRepository.findById(reqDto.getRestaurantId())
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
+
+        if (!restaurant.getMember().getId().equals(member.getId())) {
+            throw new AccessDeniedException("You can only create announcement for your own restaurant");
+        }
 
         Announcement announcement = Announcement.builder()
                 .title(reqDto.getTitle())
@@ -48,9 +57,20 @@ public class AnnouncementService {
     }
 
     // 공지 수정
-    public AnnouncementResDto updateAnnouncement(Long id, AnnouncementUpdateReqDto reqDto) {
-        Announcement announcement = announcementRepository.findById(id)
+    public AnnouncementResDto updateAnnouncement(Long restaurantId, Long announcementId, AnnouncementUpdateReqDto reqDto, Member member) throws AccessDeniedException {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
+
+        Announcement announcement = announcementRepository.findById(announcementId)
                 .orElseThrow(() -> new EntityNotFoundException("Announcement not found"));
+
+        if (!restaurant.getMember().getId().equals(member.getId())) {
+            throw new AccessDeniedException("You can only update your own announcements");
+        }
+
+        if (!announcement.getRestaurant().equals(restaurant)) {
+            throw new AccessDeniedException("This announcement does not belong to the given restaurant");
+        }
 
         Announcement updatedAnnouncement = announcement.toBuilder()
                 .title(reqDto.getTitle() != null ? reqDto.getTitle() : announcement.getTitle())
@@ -65,21 +85,40 @@ public class AnnouncementService {
                 "Announcement updated successfully",
                 savedAnnouncement.getRestaurant().getId()
         );
+
         return resDto;
     }
 
     // 공지 삭제
-    public void deleteAnnouncement(Long id) {
-        Announcement announcement = announcementRepository.findById(id)
+    public void deleteAnnouncement(Long restaurantId, Long announcementId, Member member) throws AccessDeniedException {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
+
+        Announcement announcement = announcementRepository.findById(announcementId)
                 .orElseThrow(() -> new EntityNotFoundException("Announcement not found"));
+
+        if (!restaurant.getMember().getId().equals(member.getId())) {
+            throw new AccessDeniedException("You can only delete your own announcements");
+        }
+
+        if (!announcement.getRestaurant().equals(restaurant)) {
+            throw new AccessDeniedException("This announcement does not belong to the given restaurant");
+        }
 
         announcementRepository.delete(announcement);
     }
 
     // 공지 상세 조회
-    public AnnouncementDetailDto getAnnouncementById(Long id) {
-        Announcement announcement = announcementRepository.findById(id)
+    public AnnouncementDetailDto getAnnouncementById(Long restaurantId, Long announcementId) throws AccessDeniedException {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
+
+        Announcement announcement = announcementRepository.findById(announcementId)
                 .orElseThrow(() -> new EntityNotFoundException("Announcement not found"));
+
+        if (!announcement.getRestaurant().equals(restaurant)) {
+            throw new AccessDeniedException("This announcement does not belong to the given restaurant");
+        }
 
         return convertToDto(announcement);
     }

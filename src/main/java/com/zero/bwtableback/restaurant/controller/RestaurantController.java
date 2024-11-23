@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 @RestController
@@ -166,31 +167,7 @@ public class RestaurantController {
         return ResponseEntity.ok(infoDto);
     }
 
-    // 공지 생성
-    @PreAuthorize("hasrole('OWNER')")
-    @PostMapping("/{restaurantId}/announcements")
-    public ResponseEntity<AnnouncementResDto> createAnnouncement(@PathVariable Long restaurantId,
-                                                                 @RequestBody AnnouncementReqDto reqDto) {
-        AnnouncementReqDto updatedReqDto = AnnouncementReqDto.builder()
-                .restaurantId(restaurantId)
-                .title(reqDto.getTitle())
-                .content(reqDto.getContent())
-                .event(reqDto.isEvent())
-                .build();
 
-        AnnouncementResDto resDto = announcementService.createAnnouncement(updatedReqDto);
-
-        return ResponseEntity.ok(resDto);
-    }
-
-    // 식당 공지 목록 조회
-    @GetMapping("/{restaurantId}/announcements")
-    public ResponseEntity<List<AnnouncementDetailDto>> getAnnouncementsByRestaurantId(
-            @PathVariable Long restaurantId, Pageable pageable) {
-        List<AnnouncementDetailDto> announcements = announcementService.getAnnouncementsByRestaurantId(restaurantId, pageable);
-
-        return ResponseEntity.ok(announcements);
-    }
 
     // 특정 식당의 모든 채팅방 조회
     @GetMapping("/{restaurantId}/chats")
