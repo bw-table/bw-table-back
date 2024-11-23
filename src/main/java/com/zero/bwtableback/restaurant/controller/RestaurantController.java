@@ -53,6 +53,7 @@ public class RestaurantController {
 //            log.error("Error registering restaurant", e);
 //
 //            Map<String, String> errorResponse = new HashMap<>();
+
 //            errorResponse.put("message", e.getMessage());
 //
 //            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
@@ -66,14 +67,14 @@ public class RestaurantController {
             @RequestPart("images") MultipartFile[] images,
             @RequestPart("menus") List<MenuRegisterDto> menus,
             @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
-            @AuthenticationPrincipal Member member) {
+            @AuthenticationPrincipal MemberDetails memberDetails) {
 
         try {
             reqDto.setImages(images);
             reqDto.setMenus(menus);
 
             RestaurantResDto savedRestaurant =
-                    restaurantService.registerRestaurant(reqDto, images, menus, menuImages, member);
+                    restaurantService.registerRestaurant(reqDto, images, menus, menuImages, memberDetails);
 
             return ResponseEntity.ok(savedRestaurant);
         } catch (RestaurantException e) {

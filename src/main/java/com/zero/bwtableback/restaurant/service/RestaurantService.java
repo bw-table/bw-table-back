@@ -10,6 +10,7 @@ import com.zero.bwtableback.restaurant.dto.*;
 import com.zero.bwtableback.restaurant.entity.*;
 import com.zero.bwtableback.restaurant.exception.RestaurantException;
 import com.zero.bwtableback.restaurant.repository.*;
+import com.zero.bwtableback.security.MemberDetails;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -147,7 +148,7 @@ public class RestaurantService {
                                                MultipartFile[] images,
                                                List<MenuRegisterDto> menus,
                                                List<MultipartFile> menuImages,
-                                               Member member) throws IOException {
+                                               MemberDetails memberDetails) throws IOException {
 
 //        reqDto.validate();  // TODO 간단한 테스트 후 삭제 예정
 
@@ -179,14 +180,13 @@ public class RestaurantService {
                 .link(reqDto.getLink())
                 .info(reqDto.getInfo())
                 .deposit(reqDto.getDeposit())
-                .impCode(reqDto.getImpCode())
                 .category(category)
                 .images(new HashSet<>())
                 .operatingHours(new ArrayList<>())
                 .menus(new ArrayList<>())
                 .facilities(new ArrayList<>())
                 .hashtags(new ArrayList<>())
-                .member(member)
+                .member(memberDetails.getMember())
                 .build();
 
         List<OperatingHours> operatingHours = assignOperatingHours(reqDto.getOperatingHours(), restaurant);
@@ -291,10 +291,6 @@ public class RestaurantService {
 
         if (reqDto.getDeposit() != null) {
             restaurant.setDeposit(reqDto.getDeposit());
-        }
-
-        if (reqDto.getImpCode() != null) {
-            restaurant.setImpCode(reqDto.getImpCode());
         }
 
         if (reqDto.getCategory() != null) {

@@ -19,6 +19,6 @@ public class ReviewReqDto {
 
     private MultipartFile[] images;
 
-    @NotNull(message = "MemberId must not be null")
-    private Long memberId;
+//    @NotNull(message = "MemberId must not be null")
+//    private Long memberId;
 }

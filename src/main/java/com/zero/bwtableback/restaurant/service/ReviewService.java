@@ -16,6 +16,7 @@ import com.zero.bwtableback.restaurant.dto.ReviewResDto;
 import com.zero.bwtableback.restaurant.entity.Review;
 import com.zero.bwtableback.restaurant.repository.ReviewImageRepository;
 import com.zero.bwtableback.restaurant.repository.ReviewRepository;
+import com.zero.bwtableback.security.MemberDetails;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -52,7 +53,7 @@ public class ReviewService {
     public ReviewResDto createReview(Long restaurantId,
                                      ReviewReqDto reqDto,
                                      MultipartFile[] images,
-                                     Member member) throws IOException {
+                                     MemberDetails memberDetails) throws IOException {
 
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found with id: " + restaurantId));
@@ -69,7 +70,7 @@ public class ReviewService {
                 .content(reqDto.getContent())
                 .rating(reqDto.getRating())
                 .restaurant(restaurant)
-                .member(member)
+                .member(memberDetails.getMember())
                 .build();
 
         Review savedReview = reviewRepository.save(review);
@@ -141,11 +142,11 @@ public class ReviewService {
                                      Long restaurantId,
                                      ReviewUpdateReqDto reqDto,
                                      MultipartFile[] images,
-                                     Member member) throws IOException {
+                                     MemberDetails memberDetails) throws IOException {
 
         Review review = findRestaurantAndReview(reviewId, restaurantId);
 
-        if (!review.getMember().equals(member)) {
+        if (!review.getMember().getId().equals(memberDetails.getMember().getId())) {
             throw new AccessDeniedException("You can only update your own reviews");
         }
 
@@ -207,11 +208,11 @@ public class ReviewService {
     }
 
     // 리뷰 삭제
-    public ResponseEntity<String> deleteReview(Long reviewId, Long restaurantId, Member member) throws AccessDeniedException {
+    public ResponseEntity<String> deleteReview(Long reviewId, Long restaurantId, MemberDetails memberDetails) throws AccessDeniedException {
         Review review = findRestaurantAndReview(reviewId, restaurantId);
 
-        if (!review.getMember().equals(member)) {
-            if (!isRestaurantOwner(member, restaurantId)) {
+        if (!review.getMember().getId().equals(memberDetails.getMember().getId())) {
+            if (!isRestaurantOwner(memberDetails.getMember(), restaurantId)) {
                 throw new AccessDeniedException("Reviews only can be deleted by owners and writers");
             }
         }

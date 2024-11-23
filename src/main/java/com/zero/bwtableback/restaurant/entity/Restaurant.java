@@ -39,7 +39,6 @@ public class Restaurant extends BaseEntity {
     @Column(nullable = false)
     private String contact;
 
-    // TODO: operatingHours에서 추출
     private String closedDay; // 정기휴무일(요일)
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
@@ -52,9 +51,6 @@ public class Restaurant extends BaseEntity {
 
     @Column(nullable = false)
     private int deposit; // 인당예약금
-
-    @Column(nullable = false)
-    private String impCode; // 가맹점 식별코드
 
     @OneToMany(
             mappedBy = "restaurant", // 양방향 관계 설정

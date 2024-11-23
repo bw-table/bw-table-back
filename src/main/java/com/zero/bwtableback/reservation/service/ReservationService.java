@@ -16,11 +16,15 @@ import com.zero.bwtableback.restaurant.dto.RestaurantInfoDto;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
+
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -169,14 +173,15 @@ public class ReservationService {
      * 예약 대시보드
      * 특정 식당의 예약 내역 조회
      */
-    public List<Reservation> getReservationByRestaurant(Long restaurantId, LocalDate reservationDate) {
+    public List<ReservationResDto> getReservationByRestaurant(Long restaurantId, LocalDate reservationDate, Pageable pageable) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
 
-        if (reservationDate != null) {
-            return reservationRepository.findByRestaurantIdAndReservationDate(restaurantId, reservationDate);
-        }
+        Page<Reservation> reservations = reservationRepository.findByRestaurantIdAndReservationDate(
+                restaurantId, reservationDate, pageable);
 
-        return reservationRepository.findByRestaurantId(restaurantId);
+        return reservations.stream()
+                .map(ReservationResDto::fromEntity)
+                .collect(Collectors.toList());
     }
 }

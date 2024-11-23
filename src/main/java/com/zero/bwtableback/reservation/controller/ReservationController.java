@@ -15,6 +15,7 @@ import java.time.LocalTime;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -108,10 +109,11 @@ public class ReservationController {
      * 특정 식당의 예약 내역 조회
      */
     @GetMapping("/restaurants/{restaurantId}")
-    public ResponseEntity<List<Reservation>> getReservationsByRestaurantId(@PathVariable Long restaurantId,
-                                                                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+    public ResponseEntity<List<ReservationResDto>> getReservationsByRestaurantId(@PathVariable Long restaurantId,
+                                                                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                                                                                 Pageable pageable) {
 
-        List<Reservation> reservations = reservationService.getReservationByRestaurant(restaurantId, date);
+        List<ReservationResDto> reservations = reservationService.getReservationByRestaurant(restaurantId, date, pageable);
 
         return ResponseEntity.ok(reservations);
     }
