@@ -5,23 +5,24 @@ import java.time.temporal.TemporalAdjusters;
 
 public class DateRangeCalculator {
 
-    public static LocalDate getEndDateForMonthRange(LocalDate today) {
+    public static LocalDate getEndDateForMonthlyPeriod(LocalDate today) {
         if (isLastDayOfMonth(today)) {
             return today;
         }
         return getLastDayOfPreviousMonth(today);
     }
 
-    public static LocalDate getStartDateForMonthRange(LocalDate date) {
+    public static LocalDate getStartDateSixMonthsAgo(LocalDate date) {
         return date.minusMonths(6).with(TemporalAdjusters.firstDayOfMonth());
     }
 
-    public static LocalDate getStartOfWeekRange(LocalDate endDate, int weeksAgo) {
-        return endDate.minusWeeks(weeksAgo).with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.SUNDAY));
+    public static LocalDate getStartOfWeek(LocalDate currentDate, int weeksAgo) {
+        LocalDate targetDate = currentDate.minusWeeks(weeksAgo);
+        return targetDate.with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.SUNDAY));
     }
 
-    public static LocalDate getEndOfWeekRange(LocalDate currentDate) {
-        return currentDate.with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.SATURDAY));
+    public static LocalDate getEndDateOfWeek(LocalDate currentDate) {
+        return currentDate.with(TemporalAdjusters.nextOrSame(java.time.DayOfWeek.SATURDAY));
     }
 
     private static LocalDate getLastDayOfPreviousMonth(LocalDate date) {

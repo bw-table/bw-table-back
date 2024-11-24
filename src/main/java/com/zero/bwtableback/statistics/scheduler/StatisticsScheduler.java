@@ -21,7 +21,7 @@ public class StatisticsScheduler {
     private final Job popularDatesJob;
 
     @Scheduled(cron = "0 0 1 * * ?") // 매일 새벽 1시 실행
-    public void runDailyStatisticsJob() throws Exception {
+    public void runDailyStatisticsJob() {
         try {
             jobLauncher.run(dailyStatisticsJob, new JobParameters());
             log.info("일별 예약 통계 저장을 성공적으로 완료했습니다.");
@@ -31,7 +31,7 @@ public class StatisticsScheduler {
     }
 
     @Scheduled(cron = "0 0 2 ? * SUN") // 매주 일요일 새벽 2시 실행
-    public void runWeeklyStatisticsJob() throws Exception {
+    public void runWeeklyStatisticsJob() {
         try {
             jobLauncher.run(weeklyStatisticsJob, new JobParameters());
             log.info("주별 예약 통계 저장을 성공적으로 완료했습니다.");
