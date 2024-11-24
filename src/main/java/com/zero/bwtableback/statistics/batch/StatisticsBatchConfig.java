@@ -7,25 +7,26 @@ import com.zero.bwtableback.statistics.batch.processor.MonthlyStatisticsProcesso
 import com.zero.bwtableback.statistics.batch.processor.PopularDatesProcessor;
 import com.zero.bwtableback.statistics.batch.processor.PopularTimeSlotsProcessor;
 import com.zero.bwtableback.statistics.batch.processor.WeeklyStatisticsProcessor;
+import com.zero.bwtableback.statistics.batch.writer.DailyStatisticsWriter;
+import com.zero.bwtableback.statistics.batch.writer.MonthlyStatisticsWriter;
+import com.zero.bwtableback.statistics.batch.writer.PopularDatesWriter;
+import com.zero.bwtableback.statistics.batch.writer.PopularTimeSlotsWriter;
+import com.zero.bwtableback.statistics.batch.writer.WeeklyStatisticsWriter;
 import com.zero.bwtableback.statistics.entity.Statistics;
-import com.zero.bwtableback.statistics.repository.StatisticsRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemReader;
-import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @RequiredArgsConstructor
-@EnableBatchProcessing
 @Configuration
 public class StatisticsBatchConfig {
 
@@ -33,13 +34,18 @@ public class StatisticsBatchConfig {
     private final PlatformTransactionManager transactionManager;
 
     private final RestaurantRepository restaurantRepository;
-    private final StatisticsRepository statisticsRepository;
 
     private final DailyStatisticsProcessor dailyStatisticsProcessor;
     private final WeeklyStatisticsProcessor weeklyStatisticsProcessor;
     private final MonthlyStatisticsProcessor monthlyStatisticsProcessor;
     private final PopularTimeSlotsProcessor popularTimeSlotsProcessor;
     private final PopularDatesProcessor popularDatesProcessor;
+
+    private final DailyStatisticsWriter dailyStatisticsWriter;
+    private final WeeklyStatisticsWriter weeklyStatisticsWriter;
+    private final MonthlyStatisticsWriter monthlyStatisticsWriter;
+    private final PopularTimeSlotsWriter popularTimeSlotsWriter;
+    private final PopularDatesWriter popularDatesWriter;
 
 
     @Bean
@@ -84,7 +90,7 @@ public class StatisticsBatchConfig {
                 .<Restaurant, List<Statistics>>chunk(100, transactionManager)
                 .reader(restaurantReader())
                 .processor(dailyStatisticsProcessor)
-                .writer(statisticsWriter())
+                .writer(dailyStatisticsWriter)
                 .build();
     }
 
@@ -94,7 +100,7 @@ public class StatisticsBatchConfig {
                 .<Restaurant, List<Statistics>>chunk(100, transactionManager)
                 .reader(restaurantReader())
                 .processor(weeklyStatisticsProcessor)
-                .writer(statisticsWriter())
+                .writer(weeklyStatisticsWriter)
                 .build();
     }
 
@@ -104,7 +110,7 @@ public class StatisticsBatchConfig {
                 .<Restaurant, List<Statistics>>chunk(100, transactionManager)
                 .reader(restaurantReader())
                 .processor(monthlyStatisticsProcessor)
-                .writer(statisticsWriter())
+                .writer(monthlyStatisticsWriter)
                 .build();
     }
 
@@ -114,7 +120,7 @@ public class StatisticsBatchConfig {
                 .<Restaurant, List<Statistics>>chunk(100, transactionManager)
                 .reader(restaurantReader())
                 .processor(popularTimeSlotsProcessor)
-                .writer(statisticsWriter())
+                .writer(popularTimeSlotsWriter)
                 .build();
     }
 
@@ -124,21 +130,13 @@ public class StatisticsBatchConfig {
                 .<Restaurant, List<Statistics>>chunk(100, transactionManager)
                 .reader(restaurantReader())
                 .processor(popularDatesProcessor)
-                .writer(statisticsWriter())
+                .writer(popularDatesWriter)
                 .build();
     }
-
 
     @Bean
     public ItemReader<Restaurant> restaurantReader() {
         return new ListItemReader<>(restaurantRepository.findAll());
-    }
-
-    @Bean
-    public ItemWriter<List<Statistics>> statisticsWriter() {
-        return items -> items.getItems().stream()
-                .flatMap(List::stream)
-                .forEach(statisticsRepository::save);
     }
 
 }
