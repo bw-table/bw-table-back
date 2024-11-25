@@ -47,7 +47,8 @@ public class ReservationController {
      * 예약 생성 요청을 처리
      * 1. 예약 가능 여부를 확인
      * 2. 예약이 가능한 경우, 임시 예약 정보를 Redis에 저장
-     * 3. 반환된 예약 토큰을 클라이언트에 전달하여 결제 시 사용
+     * 3. 현재 가능 인원 갱신
+     * 4. 생성된 예약 토큰을 클라이언트에 반환합니다.
      */
     @PostMapping()
     public ResponseEntity<?> requestReservation(@RequestBody ReservationCreateReqDto request,
@@ -168,7 +169,7 @@ public class ReservationController {
         return ResponseEntity.ok(reservationService.handleNoShowStatus(reservationId, memberDetails.getMemberId()));
     }
 
-    // FIXME 사용 여부 확인
+    // FIXME 사용 여부 확인 후 삭제
 //    @PutMapping("/{reservationId}/confirm")
 //    @Operation(summary = "예약 확정", description = "주어진 예약 ID로 예약을 확정합니다.")
 //    public PaymentCompleteResDto confirmReservation(

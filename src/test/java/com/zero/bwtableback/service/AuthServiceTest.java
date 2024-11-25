@@ -50,7 +50,6 @@ class AuthServiceTest {
 
     private SignUpReqDto signUpForm;
 
-    //FIXME DTO에서 SET 사용에 대한 의논 필요 (코드리뷰X)
 //    @BeforeEach
 //    void setUp() {
 //        signUpForm = new SignUpReqDto();

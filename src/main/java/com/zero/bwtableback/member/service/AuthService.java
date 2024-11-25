@@ -223,6 +223,5 @@ public class AuthService {
      * 사용자 회원탈퇴
      *
      * 로그아웃 처리 후
-     * TODO INACTIVE로 변경 (소프트삭제)
      */
 }
