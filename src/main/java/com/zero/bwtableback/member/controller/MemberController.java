@@ -59,14 +59,6 @@ public class MemberController {
         return ResponseEntity.ok(memberService.getMyInfo(email));
     }
 
-    /**'
-     * TODO 회원 정보 수정
-     */
-
-    /**
-     * TODO 회원 탈퇴
-     */
-
     /**
      * 이메일 회원 비밀번호 변경
      */

@@ -5,7 +5,9 @@ import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.dto.*;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.entity.Role;
+import com.zero.bwtableback.member.entity.Status;
 import com.zero.bwtableback.member.repository.MemberRepository;
+import com.zero.bwtableback.reservation.service.ReservationService;
 import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import com.zero.bwtableback.security.jwt.TokenProvider;
 import jakarta.servlet.http.Cookie;
@@ -32,8 +34,11 @@ public class AuthService {
 
     private final MemberRepository memberRepository;
     private final RestaurantRepository restaurantRepository;
+
     private final PasswordEncoder passwordEncoder;
     private final TokenProvider tokenProvider;
+
+    private final ReservationService reservationService;
 
     private final RedisTemplate<String, String> redisTemplate;
 
@@ -123,6 +128,11 @@ public class AuthService {
         Member member = memberRepository.findByEmail(loginReqDto.getEmail())
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_CREDENTIALS));
 
+        // 탈퇴회원 여부 확인
+        if (member.getStatus() == Status.INACTIVE) {
+            throw new CustomException(ErrorCode.ALREADY_WITHDRAWN_MEMBER);
+        }
+
         if (!passwordEncoder.matches(loginReqDto.getPassword(), member.getPassword())) {
             throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
         }
@@ -204,7 +214,7 @@ public class AuthService {
     /**
      * 사용자 로그아웃 처리
      */
-    public void logout(String email, HttpServletRequest request, HttpServletResponse response) {
+    public void logout(String email, HttpServletResponse response) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
@@ -223,6 +233,25 @@ public class AuthService {
      * 사용자 회원탈퇴
      *
      * 로그아웃 처리 후
-     * TODO INACTIVE로 변경 (소프트삭제)
      */
+    public void withdraw(Long memberId, HttpServletResponse response) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        String key = "refresh_token:" + member.getId();
+        redisTemplate.delete(key);
+
+        Cookie cookie = new Cookie("refreshToken", null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+
+        // 예약 취소처리
+        reservationService.cancelAllReservationsForMember(member.getId());
+
+        member.setStatus(Status.INACTIVE);
+        memberRepository.save(member);
+    }
 }

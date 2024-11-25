@@ -356,12 +356,12 @@ public class ReservationService {
 
         // FIXME 예약 취소 테스트를 위한 현재 날짜 임시 변경
 //        LocalDate today = LocalDate.now();
-        LocalDate today = LocalDate.of(2024, 11, 17);
+        LocalDate today = LocalDate.of(2024, 11, 10);
         if (!canCancelReservation(reservation.getReservationDate(), today)) {
             throw new CustomException(ErrorCode.CUSTOMER_CANCEL_TOO_LATE);
         }
 
-        // TODO 예약 3일 전 환불 가능
+        // 예약 3일 전 환불 가능
         paymentService.refundReservationDeposit(reservation.getId());
 
         reservation.setReservationStatus(ReservationStatus.CUSTOMER_CANCELED);
@@ -479,5 +479,21 @@ public class ReservationService {
         }
 
         return reservationRepository.findByRestaurantId(restaurantId);
+    }
+
+    /**
+     * 회원탈퇴
+     * - 모든 예약 취소 및
+     */
+    public void cancelAllReservationsForMember(Long memberId) {
+        List<Reservation> reservations = reservationRepository.findAllByMemberIdAndReservationStatus(
+                memberId, ReservationStatus.CONFIRMED
+        );
+
+        // 채팅방 삭제
+        for (Reservation reservation : reservations) {
+            handleCustomerCancel(reservation);
+            chatService.inactivateChatRoom(reservation.getId());
+        }
     }
 }
