@@ -55,8 +55,8 @@ public class MemberController {
         if (memberDetails == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        String email = memberDetails.getUsername();
-        return ResponseEntity.ok(memberService.getMyInfo(email));
+        Long memberId = memberDetails.getMemberId();
+        return ResponseEntity.ok(memberService.getMyInfo(memberId));
     }
 
     /**

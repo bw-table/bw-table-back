@@ -3,9 +3,11 @@ package com.zero.bwtableback.member.dto;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.entity.Role;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 @Getter
+@Builder
 @AllArgsConstructor
 public class MemberDto {
     private Long id;
