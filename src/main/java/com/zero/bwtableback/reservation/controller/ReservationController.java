@@ -8,6 +8,7 @@ import com.zero.bwtableback.payment.PaymentService;
 import com.zero.bwtableback.reservation.dto.PaymentReqDto;
 import com.zero.bwtableback.reservation.dto.ReservationCompleteResDto;
 import com.zero.bwtableback.reservation.dto.ReservationCreateReqDto;
+import com.zero.bwtableback.reservation.dto.ReservationResDto;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.service.ReservationService;
 import com.zero.bwtableback.restaurant.dto.ReservationAvailabilityDto;
@@ -42,6 +43,14 @@ public class ReservationController {
 
     private final RedissonClient redissonClient;
     private final RedisTemplate<String, Object> redisTemplate;
+
+    /**
+     * 특정 식당 상세 조회
+     */
+    @GetMapping("/{reservationId}")
+    public ReservationResDto getReservationById(@PathVariable Long reservationId) {
+        return reservationService.getReservationById(reservationId);
+    }
 
     /**
      * 예약 생성 요청을 처리
@@ -143,15 +152,6 @@ public class ReservationController {
                     .body((ErrorCode.INTERNAL_SERVER_ERROR));
         }
     }
-
-//    @PutMapping("/{reservationId}/status")
-//    @Operation(summary = "예약 상태 업데이트", description = "주어진 예약 ID의 상태를 업데이트합니다.")
-//    public ReservationResDto updateReservationStatus(
-//            @PathVariable Long reservationId,
-//            @RequestBody ReservationUpdateReqDto statusUpdateDto,
-//            @AuthenticationPrincipal MemberDetails memberDetails) throws IOException {
-//        return reservationService.updateReservationStatus(statusUpdateDto, reservationId, memberDetails.getMemberId());
-//    }
 
     @PutMapping("/{reservationId}/visit")
     @Operation(summary = "사장님의 방문 처리", description = "주어진 예약 ID로 방문 처리를 합니다.")
