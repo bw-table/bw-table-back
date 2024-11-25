@@ -31,17 +31,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * FIXME 테스트 코드 설명 (삭제 예정)
- *
- * @Mock mock 객체를 생성할 때 사용한다.
- * @MockBean 스프링 ApplicationContext에 mock 빈을 주입할 때 사용
- * @InjectMocks mock 객체를 주입받을 대상에 사용하며, 주입받을 필드에 mock 객체가 자동으로 주입
- * @assertThrows 메서드는 두 개의 인자를 받음
- * 예외 클래스: 발생할 것으로 예상되는 예외의 클래스
- * Executable: 예외가 발생해야 하는 코드 블록입니다. 일반적으로 람다 표현식으로 작성
- */
-
 @ActiveProfiles("test")
 @ContextConfiguration(classes = BwTableBackApplication.class)
 class AuthServiceTest {
