@@ -60,10 +60,6 @@ public class MemberController {
     }
 
     /**
-     * 이메일 회원 비밀번호 변경
-     */
-
-    /**
      * 나의 모든 예약 조회
      */
     @GetMapping("/me/reservations")
