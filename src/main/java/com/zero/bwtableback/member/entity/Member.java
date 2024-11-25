@@ -49,7 +49,7 @@ public class Member extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Status status; // TODO 로그인 시 막기
+    private Status status;
 
     @Column(name = "business_number")
     private String businessNumber; // 사업자등록번호 (예시:"123-01-11111")

@@ -41,10 +41,11 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             @Param("reservationDate") LocalDate reservationDate,
             @Param("reservationTime") LocalTime reservationTime
     );
-    Optional<Reservation> findByMemberAndRestaurantAndReservationStatus(
-            Member member, Restaurant restaurant, ReservationStatus reservationStatus);
-    Optional<Reservation> findByMemberAndRestaurantAndReservationDateBetween(
-            Member member, Restaurant restaurant, LocalDate startDate, LocalDate endDate);
+    // FIXME 사용하지 않는다면 삭제
+//    Optional<Reservation> findByMemberAndRestaurantAndReservationStatus(
+//            Member member, Restaurant restaurant, ReservationStatus reservationStatus);
+//    Optional<Reservation> findByMemberAndRestaurantAndReservationDateBetween(
+//            Member member, Restaurant restaurant, LocalDate startDate, LocalDate endDate);
 
     List<Reservation> findByRestaurantId(Long restaurantId);
 
@@ -96,5 +97,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
                 ORDER BY COUNT(r) DESC
             """)
     List<Object[]> aggregateTimeSlotStatistics(Long restaurantId, LocalDate startDate, LocalDate endDate);
+
+    // 회원탈퇴 시 회원의 확정된 예약 조회
+    List<Reservation> findAllByMemberIdAndReservationStatus(Long MemberId, ReservationStatus status);
 
 }

@@ -10,6 +10,7 @@ import com.zero.bwtableback.member.dto.MemberDto;
 import com.zero.bwtableback.member.entity.LoginType;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.entity.Role;
+import com.zero.bwtableback.member.entity.Status;
 import com.zero.bwtableback.member.oauth2.dto.KakaoUserInfoDto;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.member.service.AuthService;
@@ -155,6 +156,11 @@ public class KakaoOAuth2Service {
         // 이메일로 회원 조회
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 탈퇴회원 여부 확인
+        if (member.getStatus() == Status.INACTIVE) {
+            throw new CustomException(ErrorCode.ALREADY_WITHDRAWN_MEMBER);
+        }
 
         String accessToken = tokenProvider.createAccessToken(member.getEmail(), member.getRole());
         String refreshToken = tokenProvider.createRefreshToken(member.getId().toString());

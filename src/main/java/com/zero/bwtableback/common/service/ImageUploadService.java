@@ -116,7 +116,6 @@ public class ImageUploadService {
     /**
      * 가게 이미지
      * - 최대 5장
-     * TODO 순서는 어떻게 보장할지 생각해보기
      */
     public List<String> uploadRestaurantImages(Long restaurantId, MultipartFile[] files) throws IOException {
         validateImageFiles(files, 5);
@@ -145,7 +144,6 @@ public class ImageUploadService {
     /**
      * 리뷰 이미지
      * - 최대 5장
-     * TODO 순서는 어떻게 보장할지 생각해보기
      */
     public List<String> uploadReviewImages(Long restaurantId,
                                            Long reviewId,
