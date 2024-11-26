@@ -16,8 +16,10 @@ import org.springframework.data.repository.query.Param;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
-    @Query("SELECT r FROM Reservation r WHERE r.reservationDate = :date")
-    List<Reservation> findReservationsByDate(@Param("date") LocalDate date);
+    List<Reservation> findByReservationDateAndReservationStatusNotIn(
+            LocalDate reservationDate,
+            List<ReservationStatus> excludedStatuses
+    );
 
     Page<Reservation> findByMemberId(Long memberId, Pageable pageable);
 
