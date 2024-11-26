@@ -264,8 +264,8 @@ public class ReservationService {
                 reservationInfo.reservationDate(),
                 reservationInfo.reservationTime());
 
-        Integer CurrentCountKey = integerRedisTemplate.opsForValue().get(availableCountKey);
-        redisTemplate.opsForValue().set(availableCountKey, CurrentCountKey + reservationInfo.numberOfPeople());
+        Integer currentCount = integerRedisTemplate.opsForValue().get(availableCountKey);
+        redisTemplate.opsForValue().set(availableCountKey, currentCount + reservationInfo.numberOfPeople());
     }
 
     // CONFIRMED 상태 업데이트
@@ -318,27 +318,28 @@ public class ReservationService {
             handleOwnerCancel(reservation);
         }
 
+        // 채팅방 비활성화
+        chatService.inactivateChatRoom(reservationId);
+
         // 예약 가능 인원 복구
         Optional<ReservationCapacity> optionalReservationCapacity = reservationCapacityRepository
-                .findByRestaurantIdAndDateAndTimeslot(reservation.getId(),
+                .findByRestaurantIdAndDateAndTimeslot(reservation.getRestaurant().getId(),
                         reservation.getReservationDate(), reservation.getReservationTime());
 
         if (optionalReservationCapacity.isPresent()) {
             ReservationCapacity reservationCapacity = optionalReservationCapacity.get();
             reservationCapacity.setAvailableCapacity(reservation.getNumberOfPeople() + reservationCapacity.getAvailableCapacity());
+            reservationCapacityRepository.save(reservationCapacity);
         }
 
         // 예약 가능 인원 복구 (redis)
         String availableCountKey = String.format("reservation:currentCount:%d:%s:%s",
-                reservation.getId(),
+                reservation.getRestaurant().getId(),
                 reservation.getReservationDate(),
                 reservation.getReservationTime());
 
-        Integer CurrentCountKey = integerRedisTemplate.opsForValue().get(availableCountKey);
-        redisTemplate.opsForValue().set(availableCountKey, CurrentCountKey + reservation.getNumberOfPeople());
-
-        // 채팅방 비활성화
-        chatService.inactivateChatRoom(reservationId);
+        Integer currentCount = integerRedisTemplate.opsForValue().get(availableCountKey);
+        redisTemplate.opsForValue().set(availableCountKey, currentCount + reservation.getNumberOfPeople());
 
         return "예약이 성공적으로 취소되었습니다.";
     }
