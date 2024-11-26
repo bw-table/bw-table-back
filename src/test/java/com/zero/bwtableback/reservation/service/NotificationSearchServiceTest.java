@@ -42,8 +42,8 @@ class NotificationSearchServiceTest {
     @InjectMocks
     private NotificationSearchService notificationSearchService;
 
-    @Test
     @DisplayName("고객에게 전송된 알림 목록을 조회한다")
+    @Test
     void givenCustomerId_whenGetNotificationsSentToCustomer_thenReturnNotifications() {
         // given
         Long customerId = 1L;
