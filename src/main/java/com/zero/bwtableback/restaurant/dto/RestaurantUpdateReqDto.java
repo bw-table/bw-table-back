@@ -6,7 +6,7 @@ import java.util.List;
 
 @Getter
 //@AllArgsConstructor
-public class UpdateReqDto {
+public class RestaurantUpdateReqDto {
 
     private String name;
     private String description;

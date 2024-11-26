@@ -4,13 +4,11 @@ import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
 import com.zero.bwtableback.chat.repository.ChatRoomRepository;
 import com.zero.bwtableback.common.service.ImageUploadService;
 import com.zero.bwtableback.member.entity.Member;
-import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.restaurant.dto.*;
 import com.zero.bwtableback.restaurant.entity.*;
 import com.zero.bwtableback.restaurant.exception.RestaurantException;
 import com.zero.bwtableback.restaurant.repository.*;
-import com.zero.bwtableback.security.MemberDetails;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -125,7 +123,7 @@ public class RestaurantService {
 
     // 식당 정보 수정
     public RestaurantResDto updateRestaurant(Long id,
-                                             UpdateReqDto reqDto,
+                                             RestaurantUpdateReqDto reqDto,
                                              MultipartFile[] newImages,
                                              List<MultipartFile> newMenuImages,
                                              Member member) throws IOException {
@@ -233,7 +231,7 @@ public class RestaurantService {
     }
 
     // 메뉴 수정
-    public void updateMenu(Restaurant restaurant, UpdateReqDto reqDto, List<MultipartFile> menuImages) throws IOException {
+    public void updateMenu(Restaurant restaurant, RestaurantUpdateReqDto reqDto, List<MultipartFile> menuImages) throws IOException {
         if (reqDto.getMenus() != null && reqDto.getMenus().size() > 0) {
             for (int i = 0; i < reqDto.getMenus().size(); i++) {
                 MenuUpdateDto menuDto = reqDto.getMenus().get(i);
@@ -362,7 +360,7 @@ public class RestaurantService {
     }
 
     // 식당 상세정보 조회
-    public RestaurantInfoDto getRestaurantById(Long id) {
+    public RestaurantDetailDto getRestaurantById(Long id) {
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
 
@@ -419,8 +417,8 @@ public class RestaurantService {
                 .collect(Collectors.toList());
 
         // 리뷰
-        List<ReviewInfoDto> reviews = restaurant.getReviews().stream()
-                .map(review -> new ReviewInfoDto(
+        List<ReviewDetailDto> reviews = restaurant.getReviews().stream()
+                .map(review -> new ReviewDetailDto(
                         review.getId(),
                         review.getContent(),
                         review.getRating(),
@@ -435,7 +433,7 @@ public class RestaurantService {
                         review.getMember().getNickname()))
                 .collect(Collectors.toList());
 
-        return RestaurantInfoDto.builder()
+        return RestaurantDetailDto.builder()
                 .id(restaurant.getId())
                 .name(restaurant.getName())
                 .description(restaurant.getDescription())

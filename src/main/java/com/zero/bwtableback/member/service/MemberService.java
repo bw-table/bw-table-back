@@ -10,7 +10,7 @@ import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.reservation.dto.ReservationResDto;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
-import com.zero.bwtableback.restaurant.dto.ReviewInfoDto;
+import com.zero.bwtableback.restaurant.dto.ReviewDetailDto;
 import com.zero.bwtableback.restaurant.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -86,12 +86,12 @@ public class MemberService {
                 .map(ReservationResDto::fromEntity);
     }
 
-    public Page<ReviewInfoDto> getMyReviews(Pageable pageable, String email) {
+    public Page<ReviewDetailDto> getMyReviews(Pageable pageable, String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         return reviewRepository.findByMemberIdOrderByRestaurantId(member.getId(), pageable)
-                .map(ReviewInfoDto::fromEntity);
+                .map(ReviewDetailDto::fromEntity);
     }
 
     public Page<ChatRoomCreateResDto> getMyChatRooms(Pageable pageable, String email) {

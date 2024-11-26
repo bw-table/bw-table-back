@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @Builder
 @Getter
 @AllArgsConstructor
-public class ReviewInfoDto {
+public class ReviewDetailDto {
 
     private Long id;
     private String content;
@@ -31,8 +31,8 @@ public class ReviewInfoDto {
     private String memberProfileImage;
     private String memberNickname;
 
-    public static ReviewInfoDto fromEntity(Review review) {
-        return ReviewInfoDto.builder()
+    public static ReviewDetailDto fromEntity(Review review) {
+        return ReviewDetailDto.builder()
                 .id(review.getId())
                 .content(review.getContent())
                 .rating(review.getRating())

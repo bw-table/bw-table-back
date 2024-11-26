@@ -1,14 +1,14 @@
 package com.zero.bwtableback.reservation.dto;
 
 import com.zero.bwtableback.reservation.entity.Reservation;
-import com.zero.bwtableback.restaurant.dto.RestaurantInfoDto;
+import com.zero.bwtableback.restaurant.dto.RestaurantDetailDto;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
 public record PaymentCompleteResDto(
         ReservationInfo reservation
 ) {
-    public static PaymentCompleteResDto fromEntities(RestaurantInfoDto restaurantInfoDto, Reservation reservation) {
+    public static PaymentCompleteResDto fromEntities(RestaurantDetailDto restaurantDetailDto, Reservation reservation) {
         return new PaymentCompleteResDto(
                 new ReservationInfo(
                         reservation.getId(),
@@ -16,7 +16,7 @@ public record PaymentCompleteResDto(
                         reservation.getReservationTime(),
                         reservation.getNumberOfPeople(),
                         reservation.getSpecialRequest(),
-                        restaurantInfoDto
+                        restaurantDetailDto
                 )
         );
     }
@@ -27,7 +27,7 @@ public record PaymentCompleteResDto(
             LocalTime reservationTime,
             int numberOfPeople,
             String specialRequest,
-            RestaurantInfoDto restaurantInfoDto
+            RestaurantDetailDto restaurantDetailDto
     ) {
     }
 }

@@ -3,7 +3,6 @@ package com.zero.bwtableback.restaurant.controller;
 import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
 import com.zero.bwtableback.common.service.ImageUploadService;
 import com.zero.bwtableback.member.entity.Member;
-import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.restaurant.dto.*;
 import com.zero.bwtableback.restaurant.exception.RestaurantException;
 import com.zero.bwtableback.restaurant.service.AnnouncementService;
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 @RestController
@@ -76,7 +74,7 @@ public class RestaurantController {
     @PutMapping("/{id}")
     public ResponseEntity<RestaurantResDto> updateRestaurant(
             @PathVariable("id") Long restaurantId,
-            @RequestPart("restaurant") UpdateReqDto reqDto,
+            @RequestPart("restaurant") RestaurantUpdateReqDto reqDto,
             @RequestPart(value = "images", required = false) MultipartFile[] images,
             @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
             @AuthenticationPrincipal MemberDetails memberDetails)
@@ -142,9 +140,9 @@ public class RestaurantController {
 
     // 식당 상세정보 조회
     @GetMapping("/{id}")
-    public ResponseEntity<RestaurantInfoDto> getRestaurantById(@PathVariable Long id) {
-        RestaurantInfoDto infoDto = restaurantService.getRestaurantById(id);
-        return ResponseEntity.ok(infoDto);
+    public ResponseEntity<RestaurantDetailDto> getRestaurantById(@PathVariable Long id) {
+        RestaurantDetailDto detailDto = restaurantService.getRestaurantById(id);
+        return ResponseEntity.ok(detailDto);
     }
 
     // 특정 식당의 모든 채팅방 조회

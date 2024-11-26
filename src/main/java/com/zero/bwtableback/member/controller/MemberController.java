@@ -5,7 +5,7 @@ import com.zero.bwtableback.common.service.ImageUploadService;
 import com.zero.bwtableback.member.dto.MemberDto;
 import com.zero.bwtableback.member.service.MemberService;
 import com.zero.bwtableback.reservation.dto.ReservationResDto;
-import com.zero.bwtableback.restaurant.dto.ReviewInfoDto;
+import com.zero.bwtableback.restaurant.dto.ReviewDetailDto;
 import com.zero.bwtableback.security.MemberDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -88,8 +88,8 @@ public class MemberController {
      * 나의 모든 리뷰 조회
      */
     @GetMapping("me/reviews")
-    public ResponseEntity<Page<ReviewInfoDto>> getMyReviews(Pageable pageable,
-                                                            @AuthenticationPrincipal MemberDetails memberDetails) {
+    public ResponseEntity<Page<ReviewDetailDto>> getMyReviews(Pageable pageable,
+                                                              @AuthenticationPrincipal MemberDetails memberDetails) {
         String email = memberDetails.getUsername();
         return ResponseEntity.ok(memberService.getMyReviews(pageable, email));
     }

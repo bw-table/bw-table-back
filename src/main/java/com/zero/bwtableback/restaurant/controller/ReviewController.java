@@ -1,16 +1,13 @@
 package com.zero.bwtableback.restaurant.controller;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zero.bwtableback.member.entity.Member;
-import com.zero.bwtableback.restaurant.dto.ReviewInfoDto;
+import com.zero.bwtableback.restaurant.dto.ReviewDetailDto;
 import com.zero.bwtableback.restaurant.dto.ReviewReqDto;
 import com.zero.bwtableback.restaurant.dto.ReviewResDto;
 import com.zero.bwtableback.restaurant.dto.ReviewUpdateReqDto;
 import com.zero.bwtableback.restaurant.service.ReviewService;
 import com.zero.bwtableback.security.MemberDetails;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -93,18 +90,18 @@ public class ReviewController {
 
     // 식당 리뷰 목록 조회
     @GetMapping("/{restaurantId}/reviews")
-    public ResponseEntity<List<ReviewInfoDto>> getReviewsByRestaurant(@PathVariable Long restaurantId,
-                                                                      Pageable pageable) {
-        List<ReviewInfoDto> reviews = reviewService.getReviewsByRestaurant(restaurantId, pageable);
+    public ResponseEntity<List<ReviewDetailDto>> getReviewsByRestaurant(@PathVariable Long restaurantId,
+                                                                        Pageable pageable) {
+        List<ReviewDetailDto> reviews = reviewService.getReviewsByRestaurant(restaurantId, pageable);
         return ResponseEntity.ok(reviews);
     }
 
     // 리뷰 상세 조회
     @GetMapping("/reviews/{id}")
-    public ResponseEntity<ReviewInfoDto> getReviewById(@PathVariable Long id) {
-        ReviewInfoDto reviewInfo = reviewService.getReviewById(id);
+    public ResponseEntity<ReviewDetailDto> getReviewById(@PathVariable Long id) {
+        ReviewDetailDto reviewDetailDto = reviewService.getReviewById(id);
 
-        return ResponseEntity.ok(reviewInfo);
+        return ResponseEntity.ok(reviewDetailDto);
     }
 
 }

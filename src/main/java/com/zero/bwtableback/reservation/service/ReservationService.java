@@ -12,7 +12,7 @@ import com.zero.bwtableback.reservation.entity.NotificationType;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.entity.ReservationStatus;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
-import com.zero.bwtableback.restaurant.dto.RestaurantInfoDto;
+import com.zero.bwtableback.restaurant.dto.RestaurantDetailDto;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
@@ -71,8 +71,8 @@ public class ReservationService {
         notificationScheduleService.scheduleImmediateNotification(reservation, NotificationType.CONFIRMATION);
         notificationScheduleService.schedule24HoursBeforeNotification(reservation);
 
-        RestaurantInfoDto restaurantInfoDto = restaurantService.getRestaurantById(restaurantId);
-        return PaymentCompleteResDto.fromEntities(restaurantInfoDto, reservation);
+        RestaurantDetailDto restaurantDetailDto = restaurantService.getRestaurantById(restaurantId);
+        return PaymentCompleteResDto.fromEntities(restaurantDetailDto, reservation);
     }
 
     // CONFIRMED 제외한 나머지 상태 업데이트

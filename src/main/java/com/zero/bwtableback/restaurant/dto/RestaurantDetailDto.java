@@ -16,7 +16,7 @@ import java.util.List;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class RestaurantInfoDto {
+public class RestaurantDetailDto {
 
     private Long id;
     private String name;
@@ -36,6 +36,6 @@ public class RestaurantInfoDto {
     private List<String> hashtags;
     private List<OperatingHoursDto> operatingHours;
     private double averageRating;
-    private List<ReviewInfoDto> reviews;
+    private List<ReviewDetailDto> reviews;
     private List<AnnouncementDetailDto> announcements;
 }
