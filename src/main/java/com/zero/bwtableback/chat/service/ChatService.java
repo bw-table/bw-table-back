@@ -65,6 +65,8 @@ public class ChatService {
         return PaymentCompleteResDto.fromEntities(restaurantInfoDto, reservation);
     }
 
+
+
     // 식당 조회
     private Restaurant getRestaurant(Long restaurantId) {
         return restaurantRepository.findById(restaurantId)
