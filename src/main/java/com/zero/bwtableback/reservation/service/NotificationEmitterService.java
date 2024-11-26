@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.reservation.entity.Notification;
+import com.zero.bwtableback.reservation.entity.NotificationType;
 import com.zero.bwtableback.reservation.repository.EmitterRepository;
 import com.zero.bwtableback.reservation.repository.NotificationRepository;
 import java.io.IOException;
@@ -30,14 +31,7 @@ public class NotificationEmitterService {
         SseEmitter emitter = new SseEmitter(3_600_000L); // 기본 타임아웃 한 시간으로 설정
 
         emitterRepository.saveEmitter(emitterId, emitter);
-
-        // 마지막 알림 이후의 알림부터 전송
-        long lastEventIdLong = parseLastEventId(lastEventId);
-        if (lastEventIdLong > 0) {
-            List<Notification> missedNotifications = notificationRepository
-                    .findByReservation_Member_IdAndIdGreaterThan(memberId, lastEventIdLong);
-            missedNotifications.forEach(notification -> sendNotificationToConnectedUser(memberId, notification));
-        }
+        handleMissedNotifications(memberId, lastEventId);
 
         emitter.onCompletion(() -> emitterRepository.removeEmitter(emitterId));
         emitter.onTimeout(() -> emitterRepository.removeEmitter(emitterId));
@@ -75,6 +69,18 @@ public class NotificationEmitterService {
             log.error("알림 전송이 실패했습니다. {}: {}", emitterId, e.getMessage());
             emitter.completeWithError(e); // 연결 종료
             emitterRepository.removeEmitter(emitterId); // emitter 제거
+        }
+    }
+
+    private void handleMissedNotifications(Long memberId, String lastEventId) {
+        long lastEventIdLong = parseLastEventId(lastEventId);
+        if (lastEventIdLong > 0) {
+            List<Notification> missedNotifications = notificationRepository
+                    .findByReservation_Member_IdAndIdGreaterThanAndNotificationTypeIn(
+                            memberId,
+                            lastEventIdLong,
+                            List.of(NotificationType.CONFIRMATION, NotificationType.CANCELLATION));
+            missedNotifications.forEach(notification -> sendNotificationToConnectedUser(memberId, notification));
         }
     }
 
