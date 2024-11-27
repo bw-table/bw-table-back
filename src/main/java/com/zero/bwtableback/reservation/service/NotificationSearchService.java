@@ -1,7 +1,8 @@
 package com.zero.bwtableback.reservation.service;
 
-import static com.zero.bwtableback.reservation.entity.NotificationStatus.SENT;
-
+import com.zero.bwtableback.common.exception.CustomException;
+import com.zero.bwtableback.common.exception.ErrorCode;
+import com.zero.bwtableback.reservation.dto.NotificationResDto;
 import com.zero.bwtableback.reservation.entity.Notification;
 import com.zero.bwtableback.reservation.entity.NotificationStatus;
 import com.zero.bwtableback.reservation.entity.NotificationType;
@@ -33,7 +34,8 @@ public class NotificationSearchService {
     }
 
     // 클라이언트에서 직접 메시지를 작성을 원하는 경우 활용할 수 있는 데이터 반환
-    public Map<String, Object> createNotificationData(Reservation reservation, NotificationType type) {
+    public Map<String, Object> createNotificationData(Long memberId, Reservation reservation, NotificationType type) {
+        validateReservationAccess(memberId, reservation);
         Map<String, Object> notificationData = new HashMap<>();
         notificationData.put("reservationDate", reservation.getReservationDate().toString());
         notificationData.put("reservationTime", reservation.getReservationTime().toString());
@@ -41,6 +43,13 @@ public class NotificationSearchService {
         notificationData.put("customerName", reservation.getMember().getName());
         notificationData.put("type", type);
         return notificationData;
+    }
+
+    private void validateReservationAccess(Long memberId, Reservation reservation) {
+        if (!reservation.getMember().getId().equals(memberId) &&
+                !reservation.getRestaurant().getMember().getId().equals(memberId)) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED_ACCESS);
+        }
     }
 
 }

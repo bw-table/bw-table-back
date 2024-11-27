@@ -40,8 +40,8 @@ public class NotificationEmitterService {
     }
 
     // 동일한 알림을 고객과 가게 주인에게 모두 전송
-    public void sendNotificationToCustomerAndOwner(Long customerId, Long ownerId, Notification notification) {
-        sendNotificationToConnectedUser(customerId, notification);
+    public void sendNotificationToGuestAndOwner(Long guestId, Long ownerId, Notification notification) {
+        sendNotificationToConnectedUser(guestId, notification);
         sendNotificationToConnectedUser(ownerId, notification);
     }
 
