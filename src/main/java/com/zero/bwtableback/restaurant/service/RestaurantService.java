@@ -33,7 +33,6 @@ public class RestaurantService {
     private final RestaurantImageRepository restaurantImageRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ImageUploadService imageUploadService;
-    private final MemberRepository memberRepository;
 
     // 등록
     public RestaurantResDto registerRestaurant(RestaurantReqDto reqDto,
