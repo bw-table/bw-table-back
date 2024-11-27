@@ -298,7 +298,6 @@ public class ReservationService {
     /**
      * 손님/가게의 취소 요청
      */
-    @Transactional
     public String cancelReservation(Long reservationId, Long memberId) throws IOException {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESERVATION_NOT_FOUND));
