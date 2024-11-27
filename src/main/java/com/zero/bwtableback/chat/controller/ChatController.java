@@ -27,7 +27,7 @@ public class ChatController {
     private final ChatService chatService;
 
     // 채팅방 생성 엔드포인트는 예약 확정 시 자동으로 생성
-    
+
     // FIXME 특정 채팅방 조회 (필요 여부 판단)
     @GetMapping("/{chatRoomId}")
     public ResponseEntity<ChatRoom> getChatRoomById(@PathVariable Long chatRoomId) {
