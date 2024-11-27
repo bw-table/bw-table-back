@@ -16,7 +16,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Collections;
 import java.util.Map;
@@ -94,7 +93,7 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody EmailLoginReqDto loginReqDto,
                                    HttpServletRequest request,
                                    HttpServletResponse response) {
-            MemberDto memberDto = authService.authenticateMember(loginReqDto);
+        MemberDto memberDto = authService.authenticateMember(loginReqDto);
         try {
             String accessToken = getJwtFromRequest(request);
 
@@ -152,11 +151,24 @@ public class AuthController {
      */
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@AuthenticationPrincipal MemberDetails memberDetails,
-                                    HttpServletRequest request, HttpServletResponse response) {
+                                    HttpServletResponse response) {
         String email = memberDetails.getUsername();
 
-        authService.logout(email, request, response);
+        authService.logout(email, response);
 
         return ResponseEntity.ok("로그아웃이 완료되었습니다.");
     }
+
+    /**
+     * 회원 탈퇴
+     * - 토큰 정보 삭제
+     */
+    @DeleteMapping("/withdraw")
+    public ResponseEntity<?> withdrawMember(@AuthenticationPrincipal MemberDetails memberDetails,
+                                            HttpServletResponse response) {
+        authService.withdraw(memberDetails.getMemberId(), response);
+
+        return ResponseEntity.ok().body("회원탈퇴가 완료되었습니다.");
+    }
+
 }
