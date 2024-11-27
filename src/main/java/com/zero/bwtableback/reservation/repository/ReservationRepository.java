@@ -4,16 +4,15 @@ import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.entity.ReservationStatus;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
-import java.util.Optional;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
@@ -48,6 +47,29 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     Reservation findTopByMemberOrderByReservationDateDesc(Member member);
 
+    // 날짜별 예약 건수 조회
+    @Query("""
+                SELECT r.reservationDate, COUNT(r)
+                FROM Reservation r
+                WHERE r.restaurant.id = :restaurantId
+                  AND r.reservationDate BETWEEN :startDate AND :endDate
+                  AND r.reservationStatus = 'VISITED'
+                GROUP BY r.reservationDate
+            """)
+    List<Object[]> aggregateDailyStatistics(Long restaurantId, LocalDate startDate, LocalDate endDate);
+
+    // 시간대별 예약 건수 조회
+    @Query("""
+                SELECT r.reservationTime, COUNT(r)
+                FROM Reservation r
+                WHERE r.restaurant.id = :restaurantId
+                  AND r.reservationDate BETWEEN :startDate AND :endDate
+                  AND r.reservationStatus = 'VISITED'
+                GROUP BY r.reservationTime
+            """)
+    List<Object[]> aggregateTimeSlotStatistics(Long restaurantId, LocalDate startDate, LocalDate endDate);
+
     // 회원탈퇴 시 회원의 확정된 예약 조회
     List<Reservation> findAllByMemberIdAndReservationStatus(Long MemberId, ReservationStatus status);
+
 }

@@ -172,6 +172,7 @@ public class ReservationService {
             // 예약 인원 차감
             reservationCapacity.setAvailableCapacity(reservationCapacity.getAvailableCapacity() - reservationInfo.numberOfPeople());
             reservationCapacityRepository.save(reservationCapacity);
+            return;
         }
 
         // 해당 식당의 예약 날짜와 시간대에 예약 수용 인원 테이블이 없다면 생성
@@ -328,6 +329,7 @@ public class ReservationService {
 
         if (optionalReservationCapacity.isPresent()) {
             ReservationCapacity reservationCapacity = optionalReservationCapacity.get();
+            // 기존 예약 가능 인원 수에 추가
             reservationCapacity.setAvailableCapacity(reservation.getNumberOfPeople() + reservationCapacity.getAvailableCapacity());
             reservationCapacityRepository.save(reservationCapacity);
         }

@@ -45,7 +45,7 @@ public class ReservationController {
     private final RedisTemplate<String, Object> redisTemplate;
 
     /**
-     * 특정 식당 상세 조회
+     * 예약 아이디로 예약 상세 조회
      */
     @GetMapping("/{reservationId}")
     public ReservationResDto getReservationById(@PathVariable Long reservationId) {

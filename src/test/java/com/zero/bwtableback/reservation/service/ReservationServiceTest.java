@@ -130,7 +130,7 @@ class ReservationServiceTest {
 //        ReservationResDto result = reservationService.updateReservationStatus(updateDto, reservationId, memberId);
 
         // then
-//        verify(notificationScheduleService).scheduleImmediateNotification(reservation, NotificationType.CANCELLATION);
+        verify(notificationScheduleService).scheduleImmediateNotification(reservation, NotificationType.CANCELLATION);
 //        assertThat(result).isNotNull();
     }
 
