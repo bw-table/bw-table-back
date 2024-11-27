@@ -35,7 +35,7 @@ public class Statistics {
     private StatisticsType type;
 
     @Column(nullable = false)
-    private String timeKey; // 날짜: "2024-11-01", 주: "2024-W45", 월: "2024-11"
+    private String timeKey; // 날짜: "2024-11-01", 주: "2024-11-17 ~ 2024-11-23", 월: "2024-11"
 
     @Column(nullable = false)
     private int reservationCount; // 예약 건수
