@@ -153,15 +153,6 @@ public class ReservationController {
         }
     }
 
-//    @PutMapping("/{reservationId}/status")
-//    @Operation(summary = "예약 상태 업데이트", description = "주어진 예약 ID의 상태를 업데이트합니다.")
-//    public ReservationResDto updateReservationStatus(
-//            @PathVariable Long reservationId,
-//            @RequestBody ReservationUpdateReqDto statusUpdateDto,
-//            @AuthenticationPrincipal MemberDetails memberDetails) throws IOException {
-//        return reservationService.updateReservationStatus(statusUpdateDto, reservationId, memberDetails.getMemberId());
-//    }
-
     @PutMapping("/{reservationId}/visit")
     @Operation(summary = "사장님의 방문 처리", description = "주어진 예약 ID로 방문 처리를 합니다.")
     public ResponseEntity<?> handleVisited(
