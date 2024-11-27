@@ -24,10 +24,6 @@ import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import com.zero.bwtableback.restaurant.repository.TimeslotSettingRepository;
 import com.zero.bwtableback.restaurant.repository.WeekdaySettingRepository;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
-
-import java.time.LocalDate;
-import java.util.List;
-
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

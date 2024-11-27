@@ -47,8 +47,8 @@ public class MemberService {
     /**
      * 본인 정보 조회
      */
-    public MemberPrivateDto getMyInfo(String email) {
-        Member member = memberRepository.findByEmail(email)
+    public MemberPrivateDto getMyInfo(Long memberId) {
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         return convertToPrivateDto(member);
     }

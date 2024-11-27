@@ -55,13 +55,9 @@ public class MemberController {
         if (memberDetails == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        String email = memberDetails.getUsername();
-        return ResponseEntity.ok(memberService.getMyInfo(email));
+        Long memberId = memberDetails.getMemberId();
+        return ResponseEntity.ok(memberService.getMyInfo(memberId));
     }
-
-    /**
-     * 이메일 회원 비밀번호 변경
-     */
 
     /**
      * 나의 모든 예약 조회

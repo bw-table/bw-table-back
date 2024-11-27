@@ -8,6 +8,7 @@ import com.zero.bwtableback.payment.PaymentService;
 import com.zero.bwtableback.reservation.dto.PaymentReqDto;
 import com.zero.bwtableback.reservation.dto.ReservationCompleteResDto;
 import com.zero.bwtableback.reservation.dto.ReservationCreateReqDto;
+import com.zero.bwtableback.reservation.dto.ReservationResDto;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.service.ReservationService;
 import com.zero.bwtableback.restaurant.dto.ReservationAvailabilityDto;
@@ -42,6 +43,14 @@ public class ReservationController {
 
     private final RedissonClient redissonClient;
     private final RedisTemplate<String, Object> redisTemplate;
+
+    /**
+     * 예약 아이디로 예약 상세 조회
+     */
+    @GetMapping("/{reservationId}")
+    public ReservationResDto getReservationById(@PathVariable Long reservationId) {
+        return reservationService.getReservationById(reservationId);
+    }
 
     /**
      * 예약 생성 요청을 처리
