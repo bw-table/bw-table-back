@@ -10,7 +10,6 @@ import com.zero.bwtableback.reservation.service.ReservationService;
 import com.zero.bwtableback.security.MemberDetails;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
@@ -23,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/notifications")
