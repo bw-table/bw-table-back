@@ -14,9 +14,9 @@ import org.springframework.data.repository.query.Param;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
-    List<Reservation> findByReservationDateAndReservationStatusNotIn(
+    List<Reservation> findByReservationDateAndReservationStatus(
             LocalDate reservationDate,
-            List<ReservationStatus> excludedStatuses
+            ReservationStatus reservationStatus
     );
 
     Page<Reservation> findByMemberId(Long memberId, Pageable pageable);
