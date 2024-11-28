@@ -1,11 +1,10 @@
 package com.zero.bwtableback.member.dto;
 
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Getter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor // JSON 역직렬화(JSON 문자열 -> Java 객체)를 위해 필요
 public class SignUpReqDto {

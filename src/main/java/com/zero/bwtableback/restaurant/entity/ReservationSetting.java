@@ -26,11 +26,11 @@ public class ReservationSetting {
     private LocalDate endDate;
 
     @Column(name = "restaurant_id", nullable = false)
-    private Long restaurantId; // 외래키
+    private Long restaurantId;
 
     @ManyToOne
     @JoinColumn(name = "restaurant_id", insertable = false, updatable = false)
-    private Restaurant restaurant; // 연관된 Restaurant 객체 조회용
+    private Restaurant restaurant;
 
     @OneToMany(mappedBy = "reservationSetting", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WeekdaySetting> weekdaySettings = new ArrayList<>();

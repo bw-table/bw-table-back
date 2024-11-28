@@ -74,10 +74,29 @@ public class AuthService {
      * 새로운 사용자 이메일 회원가입
      */
     public MemberDto signUp(SignUpReqDto form) {
+        // 이메일 중복 체크
+        if (memberRepository.existsByEmail(form.getEmail())) {
+            throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
+        }
+
+        // 닉네임 중복 체크
+        if (memberRepository.existsByNickname(form.getNickname())) {
+            throw new CustomException(ErrorCode.NICKNAME_ALREADY_EXISTS);
+        }
+
+        // 전화번호 중복 체크
+        if (memberRepository.existsByPhone(form.getPhone())) {
+            throw new CustomException(ErrorCode.PHONE_ALREADY_EXISTS);
+        }
+
+        // 사업자등록번호 중복 체크 (사장님만)
+        if (form.getBusinessNumber() != null &&
+                memberRepository.existsByBusinessNumber(form.getBusinessNumber())) {
+            throw new CustomException(ErrorCode.BUSINESS_NUMBER_ALREADY_EXISTS);
+        }
+
         String encodedPassword = passwordEncoder.encode(form.getPassword());
-
         Member member = Member.from(form, encodedPassword);
-
         memberRepository.save(member);
 
         return MemberDto.from(member);
@@ -159,6 +178,7 @@ public class AuthService {
     // 리프레시 토큰 검증
     public void validateRefreshToken(String refreshToken, Long memberId) {
         String key = "refresh_token:" + memberId;
+
         String storedRefreshToken = redisTemplate.opsForValue().get(key);
 
         if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {

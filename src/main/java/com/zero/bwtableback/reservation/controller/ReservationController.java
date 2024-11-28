@@ -45,6 +45,14 @@ public class ReservationController {
     private final RedisTemplate<String, Object> redisTemplate;
 
     /**
+     * 예약 아이디로 예약 상세 조회
+     */
+    @GetMapping("/{reservationId}")
+    public ReservationResDto getReservationById(@PathVariable Long reservationId) {
+        return reservationService.getReservationById(reservationId);
+    }
+
+    /**
      * 예약 생성 요청을 처리
      * 1. 예약 가능 여부를 확인
      * 2. 예약이 가능한 경우, 임시 예약 정보를 Redis에 저장
@@ -144,15 +152,6 @@ public class ReservationController {
                     .body((ErrorCode.INTERNAL_SERVER_ERROR));
         }
     }
-
-//    @PutMapping("/{reservationId}/status")
-//    @Operation(summary = "예약 상태 업데이트", description = "주어진 예약 ID의 상태를 업데이트합니다.")
-//    public ReservationResDto updateReservationStatus(
-//            @PathVariable Long reservationId,
-//            @RequestBody ReservationUpdateReqDto statusUpdateDto,
-//            @AuthenticationPrincipal MemberDetails memberDetails) throws IOException {
-//        return reservationService.updateReservationStatus(statusUpdateDto, reservationId, memberDetails.getMemberId());
-//    }
 
     @PutMapping("/{reservationId}/visit")
     @Operation(summary = "사장님의 방문 처리", description = "주어진 예약 ID로 방문 처리를 합니다.")

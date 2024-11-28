@@ -1,6 +1,7 @@
 package com.zero.bwtableback.security;
 
 import com.zero.bwtableback.member.entity.Member;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -11,6 +12,7 @@ import java.util.Collection;
 /**
  * Spring Security와 통합된 사용자 인증 및 권한 부여 시스템
  */
+@Builder
 @RequiredArgsConstructor
 public class MemberDetails implements UserDetails {
     // Member 객체 반환
