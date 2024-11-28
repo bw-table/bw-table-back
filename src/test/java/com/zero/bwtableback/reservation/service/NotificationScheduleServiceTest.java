@@ -96,15 +96,6 @@ class NotificationScheduleServiceTest {
         given(reservation.getReservationDate()).willReturn(reservationDate);
         given(reservation.getReservationTime()).willReturn(reservationTime);
 
-        Notification notification = Notification.builder()
-                .reservation(reservation)
-                .notificationType(NotificationType.REMINDER_24H)
-                .message("알림 메시지 예시")
-                .status(NotificationStatus.PENDING)
-                .build();
-
-        given(notificationRepository.save(any(Notification.class))).willReturn(notification);
-
         try (MockedStatic<NotificationMessageGenerator> mockedGenerator = Mockito.mockStatic(NotificationMessageGenerator.class)) {
             mockedGenerator.when(() -> NotificationMessageGenerator.generateMessage(any(Reservation.class), any(NotificationType.class)))
                     .thenReturn("알림 메시지 예시");
