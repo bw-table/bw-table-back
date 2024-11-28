@@ -7,7 +7,6 @@ import com.zero.bwtableback.reservation.entity.ReservationStatus;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
 import com.zero.bwtableback.reservation.service.NotificationScheduleService;
 import java.time.LocalDate;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -54,14 +53,13 @@ public class DayOfVisitNotificationJobConfig {
     @StepScope
     public ItemReader<Reservation> todayReservationsReader(ReservationRepository reservationRepository) {
         return new ListItemReader<>(
-                reservationRepository.findByReservationDateAndReservationStatusNotIn(
+                reservationRepository.findByReservationDateAndReservationStatus(
                         LocalDate.now(),
-                        List.of(ReservationStatus.OWNER_CANCELED, ReservationStatus.CUSTOMER_CANCELED)
+                        ReservationStatus.CONFIRMED
                 )
         );
     }
 
-    // 예약 알림 생성 Processor
     @Bean
     public ItemProcessor<Reservation, Notification> dayOfVisitNotificationProcessor() {
         return reservation -> {
@@ -72,7 +70,6 @@ public class DayOfVisitNotificationJobConfig {
         };
     }
 
-    // 예약 알림 전송 Writer
     @Bean
     public ItemWriter<Notification> dayOfVisitNotificationWriter() {
         return notifications -> notifications.forEach(notification -> {
