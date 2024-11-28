@@ -21,11 +21,15 @@ import java.util.Set;
 public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     boolean existsByAddress(String address);
+
     boolean existsByContact(String contact);
 
     Page<Restaurant> findByNameContainingIgnoreCase(String name, Pageable pageable);
+
     Page<Restaurant> findByCategory_CategoryType(CategoryType type, Pageable pageable);
+
     Page<Restaurant> findByHashtags_Name(String hashtag, Pageable pageable);
+
     Page<Restaurant> findByMenus_NameContaining(String menu, Pageable pageable);
 
     List<Restaurant> findByFacilities_FacilityType(FacilityType facilityType, Pageable pageable);

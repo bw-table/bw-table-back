@@ -113,10 +113,11 @@ public class TokenProvider {
             return true;
         } catch (ExpiredJwtException e) {
             log.warn("만료된 리프레시 토큰입니다.");
+            throw new RuntimeException("만료된 리프레시 토큰입니다.");
         } catch (JwtException e) {
             log.error("유효하지 않은 리프레시 토큰입니다: {}", e.getMessage());
+            throw new RuntimeException("유효하지 않은 리프레시 토큰입니다.");
         }
-        return false;
     }
 
     /**

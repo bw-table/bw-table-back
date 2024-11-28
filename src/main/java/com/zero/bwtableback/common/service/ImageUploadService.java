@@ -13,6 +13,7 @@ import com.zero.bwtableback.restaurant.repository.RestaurantImageRepository;
 import com.zero.bwtableback.restaurant.repository.ReviewImageRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class ImageUploadService {
 
@@ -40,10 +42,10 @@ public class ImageUploadService {
      * 회원 프로필 이미지
      * - 최대 1장
      */
-    public String uploadProfileImage(MultipartFile file, String email) throws IOException {
+    public String uploadProfileImage(MultipartFile file, Long memberId) throws IOException {
         validateSingleImageFile(file);
 
-        Member member = memberRepository.findByEmail(email)
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         String fileUrl = uploadFile(file, "member/" + member.getId() + "/profile/");
@@ -55,9 +57,65 @@ public class ImageUploadService {
     }
 
     /**
+     * 이미지 수정 1장
+     */
+    public String updateProfileImage(MultipartFile newFile, Long memberId) throws IOException {
+        try {
+            Member member = memberRepository.findById(memberId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+            String oldFileUrl = member.getProfileImage();
+            if (oldFileUrl != null) {
+                deleteFileFromS3(member);
+            }
+
+            String newFileUrl = uploadProfileImage(newFile, memberId);
+            return newFileUrl;
+
+        } catch (IOException e) {
+            log.error("회원 ID: {}에 대한 파일 업로드 오류", memberId, e);
+            throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
+    }
+
+    /**
+     * 이미지 삭제
+     */
+    public void deleteFileFromDB(Long memberId) {
+        try {
+            Member member = memberRepository.findById(memberId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+            // S3에서 파일 삭제
+            deleteFileFromS3(member);
+
+            // 프로필 이미지 URL을 null로 설정
+            member.setProfileImage(null);
+
+            // 데이터베이스에 변경 사항 저장
+            memberRepository.save(member);
+
+        } catch (Exception e) {
+            // 일반적인 예외 처리
+            log.error("회원 ID: {}에 대한 파일 삭제 오류", memberId, e);
+            throw new CustomException(ErrorCode.FILE_DELETE_FAILED);
+        }
+    }
+
+    /**
+     * 이미지 삭제 S3에서
+     */
+    private void deleteFileFromS3(Member member) {
+        String fileUrl = member.getProfileImage();
+        String baseUrl = "https://bwtable.s3.amazonaws.com/";
+        String fileName = fileUrl.replace(baseUrl, "");
+
+        amazonS3Client.deleteObject(BUCKET_NAME, fileName);
+    }
+
+    /**
      * 가게 이미지
      * - 최대 5장
-     * TODO 순서는 어떻게 보장할지 생각해보기
      */
     public List<String> uploadRestaurantImages(Long restaurantId, MultipartFile[] files) throws IOException {
         validateImageFiles(files, 5);
@@ -86,7 +144,6 @@ public class ImageUploadService {
     /**
      * 리뷰 이미지
      * - 최대 5장
-     * TODO 순서는 어떻게 보장할지 생각해보기
      */
     public List<String> uploadReviewImages(Long restaurantId,
                                            Long reviewId,
@@ -146,28 +203,26 @@ public class ImageUploadService {
                         contentType.equals("image/png"));
     }
 
-    /**
-     * TODO 이미지 수정 1장
-     */
-    public String updateProfileImage(MultipartFile newFile, String email) throws IOException {
-        // 기존 프로필 이미지 URL을 가져옵니다.
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    // FIXME 삭제 검토
+//    public String updateProfileImage(MultipartFile newFile, String email) throws IOException {
+//        // 기존 프로필 이미지 URL을 가져옵니다.
+//        Member member = memberRepository.findByEmail(email)
+//                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+//
+//        String oldFileUrl = member.getProfileImage(); // 기존 URL 가져오기
+//        if (oldFileUrl != null) {
+//            deleteFileFromS3(oldFileUrl); // 기존 파일 삭제
+//        }
+//
+//        // 새로운 이미지를 S3에 업로드
+//        String newFileUrl = uploadFile(newFile, "member/" + member.getId() + "/profile/");
+//        member.setProfileImage(newFileUrl);
+//        memberRepository.save(member);
+//
+//        return newFileUrl;
+//    }
 
-        String oldFileUrl = member.getProfileImage(); // 기존 URL 가져오기
-        if (oldFileUrl != null) {
-            deleteFileFromS3(oldFileUrl); // 기존 파일 삭제
-        }
-
-        // 새로운 이미지를 S3에 업로드
-        String newFileUrl = uploadFile(newFile, "member/" + member.getId() + "/profile/");
-        member.setProfileImage(newFileUrl);
-        memberRepository.save(member);
-
-        return newFileUrl;
-    }
-
-    // TODO 기존 프로필 이미지 URL을 가져오는 메서드
+    // FIXME 삭제검토 :  기존 프로필 이미지 URL을 가져오는 메서드
     private String getOldProfileImageUrl(String email) {
         // 기존 프로필 이미지 URL 반환
         // return member.getProfileImage();
@@ -212,7 +267,7 @@ public class ImageUploadService {
         reviewImageRepository.delete(image);
     }
 
-    // URL에서 파일 경로 추출
+    // FIXME 삭제검토  URL에서 파일 경로 추출
     public String getImagePathFromUrl(String imageUrl) {
         String baseUrl = "https://" + BUCKET_NAME + ".s3.amazonaws.com/";
         if (imageUrl.startsWith(baseUrl)) {
@@ -221,7 +276,7 @@ public class ImageUploadService {
         return imageUrl;
     }
 
-    // URL에서 파일 이름 추출
+    // FIXME 삭제검토  URL에서 파일 이름 추출
     private String getFileNameFromUrl(String imageUrl) {
         return imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
     }

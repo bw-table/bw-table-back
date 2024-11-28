@@ -1,4 +1,4 @@
-package com.zero.bwtableback.reservation.dto;
+package com.zero.bwtableback.payment.dto;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -6,6 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PaymentDto {
+    private String reservationToken; // 예약 토큰
     private String applyNum;      // 신청 번호
     private String bankName;      // 은행 이름 (null 가능)
     private String buyerAddr;     // 구매자 주소 (빈 문자열 가능)
@@ -30,5 +31,4 @@ public class PaymentDto {
     private String receiptUrl;    // 영수증 URL
     private String status;        // 결제 상태 (예: "paid")
     private boolean success;      // 결제 성공 여부
-
 }

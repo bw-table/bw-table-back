@@ -50,7 +50,7 @@ public class RestaurantController {
             reqDto.setImages(images);
             reqDto.setMenus(menus);
 
-            RestaurantResDto savedRestaurant =
+            RestaurantRegisterResDto savedRestaurant =
                     restaurantService.registerRestaurant(reqDto, images, menus, menuImages, member);
 
             return ResponseEntity.ok(savedRestaurant);
@@ -72,7 +72,7 @@ public class RestaurantController {
     // 식당 정보 수정
     @PreAuthorize("hasrole('OWNER')")
     @PutMapping("/{id}")
-    public ResponseEntity<RestaurantResDto> updateRestaurant(
+    public ResponseEntity<RestaurantRegisterResDto> updateRestaurant(
             @PathVariable("id") Long restaurantId,
             @RequestPart("restaurant") RestaurantUpdateReqDto reqDto,
             @RequestPart(value = "images", required = false) MultipartFile[] images,
@@ -82,8 +82,8 @@ public class RestaurantController {
 
         Member member = memberDetails.getMember();
 
-        RestaurantResDto updatedRestaurant =
-                restaurantService.updateRestaurant(restaurantId, reqDto, images, menuImages, member);
+        RestaurantRegisterResDto updatedRestaurant =
+                restaurantService.updateRestaurant(restaurantId, reqDto, images, menuImages);
 
         return ResponseEntity.ok(updatedRestaurant);
     }

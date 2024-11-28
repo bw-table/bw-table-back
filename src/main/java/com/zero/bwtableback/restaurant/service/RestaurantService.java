@@ -4,6 +4,7 @@ import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
 import com.zero.bwtableback.chat.repository.ChatRoomRepository;
 import com.zero.bwtableback.common.service.ImageUploadService;
 import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.restaurant.dto.*;
 import com.zero.bwtableback.restaurant.entity.*;
@@ -11,6 +12,7 @@ import com.zero.bwtableback.restaurant.exception.RestaurantException;
 import com.zero.bwtableback.restaurant.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,9 @@ public class RestaurantService {
     private final ChatRoomRepository chatRoomRepository;
     private final ImageUploadService imageUploadService;
     private final MemberRepository memberRepository;
+
+    @Value("${IMP_CODE}")
+    private String impCode;
 
     // 등록
     public RestaurantResDto registerRestaurant(RestaurantReqDto reqDto,
@@ -114,7 +119,7 @@ public class RestaurantService {
             }
         }
 
-        return new RestaurantResDto(
+        return new RestaurantRegisterResDto(
                 savedRestaurant.getId(),
                 savedRestaurant.getName(),
                 "Restaurant registered successfully"
@@ -223,7 +228,7 @@ public class RestaurantService {
         }
 
         Restaurant updatedRestaurant = restaurantRepository.save(restaurant);
-        return new RestaurantResDto(
+        return new RestaurantRegisterResDto(
                 updatedRestaurant.getId(),
                 updatedRestaurant.getName(),
                 "Restaurant updated successfully"
