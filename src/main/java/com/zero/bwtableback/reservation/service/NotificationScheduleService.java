@@ -14,9 +14,11 @@ import com.zero.bwtableback.reservation.util.NotificationMessageGenerator;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class NotificationScheduleService {
@@ -31,33 +33,20 @@ public class NotificationScheduleService {
         sendNotification(notification);
     }
 
-    // 가게 주인과 고객에게 알림 전송
-    public void sendNotification(Notification notification) {
-        Long customerId = notification.getReservation().getMember().getId();
-        Long ownerId = notification.getReservation().getRestaurant().getMember().getId();
-        notificationEmitterService.sendNotificationToCustomerAndOwner(customerId, ownerId, notification);
-        markAsSent(notification);
-    }
-
     // 예약 24시간 전 알림 생성
     public void schedule24HoursBeforeNotification(Reservation reservation) {
         LocalDateTime scheduledTime = reservation.getReservationDate()
                 .atTime(reservation.getReservationTime()).minusHours(24);
-        createScheduledNotification(reservation, scheduledTime);
-    }
 
-    // 예약 상태 확인 후 알림 전송 및 상태 업데이트
-    private void createScheduledNotification(Reservation reservation, LocalDateTime scheduledTime) {
-        Notification notification = createAndSaveNotification(reservation, NotificationType.REMINDER_24H);
-        Long customerId = notification.getReservation().getMember().getId();
-        Long ownerId = notification.getReservation().getRestaurant().getMember().getId();
+        if (scheduledTime.isBefore(LocalDateTime.now())) {
+            log.info("예약 시간이 24시간 이내여서 알림을 스케줄링하지 않습니다.");
+            return;
+        }
 
-        // 스케줄링된 시간에 전송 상태로 변경하고 알림 전송
         taskScheduler.schedule(() -> {
             if (reservation.getReservationStatus() != ReservationStatus.OWNER_CANCELED &&
                     reservation.getReservationStatus() != ReservationStatus.CUSTOMER_CANCELED) {
-                notificationEmitterService.sendNotificationToCustomerAndOwner(customerId, ownerId, notification);
-                markAsSent(notification);
+                sendNotification(createAndSaveNotification(reservation, NotificationType.REMINDER_24H));
             }
         }, scheduledTime.atZone(ZoneId.systemDefault()).toInstant());
     }
@@ -70,20 +59,24 @@ public class NotificationScheduleService {
                 .reservation(reservation)
                 .notificationType(type)
                 .message(message)
-                .scheduledTime(LocalDateTime.now())
                 .status(NotificationStatus.PENDING)
                 .build();
 
         return notificationRepository.save(notification);
     }
 
+    // 가게 주인과 고객에게 알림 전송
+    public void sendNotification(Notification notification) {
+        Long customerId = notification.getReservation().getMember().getId();
+        Long ownerId = notification.getReservation().getRestaurant().getMember().getId();
+        notificationEmitterService.sendNotificationToCustomerAndOwner(customerId, ownerId, notification);
+        markAsSent(notification);
+    }
+
     // 알림 전송 완료 상태로 업데이트
     private void markAsSent(Notification notification) {
         if (notification.getStatus() == SENT) {
             throw new CustomException(ErrorCode.NOTIFICATION_ALREADY_SENT);
-        }
-        if (LocalDateTime.now().isBefore(notification.getScheduledTime())) {
-            throw new CustomException(ErrorCode.NOTIFICATION_SCHEDULED_TIME_NOT_REACHED);
         }
 
         notification.setSentTime(LocalDateTime.now());

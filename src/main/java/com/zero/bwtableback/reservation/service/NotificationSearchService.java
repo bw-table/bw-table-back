@@ -22,13 +22,13 @@ public class NotificationSearchService {
 
     // 고객 회원에게 전송된 알림 목록 조회
     public Page<Notification> getNotificationsSentToCustomer(Long customerId, Pageable pageable) {
-        return notificationRepository.findByReservation_Member_IdAndStatusOrderByScheduledTimeDesc(
+        return notificationRepository.findByReservation_Member_IdAndStatusOrderBySentTimeDesc(
                 customerId, SENT, pageable);
     }
 
     // 가게 주인 회원에게 전송된 알림 목록 조회
     public Page<Notification> getNotificationsSentToOwner(Long ownerId, Pageable pageable) {
-        return notificationRepository.findByReservation_Restaurant_Member_IdAndStatusOrderByScheduledTimeDesc(
+        return notificationRepository.findByReservation_Restaurant_Member_IdAndStatusOrderBySentTimeDesc(
                 ownerId, NotificationStatus.SENT, pageable);
     }
 

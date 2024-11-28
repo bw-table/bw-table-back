@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.zero.bwtableback.common.exception.CustomException;
@@ -33,7 +33,6 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.scheduling.TaskScheduler;
-
 @ExtendWith(MockitoExtension.class)
 class NotificationScheduleServiceTest {
 
@@ -51,16 +50,15 @@ class NotificationScheduleServiceTest {
 
     @DisplayName("예약 확정 시 즉시 알림을 생성하고 전송한다")
     @Test
-    void givenReservationAndType_whenScheduleImmediateNotification_thenCreateAndSendNotification() {
+    void scheduleImmediateNotification_CreatesAndSendsNotification() {
         // given
         Reservation reservation = mock(Reservation.class);
-        Restaurant restaurant = mock(Restaurant.class);
         Member customerMember = mock(Member.class);
         Member ownerMember = mock(Member.class);
+        Restaurant restaurant = mock(Restaurant.class);
         Notification notification = mock(Notification.class);
-        String message = "알림 메시지 예시";
 
-        LocalDateTime scheduledTime = LocalDateTime.now().minusMinutes(5); // 과거 시간 설정
+        String message = "알림 메시지 예시";
 
         given(reservation.getMember()).willReturn(customerMember);
         given(reservation.getRestaurant()).willReturn(restaurant);
@@ -68,41 +66,29 @@ class NotificationScheduleServiceTest {
         given(customerMember.getId()).willReturn(1L);
         given(ownerMember.getId()).willReturn(2L);
         given(notification.getReservation()).willReturn(reservation);
-        given(notification.getScheduledTime()).willReturn(scheduledTime);
 
         try (MockedStatic<NotificationMessageGenerator> mockedGenerator = Mockito.mockStatic(NotificationMessageGenerator.class)) {
             mockedGenerator.when(() -> NotificationMessageGenerator.generateMessage(reservation, NotificationType.CONFIRMATION))
                     .thenReturn(message);
 
             given(notificationRepository.save(any(Notification.class))).willReturn(notification);
-            doNothing().when(notificationEmitterService).sendNotificationToCustomerAndOwner(any(), any(), any());
 
             // when
             notificationScheduleService.scheduleImmediateNotification(reservation, NotificationType.CONFIRMATION);
 
             // then
             verify(notificationRepository).save(any(Notification.class));
-            verify(notificationEmitterService).sendNotificationToCustomerAndOwner(any(), any(), any());
-            verify(notification).setSentTime(any(LocalDateTime.class));
+            verify(notificationEmitterService).sendNotificationToCustomerAndOwner(1L, 2L, notification);
         }
     }
 
     @DisplayName("예약 24시간 전 알림을 스케줄링한다")
     @Test
-    void givenReservation_whenSchedule24HoursBeforeNotification_thenScheduleNotification() {
+    void schedule24HoursBeforeNotification_SchedulesNotificationCorrectly() {
         // given
         Reservation reservation = mock(Reservation.class);
-        Member customerMember = mock(Member.class);
-        Member ownerMember = mock(Member.class);
-        Restaurant restaurant = mock(Restaurant.class);
 
-        given(reservation.getMember()).willReturn(customerMember);
-        given(reservation.getRestaurant()).willReturn(restaurant);
-        given(restaurant.getMember()).willReturn(ownerMember);
-        given(ownerMember.getId()).willReturn(1L);
-
-        // 예약 날짜와 시간을 설정
-        LocalDate reservationDate = LocalDate.now().plusDays(1);
+        LocalDate reservationDate = LocalDate.now().plusDays(10);
         LocalTime reservationTime = LocalTime.of(12, 0);
         LocalDateTime reservationDateTime = LocalDateTime.of(reservationDate, reservationTime);
         LocalDateTime expectedScheduleTime = reservationDateTime.minusHours(24);
@@ -110,19 +96,18 @@ class NotificationScheduleServiceTest {
         given(reservation.getReservationDate()).willReturn(reservationDate);
         given(reservation.getReservationTime()).willReturn(reservationTime);
 
+        Notification notification = Notification.builder()
+                .reservation(reservation)
+                .notificationType(NotificationType.REMINDER_24H)
+                .message("알림 메시지 예시")
+                .status(NotificationStatus.PENDING)
+                .build();
+
+        given(notificationRepository.save(any(Notification.class))).willReturn(notification);
+
         try (MockedStatic<NotificationMessageGenerator> mockedGenerator = Mockito.mockStatic(NotificationMessageGenerator.class)) {
             mockedGenerator.when(() -> NotificationMessageGenerator.generateMessage(any(Reservation.class), any(NotificationType.class)))
                     .thenReturn("알림 메시지 예시");
-
-            Notification notification = Notification.builder()
-                    .reservation(reservation)
-                    .notificationType(NotificationType.REMINDER_24H)
-                    .message("알림 메시지 예시")
-                    .scheduledTime(LocalDateTime.now())
-                    .status(NotificationStatus.PENDING)
-                    .build();
-
-            given(notificationRepository.save(any(Notification.class))).willReturn(notification);
 
             ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
 
@@ -139,40 +124,9 @@ class NotificationScheduleServiceTest {
         }
     }
 
-    @DisplayName("예약 상태에 따라 알림을 생성하고 저장한다")
+    @DisplayName("이미 전송된 알림에 대해 예외를 발생시킨다")
     @Test
-    void givenReservationAndNotificationType_whenCreateAndSaveNotification_thenNotificationIsSaved() {
-        // given
-        Reservation reservation = mock(Reservation.class);
-        NotificationType type = NotificationType.REMINDER_24H;
-        String message = "알림 메시지 예시";
-
-        try (MockedStatic<NotificationMessageGenerator> mockedGenerator = Mockito.mockStatic(NotificationMessageGenerator.class)) {
-            mockedGenerator.when(() -> NotificationMessageGenerator.generateMessage(reservation, type)).thenReturn(message);
-
-            Notification notification = Notification.builder()
-                    .reservation(reservation)
-                    .notificationType(type)
-                    .message(message)
-                    .scheduledTime(LocalDateTime.now())
-                    .status(NotificationStatus.PENDING)
-                    .build();
-
-            given(notificationRepository.save(any(Notification.class))).willReturn(notification);
-
-            // when
-            Notification savedNotification = notificationScheduleService.createAndSaveNotification(reservation, type);
-
-            // then
-            assertThat(savedNotification).isNotNull();
-            assertThat(savedNotification.getMessage()).isEqualTo(message);
-            verify(notificationRepository).save(any(Notification.class));
-        }
-    }
-
-    @DisplayName("이미 전송된 알림을 다시 전송 시도하면 예외를 발생시킨다")
-    @Test
-    void givenAlreadySentNotification_whenImmediateNotificationScheduled_thenThrowException() {
+    void scheduleImmediateNotification_ThrowsExceptionIfAlreadySent() {
         // given
         Reservation reservation = mock(Reservation.class);
         Member customerMember = mock(Member.class);
@@ -187,8 +141,7 @@ class NotificationScheduleServiceTest {
                 .reservation(reservation)
                 .notificationType(NotificationType.CONFIRMATION)
                 .message("알림 메시지 예시")
-                .scheduledTime(LocalDateTime.now())
-                .status(NotificationStatus.SENT) // 이미 전송된 상태로 설정
+                .status(NotificationStatus.SENT)
                 .build();
 
         given(notificationRepository.save(any(Notification.class))).willReturn(notification);
@@ -204,41 +157,23 @@ class NotificationScheduleServiceTest {
         }
     }
 
-    @DisplayName("예정된 시간 전에 알림 전송을 시도하면 예외를 발생시킨다")
+    @DisplayName("예약 시간이 24시간 이내인 경우 알림 스케줄링을 생략한다")
     @Test
-    void givenNotificationWithFutureScheduledTime_whenImmediateNotificationScheduled_thenThrowException() {
+    void schedule24HoursBeforeNotification_DoesNotScheduleIfWithin24Hours() {
         // given
         Reservation reservation = mock(Reservation.class);
-        Member customerMember = mock(Member.class);
-        Member ownerMember = mock(Member.class);
-        Restaurant restaurant = mock(Restaurant.class);
 
-        given(reservation.getMember()).willReturn(customerMember);
-        given(reservation.getRestaurant()).willReturn(restaurant);
-        given(restaurant.getMember()).willReturn(ownerMember);
+        LocalDate reservationDate = LocalDate.now();
+        LocalTime reservationTime = LocalTime.now().plusHours(1); // 현재 시간 기준 1시간 후
+        given(reservation.getReservationDate()).willReturn(reservationDate);
+        given(reservation.getReservationTime()).willReturn(reservationTime);
 
-        // 미래 시간으로 예약 시간을 설정
-        LocalDateTime futureScheduledTime = LocalDateTime.now().plusMinutes(10);
+        // when
+        notificationScheduleService.schedule24HoursBeforeNotification(reservation);
 
-        Notification notification = Notification.builder()
-                .reservation(reservation)
-                .notificationType(NotificationType.CONFIRMATION)
-                .message("알림 메시지 예시")
-                .scheduledTime(futureScheduledTime)
-                .status(NotificationStatus.PENDING) // 아직 보내지 않은 알림으로 설정
-                .build();
-
-        given(notificationRepository.save(any(Notification.class))).willReturn(notification);
-
-        try (MockedStatic<NotificationMessageGenerator> mockedGenerator = Mockito.mockStatic(NotificationMessageGenerator.class)) {
-            mockedGenerator.when(() -> NotificationMessageGenerator.generateMessage(any(Reservation.class), any(NotificationType.class)))
-                    .thenReturn("알림 메시지 예시");
-
-            // when & then
-            assertThatThrownBy(() -> notificationScheduleService.scheduleImmediateNotification(reservation, NotificationType.CONFIRMATION))
-                    .isInstanceOf(CustomException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOTIFICATION_SCHEDULED_TIME_NOT_REACHED);
-        }
+        // then
+        verify(notificationRepository, never()).save(any(Notification.class));
+        verify(taskScheduler, never()).schedule(any(Runnable.class), any(Instant.class));
     }
 
 }
