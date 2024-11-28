@@ -17,7 +17,7 @@ import com.zero.bwtableback.reservation.entity.NotificationType;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.entity.ReservationStatus;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
-import com.zero.bwtableback.restaurant.dto.RestaurantInfoDto;
+import com.zero.bwtableback.restaurant.dto.RestaurantDetailDto;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
 
@@ -64,8 +64,8 @@ class ReservationServiceTest {
         given(reservationRepository.findById(reservationId)).willReturn(java.util.Optional.of(reservation));
         given(memberRepository.findById(memberId)).willReturn(java.util.Optional.of(member));
 
-        RestaurantInfoDto restaurantInfoDto = mock(RestaurantInfoDto.class);
-        given(restaurantService.getRestaurantById(restaurantId)).willReturn(restaurantInfoDto);
+        RestaurantDetailDto restaurantDetailDto = mock(RestaurantDetailDto.class);
+        given(restaurantService.getRestaurantById(restaurantId)).willReturn(restaurantDetailDto);
         given(member.getId()).willReturn(memberId);
 
         // when

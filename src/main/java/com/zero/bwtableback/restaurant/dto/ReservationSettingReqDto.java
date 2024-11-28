@@ -1,6 +1,7 @@
 package com.zero.bwtableback.restaurant.dto;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.List;
 public class ReservationSettingReqDto {
     private LocalDate startDate;
     private LocalDate endDate;
-    private Long restaurantId;
     private List<WeekdaySettingDto> weekdaySettings;
+    @Setter
+    private Long restaurantId;
 }

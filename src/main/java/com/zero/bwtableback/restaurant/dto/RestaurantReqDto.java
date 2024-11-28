@@ -46,9 +46,6 @@ public class RestaurantReqDto {
     @NotNull(message = "Deposit must not be null")
     private int deposit;
 
-    @NotNull(message = "ImpCode must not be null")
-    private String impCode;
-
     @NotNull(message = "Menu must not be null")
     private List<MenuRegisterDto> menus;
 

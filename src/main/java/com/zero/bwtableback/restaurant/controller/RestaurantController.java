@@ -3,7 +3,6 @@ package com.zero.bwtableback.restaurant.controller;
 import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
 import com.zero.bwtableback.common.service.ImageUploadService;
 import com.zero.bwtableback.member.entity.Member;
-import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.restaurant.dto.*;
 import com.zero.bwtableback.restaurant.exception.RestaurantException;
 import com.zero.bwtableback.restaurant.service.AnnouncementService;
@@ -36,29 +35,6 @@ public class RestaurantController {
     private final ImageUploadService imageUploadService;
 
     // 식당 등록
-    // TODO: 식당 등록 후 응답형식 결정 필요
-//    @PostMapping("/new")
-//    public ResponseEntity<?> registerRestaurant(@RequestBody RegisterReqDto reqDto) {
-//
-//        try {
-//            Restaurant savedRestaurant = restaurantService.registerRestaurant(reqDto);
-//
-//            RegisterResDto resDto = new RegisterResDto(
-//                    savedRestaurant.getId(),
-//                    savedRestaurant.getName(),
-//                    "Restaurant registered successfully"
-//            );
-//            return ResponseEntity.status(HttpStatus.CREATED).body(resDto);
-//        } catch (RestaurantException e) {
-//            log.error("Error registering restaurant", e);
-//
-//            Map<String, String> errorResponse = new HashMap<>();
-//            errorResponse.put("message", e.getMessage());
-//
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-//        }
-//    }
-
     @PreAuthorize("hasrole('OWNER')")
     @PostMapping("/new")
     public ResponseEntity<?> registerRestaurant(
@@ -66,7 +42,9 @@ public class RestaurantController {
             @RequestPart("images") MultipartFile[] images,
             @RequestPart("menus") List<MenuRegisterDto> menus,
             @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
-            @AuthenticationPrincipal Member member) {
+            @AuthenticationPrincipal MemberDetails memberDetails) {
+
+        Member member = memberDetails.getMember();
 
         try {
             reqDto.setImages(images);
@@ -96,11 +74,13 @@ public class RestaurantController {
     @PutMapping("/{id}")
     public ResponseEntity<RestaurantRegisterResDto> updateRestaurant(
             @PathVariable("id") Long restaurantId,
-            @RequestPart("restaurant") UpdateReqDto reqDto,
+            @RequestPart("restaurant") RestaurantUpdateReqDto reqDto,
             @RequestPart(value = "images", required = false) MultipartFile[] images,
             @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
-            @AuthenticationPrincipal Member member)
+            @AuthenticationPrincipal MemberDetails memberDetails)
                                                     throws IOException {
+
+        Member member = memberDetails.getMember();
 
         RestaurantRegisterResDto updatedRestaurant =
                 restaurantService.updateRestaurant(restaurantId, reqDto, images, menuImages);
@@ -160,35 +140,9 @@ public class RestaurantController {
 
     // 식당 상세정보 조회
     @GetMapping("/{id}")
-    public ResponseEntity<RestaurantInfoDto> getRestaurantById(@PathVariable Long id) {
-        RestaurantInfoDto infoDto = restaurantService.getRestaurantById(id);
-        return ResponseEntity.ok(infoDto);
-    }
-
-    // 공지 생성
-    @PreAuthorize("hasrole('OWNER')")
-    @PostMapping("/{restaurantId}/announcements")
-    public ResponseEntity<AnnouncementResDto> createAnnouncement(@PathVariable Long restaurantId,
-                                                                 @RequestBody AnnouncementReqDto reqDto) {
-        AnnouncementReqDto updatedReqDto = AnnouncementReqDto.builder()
-                .restaurantId(restaurantId)
-                .title(reqDto.getTitle())
-                .content(reqDto.getContent())
-                .event(reqDto.isEvent())
-                .build();
-
-        AnnouncementResDto resDto = announcementService.createAnnouncement(updatedReqDto);
-
-        return ResponseEntity.ok(resDto);
-    }
-
-    // 식당 공지 목록 조회
-    @GetMapping("/{restaurantId}/announcements")
-    public ResponseEntity<List<AnnouncementDetailDto>> getAnnouncementsByRestaurantId(
-            @PathVariable Long restaurantId, Pageable pageable) {
-        List<AnnouncementDetailDto> announcements = announcementService.getAnnouncementsByRestaurantId(restaurantId, pageable);
-
-        return ResponseEntity.ok(announcements);
+    public ResponseEntity<RestaurantDetailDto> getRestaurantById(@PathVariable Long id) {
+        RestaurantDetailDto detailDto = restaurantService.getRestaurantById(id);
+        return ResponseEntity.ok(detailDto);
     }
 
     // 특정 식당의 모든 채팅방 조회

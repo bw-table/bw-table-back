@@ -15,7 +15,7 @@ import com.zero.bwtableback.reservation.dto.PaymentCompleteResDto;
 import com.zero.bwtableback.reservation.dto.ReservationResDto;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
-import com.zero.bwtableback.restaurant.dto.RestaurantInfoDto;
+import com.zero.bwtableback.restaurant.dto.RestaurantDetailDto;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
@@ -61,8 +61,8 @@ public class ChatService {
 
         chatRoomRepository.save(chatRoom);
 
-        RestaurantInfoDto restaurantInfoDto = restaurantService.getRestaurantById(restaurant.getId());
-        return PaymentCompleteResDto.fromEntities(restaurantInfoDto, reservation);
+        RestaurantDetailDto restaurantDetailDto = restaurantService.getRestaurantById(restaurant.getId());
+        return PaymentCompleteResDto.fromEntities(restaurantDetailDto, reservation);
     }
 
 

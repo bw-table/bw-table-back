@@ -25,5 +25,4 @@ public class Announcement extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
-
 }

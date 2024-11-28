@@ -16,15 +16,25 @@ import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.entity.ReservationStatus;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
 import com.zero.bwtableback.restaurant.dto.ReservationAvailabilityDto;
-import com.zero.bwtableback.restaurant.dto.RestaurantInfoDto;
 import com.zero.bwtableback.restaurant.dto.RestaurantResDto;
 import com.zero.bwtableback.restaurant.entity.*;
 import com.zero.bwtableback.restaurant.repository.*;
+import com.zero.bwtableback.restaurant.repository.ReservationSettingRepository;
+import com.zero.bwtableback.restaurant.dto.RestaurantDetailDto;
+import com.zero.bwtableback.restaurant.entity.Restaurant;
+import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
+import com.zero.bwtableback.restaurant.repository.TimeslotSettingRepository;
+import com.zero.bwtableback.restaurant.repository.WeekdaySettingRepository;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
+
+import java.util.stream.Collectors;
+
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -291,8 +301,8 @@ public class ReservationService {
         notificationScheduleService.scheduleImmediateNotification(reservation, NotificationType.CONFIRMATION);
         notificationScheduleService.schedule24HoursBeforeNotification(reservation);
 
-        RestaurantInfoDto restaurantInfoDto = restaurantService.getRestaurantById(restaurant.getId());
-        return PaymentCompleteResDto.fromEntities(restaurantInfoDto, reservation);
+        RestaurantDetailDto restaurantDetailDto = restaurantService.getRestaurantById(restaurantId);
+        return PaymentCompleteResDto.fromEntities(restaurantDetailDto, reservation);
     }
 
     /**
@@ -467,15 +477,16 @@ public class ReservationService {
      * 예약 대시보드
      * 특정 식당의 예약 내역 조회
      */
-    public List<Reservation> getReservationByRestaurant(Long restaurantId, LocalDate reservationDate) {
+    public List<ReservationResDto> getReservationByRestaurant(Long restaurantId, LocalDate reservationDate, Pageable pageable) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
 
-        if (reservationDate != null) {
-            return reservationRepository.findByRestaurantIdAndReservationDate(restaurantId, reservationDate);
-        }
+        Page<Reservation> reservations = reservationRepository.findByRestaurantIdAndReservationDate(
+                restaurantId, reservationDate, pageable);
 
-        return reservationRepository.findByRestaurantId(restaurantId);
+        return reservations.stream()
+                .map(ReservationResDto::fromEntity)
+                .collect(Collectors.toList());
     }
 
     /**

@@ -184,10 +184,11 @@ public class ReservationController {
      * 특정 식당의 예약 내역 조회
      */
     @GetMapping("/restaurants/{restaurantId}")
-    public ResponseEntity<List<Reservation>> getReservationsByRestaurantId(@PathVariable Long restaurantId,
-                                                                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+    public ResponseEntity<List<ReservationResDto>> getReservationsByRestaurantId(@PathVariable Long restaurantId,
+                                                                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                                                                                 Pageable pageable) {
 
-        List<Reservation> reservations = reservationService.getReservationByRestaurant(restaurantId, date);
+        List<ReservationResDto> reservations = reservationService.getReservationByRestaurant(restaurantId, date, pageable);
 
         return ResponseEntity.ok(reservations);
     }

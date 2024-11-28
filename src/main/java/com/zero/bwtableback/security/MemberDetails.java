@@ -18,6 +18,10 @@ public class MemberDetails implements UserDetails {
     // Member 객체 반환
     private final Member member;
 
+    public Member getMember() {
+        return member;
+    }
+
     public Long getMemberId() {
         return member.getId();
     }
@@ -57,5 +61,4 @@ public class MemberDetails implements UserDetails {
     public boolean isEnabled() {
         return true; // 계정 활성화 여부
     }
-
 }

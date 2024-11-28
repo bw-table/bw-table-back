@@ -1,15 +1,13 @@
 package com.zero.bwtableback.restaurant.controller;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zero.bwtableback.member.entity.Member;
-import com.zero.bwtableback.restaurant.dto.ReviewInfoDto;
+import com.zero.bwtableback.restaurant.dto.ReviewDetailDto;
 import com.zero.bwtableback.restaurant.dto.ReviewReqDto;
 import com.zero.bwtableback.restaurant.dto.ReviewResDto;
 import com.zero.bwtableback.restaurant.dto.ReviewUpdateReqDto;
 import com.zero.bwtableback.restaurant.service.ReviewService;
+import com.zero.bwtableback.security.MemberDetails;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -37,16 +35,17 @@ public class ReviewController {
     public ResponseEntity<ReviewResDto> createReview(@PathVariable Long restaurantId,
                                                      @RequestPart(value = "review") ReviewReqDto reqDto,
                                                      @RequestPart(value = "images", required = false) MultipartFile[] images,
-                                                     @AuthenticationPrincipal Member member) throws IOException {
-//        reqDto = new ReviewReqDto(reqDto.getContent(), reqDto.getRating(), images);
+                                                     @AuthenticationPrincipal MemberDetails memberDetails) throws IOException {
 
         // 이미지 배열이 제대로 전달됐는지 확인
-        if (images != null && images.length > 0) {
-            log.info("Number of images uploaded: " + images.length);
-        } else {
-            log.warn("No images uploaded.");
-        }
+        // FIXME 테스트용
+//        if (images != null && images.length > 0) {
+//            log.info("Number of images uploaded: " + images.length);
+//        } else {
+//            log.warn("No images uploaded.");
+//        }
 
+        Member member = memberDetails.getMember();
         ReviewResDto resDto = reviewService.createReview(restaurantId, reqDto, images, member);
 
         return ResponseEntity.ok(resDto);
@@ -59,8 +58,9 @@ public class ReviewController {
                                                      @PathVariable Long reviewId,
                                                      @RequestPart(value = "review") ReviewUpdateReqDto reqDto,
                                                      @RequestPart(value = "images", required = false) MultipartFile[] images,
-                                                     @AuthenticationPrincipal Member member) throws IOException {
+                                                     @AuthenticationPrincipal MemberDetails memberDetails) throws IOException {
 
+        Member member = memberDetails.getMember();
         ReviewResDto response = reviewService.updateReview(reviewId, restaurantId, reqDto, images, member);
 
         return ResponseEntity.ok(response);
@@ -71,7 +71,9 @@ public class ReviewController {
     @DeleteMapping("/{restaurantId}/reviews/{reviewId}")
     public ResponseEntity<String> deleteReview(@PathVariable Long restaurantId,
                                                @PathVariable Long reviewId,
-                                               @AuthenticationPrincipal Member member) {
+                                               @AuthenticationPrincipal MemberDetails memberDetails) {
+
+        Member member = memberDetails.getMember();
         try {
             return reviewService.deleteReview(reviewId, restaurantId, member);
         } catch (EntityNotFoundException e) {
@@ -88,18 +90,18 @@ public class ReviewController {
 
     // 식당 리뷰 목록 조회
     @GetMapping("/{restaurantId}/reviews")
-    public ResponseEntity<List<ReviewInfoDto>> getReviewsByRestaurant(@PathVariable Long restaurantId,
-                                                                      Pageable pageable) {
-        List<ReviewInfoDto> reviews = reviewService.getReviewsByRestaurant(restaurantId, pageable);
+    public ResponseEntity<List<ReviewDetailDto>> getReviewsByRestaurant(@PathVariable Long restaurantId,
+                                                                        Pageable pageable) {
+        List<ReviewDetailDto> reviews = reviewService.getReviewsByRestaurant(restaurantId, pageable);
         return ResponseEntity.ok(reviews);
     }
 
     // 리뷰 상세 조회
     @GetMapping("/reviews/{id}")
-    public ResponseEntity<ReviewInfoDto> getReviewById(@PathVariable Long id) {
-        ReviewInfoDto reviewInfo = reviewService.getReviewById(id);
+    public ResponseEntity<ReviewDetailDto> getReviewById(@PathVariable Long id) {
+        ReviewDetailDto reviewDetailDto = reviewService.getReviewById(id);
 
-        return ResponseEntity.ok(reviewInfo);
+        return ResponseEntity.ok(reviewDetailDto);
     }
 
 }

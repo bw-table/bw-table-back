@@ -3,10 +3,7 @@ package com.zero.bwtableback.restaurant.service;
 import com.zero.bwtableback.common.service.ImageUploadService;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
-import com.zero.bwtableback.reservation.entity.Reservation;
-import com.zero.bwtableback.reservation.entity.ReservationStatus;
-import com.zero.bwtableback.reservation.repository.ReservationRepository;
-import com.zero.bwtableback.restaurant.dto.ReviewInfoDto;
+import com.zero.bwtableback.restaurant.dto.ReviewDetailDto;
 import com.zero.bwtableback.restaurant.dto.ReviewUpdateReqDto;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.entity.ReviewImage;
@@ -22,7 +19,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -30,9 +26,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -98,31 +92,31 @@ public class ReviewService {
     }
 
     // 식당 리뷰 목록 조회
-    public List<ReviewInfoDto> getReviewsByRestaurant(Long restaurantId, Pageable pageable) {
+    public List<ReviewDetailDto> getReviewsByRestaurant(Long restaurantId, Pageable pageable) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found with id: " + restaurantId));
 
         Page<Review> reviews = reviewRepository.findByRestaurant_Id(restaurantId, pageable);
 
         return reviews.stream()
-                .map(this::convertToInfoDto)
+                .map(this::convertToDetailDto)
                 .collect(Collectors.toList());
     }
 
     // 리뷰 상세 조회 (필요없음)
-    public ReviewInfoDto getReviewById(Long id) {
+    public ReviewDetailDto getReviewById(Long id) {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Review not found with id: " + id));
 
-        return convertToInfoDto(review);
+        return convertToDetailDto(review);
     }
 
-    private ReviewInfoDto convertToInfoDto(Review review) {
+    private ReviewDetailDto convertToDetailDto(Review review) {
         List<String> images = review.getImages().stream()
                 .map(ReviewImage::getImageUrl)
                 .collect(Collectors.toList());
 
-        return ReviewInfoDto.builder()
+        return ReviewDetailDto.builder()
                 .id(review.getId())
                 .content(review.getContent())
                 .rating(review.getRating())
@@ -145,7 +139,7 @@ public class ReviewService {
 
         Review review = findRestaurantAndReview(reviewId, restaurantId);
 
-        if (!review.getMember().equals(member)) {
+        if (!review.getMember().getId().equals(member.getId())) {
             throw new AccessDeniedException("You can only update your own reviews");
         }
 
@@ -210,7 +204,7 @@ public class ReviewService {
     public ResponseEntity<String> deleteReview(Long reviewId, Long restaurantId, Member member) throws AccessDeniedException {
         Review review = findRestaurantAndReview(reviewId, restaurantId);
 
-        if (!review.getMember().equals(member)) {
+        if (!review.getMember().getId().equals(member.getId())) {
             if (!isRestaurantOwner(member, restaurantId)) {
                 throw new AccessDeniedException("Reviews only can be deleted by owners and writers");
             }
