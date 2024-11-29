@@ -63,12 +63,12 @@ public class NotificationEmitterService {
         try {
             emitter.send(SseEmitter.event()
                     .name("reservation-notification")
-                    .id(emitterId) // 이벤트 ID를 emitterId로 설정
+                    .id(emitterId)
                     .data(message));
         } catch (Exception e) {
             log.error("알림 전송이 실패했습니다. {}: {}", emitterId, e.getMessage());
-            emitter.completeWithError(e); // 연결 종료
-            emitterRepository.removeEmitter(emitterId); // emitter 제거
+            emitter.completeWithError(e);
+            emitterRepository.removeEmitter(emitterId);
         }
     }
 
@@ -96,7 +96,7 @@ public class NotificationEmitterService {
     private String createNotificationMessage(Notification notification) {
         Map<String, Object> notificationData = new HashMap<>();
         notificationData.put("message", notification.getMessage());
-        notificationData.put("customerId", notification.getReservation().getMember().getId());
+        notificationData.put("guestId", notification.getReservation().getMember().getId());
         notificationData.put("ownerId", notification.getReservation().getRestaurant().getMember().getId());
         notificationData.put("reservationId", notification.getReservation().getId());
         notificationData.put("status", notification.getStatus());
@@ -107,4 +107,5 @@ public class NotificationEmitterService {
             throw new CustomException(ErrorCode.JSON_PARSING_FAILED);
         }
     }
+
 }

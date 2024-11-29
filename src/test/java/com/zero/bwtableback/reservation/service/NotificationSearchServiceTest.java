@@ -44,7 +44,7 @@ class NotificationSearchServiceTest {
 
     @DisplayName("고객에게 전송된 알림 목록을 조회한다")
     @Test
-    void givenGuestId_whenGetNotificationsSentToCustomer_thenReturnNotifications() {
+    void givenGuestId_whenGetNotificationsSentToGuest_thenReturnNotifications() {
         // given
         Long guestId = 1L;
         Pageable pageable = PageRequest.of(0, 10);
@@ -69,7 +69,7 @@ class NotificationSearchServiceTest {
 
         Page<Notification> notifications = new PageImpl<>(Collections.singletonList(notification), pageable, 1);
         when(notificationRepository.findByReservation_Member_IdAndStatusOrderBySentTimeDesc(
-                customerId, NotificationStatus.SENT, pageable))
+                guestId, NotificationStatus.SENT, pageable))
                 .thenReturn(notifications);
 
         // when
@@ -137,7 +137,7 @@ class NotificationSearchServiceTest {
         NotificationType type = NotificationType.REMINDER_24H;
 
         when(restaurant.getName()).thenReturn("Test Restaurant");
-        when(member.getName()).thenReturn("Test Customer");
+        when(member.getName()).thenReturn("Test Guest");
         when(member.getId()).thenReturn(memberId);
 
         // when
@@ -147,7 +147,7 @@ class NotificationSearchServiceTest {
         assertThat(notificationData).containsEntry("reservationDate", "2024-11-12");
         assertThat(notificationData).containsEntry("reservationTime", "18:00");
         assertThat(notificationData).containsEntry("restaurantName", "Test Restaurant");
-        assertThat(notificationData).containsEntry("customerName", "Test Customer");
+        assertThat(notificationData).containsEntry("guestName", "Test Guest");
         assertThat(notificationData).containsEntry("type", type);
     }
 

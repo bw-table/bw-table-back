@@ -3,7 +3,6 @@ package com.zero.bwtableback.reservation.service;
 import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.reservation.dto.NotificationResDto;
-import com.zero.bwtableback.reservation.entity.Notification;
 import com.zero.bwtableback.reservation.entity.NotificationStatus;
 import com.zero.bwtableback.reservation.entity.NotificationType;
 import com.zero.bwtableback.reservation.entity.Reservation;
@@ -22,15 +21,17 @@ public class NotificationSearchService {
     private final NotificationRepository notificationRepository;
 
     // 고객 회원에게 전송된 알림 목록 조회
-    public Page<Notification> getNotificationsSentToCustomer(Long customerId, Pageable pageable) {
+    public Page<NotificationResDto> getNotificationsSentToGuest(Long guestId, Pageable pageable) {
         return notificationRepository.findByReservation_Member_IdAndStatusOrderBySentTimeDesc(
-                customerId, SENT, pageable);
+                guestId, NotificationStatus.SENT, pageable)
+                .map(NotificationResDto::fromEntity);
     }
 
     // 가게 주인 회원에게 전송된 알림 목록 조회
-    public Page<Notification> getNotificationsSentToOwner(Long ownerId, Pageable pageable) {
+    public Page<NotificationResDto> getNotificationsSentToOwner(Long ownerId, Pageable pageable) {
         return notificationRepository.findByReservation_Restaurant_Member_IdAndStatusOrderBySentTimeDesc(
-                ownerId, NotificationStatus.SENT, pageable);
+                ownerId, NotificationStatus.SENT, pageable)
+                .map(NotificationResDto::fromEntity);
     }
 
     // 클라이언트에서 직접 메시지를 작성을 원하는 경우 활용할 수 있는 데이터 반환
@@ -40,7 +41,7 @@ public class NotificationSearchService {
         notificationData.put("reservationDate", reservation.getReservationDate().toString());
         notificationData.put("reservationTime", reservation.getReservationTime().toString());
         notificationData.put("restaurantName", reservation.getRestaurant().getName());
-        notificationData.put("customerName", reservation.getMember().getName());
+        notificationData.put("guestName", reservation.getMember().getName());
         notificationData.put("type", type);
         return notificationData;
     }
