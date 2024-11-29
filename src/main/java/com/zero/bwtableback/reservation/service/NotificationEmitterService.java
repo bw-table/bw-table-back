@@ -48,23 +48,23 @@ public class NotificationEmitterService {
     // 회원의 활성화된 emitter에 알림 전송
     public void sendNotificationToConnectedUser(Long memberId, Notification notification) {
         List<String> emitterIds = emitterRepository.findAllEmitterIdsByMemberId(memberId);
-        String jsonMessage = createNotificationMessage(notification);
 
         emitterIds.forEach(emitterId -> {
             SseEmitter emitter = emitterRepository.findById(emitterId);
             if (emitter != null) {
-                sendMessageByEmitter(emitter, emitterId, jsonMessage);
+                sendMessageByEmitter(emitter, emitterId, notification);
             }
         });
     }
 
     // 해당 emitter로 메시지 전송
-    private void sendMessageByEmitter(SseEmitter emitter, String emitterId, String message) {
+    private void sendMessageByEmitter(SseEmitter emitter, String emitterId, Notification notification) {
         try {
+            String jsonMessage = createNotificationMessage(notification);
             emitter.send(SseEmitter.event()
                     .name("reservation-notification")
-                    .id(emitterId)
-                    .data(message));
+                    .id(String.valueOf(notification.getId()))
+                    .data(jsonMessage));
         } catch (Exception e) {
             log.error("알림 전송이 실패했습니다. {}: {}", emitterId, e.getMessage());
             emitter.completeWithError(e);
