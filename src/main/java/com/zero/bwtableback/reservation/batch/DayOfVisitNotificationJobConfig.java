@@ -65,7 +65,7 @@ public class DayOfVisitNotificationJobConfig {
         return reservation -> {
             Notification notification = notificationScheduleService.createAndSaveNotification(
                     reservation, NotificationType.DAY_OF_VISIT);
-            log.info("예약 알림 생성 완료: {}", reservation.getId());
+            log.info("알림 생성 완료: 예약 id {}", reservation.getId());
             return notification;
         };
     }
@@ -74,7 +74,7 @@ public class DayOfVisitNotificationJobConfig {
     public ItemWriter<Notification> dayOfVisitNotificationWriter() {
         return notifications -> notifications.forEach(notification -> {
             notificationScheduleService.sendNotification(notification);
-            log.info("예약 알림 전송 완료: {}", notification.getId());
+            log.info("알림 전송 완료: 예약 알림 id {}", notification.getId());
         });
     }
 
