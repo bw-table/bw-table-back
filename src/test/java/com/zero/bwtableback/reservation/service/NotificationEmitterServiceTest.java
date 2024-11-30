@@ -116,13 +116,13 @@ public class NotificationEmitterServiceTest {
     private Notification createMockNotification(Long memberId, Long ownerId) {
         Notification notification = mock(Notification.class);
         Reservation reservation = mock(Reservation.class);
-        Member customer = mock(Member.class);
+        Member guest = mock(Member.class);
         Member owner = mock(Member.class);
         Restaurant restaurant = mock(Restaurant.class);
 
         given(notification.getReservation()).willReturn(reservation);
-        given(reservation.getMember()).willReturn(customer);
-        given(customer.getId()).willReturn(memberId);
+        given(reservation.getMember()).willReturn(guest);
+        given(guest.getId()).willReturn(memberId);
         given(reservation.getRestaurant()).willReturn(restaurant);
         given(restaurant.getMember()).willReturn(owner);
         given(owner.getId()).willReturn(ownerId);

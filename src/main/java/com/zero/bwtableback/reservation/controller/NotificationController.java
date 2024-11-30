@@ -1,7 +1,6 @@
 package com.zero.bwtableback.reservation.controller;
 
 import com.zero.bwtableback.reservation.dto.NotificationResDto;
-import com.zero.bwtableback.reservation.entity.Notification;
 import com.zero.bwtableback.reservation.entity.NotificationType;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.service.NotificationEmitterService;
@@ -13,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,6 +31,7 @@ public class NotificationController {
     private final NotificationEmitterService notificationEmitterService;
     private final NotificationSearchService notificationSearchService;
 
+    @PreAuthorize("hasRole('GUEST') or hasRole('OWNER')")
     @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(@AuthenticationPrincipal MemberDetails memberDetails,
                                 @RequestHeader(value = "Last-Event-ID", required = false, defaultValue = "")
@@ -38,26 +39,27 @@ public class NotificationController {
         return notificationEmitterService.subscribe(memberDetails.getMemberId(), lastEventId);
     }
 
-    // 고객 회원에게 전송된 알림 목록 조회
-    @GetMapping("/customers/{userId}")
-    public Page<NotificationResDto> getCustomerNotifications(@PathVariable Long userId, Pageable pageable) {
-        Page<Notification> notifications = notificationSearchService.getNotificationsSentToCustomer(userId, pageable);
-        return notifications.map(NotificationResDto::fromEntity);
+    @PreAuthorize("hasRole('GUEST')")
+    @GetMapping("/guests")
+    public Page<NotificationResDto> getGuestNotifications(@AuthenticationPrincipal MemberDetails memberDetails,
+                                                          Pageable pageable) {
+        return notificationSearchService.getNotificationsSentToGuest(memberDetails.getMemberId(), pageable);
     }
 
-    // 가게 주인 회원에게 전송된 알림 목록 조회
-    @GetMapping("/owners/{ownerId}")
-    public Page<NotificationResDto> getOwnerNotifications(@PathVariable Long ownerId, Pageable pageable) {
-        Page<Notification> notifications = notificationSearchService.getNotificationsSentToOwner(ownerId, pageable);
-        return notifications.map(NotificationResDto::fromEntity);
+    @PreAuthorize("hasRole('OWNER')")
+    @GetMapping("/owners")
+    public Page<NotificationResDto> getOwnerNotifications(@AuthenticationPrincipal MemberDetails memberDetails,
+                                                          Pageable pageable) {
+        return notificationSearchService.getNotificationsSentToOwner(memberDetails.getMemberId(), pageable);
     }
 
-    // 메시지 생성에 사용할 수 있는 알림 정보 반환
+    @PreAuthorize("hasRole('GUEST') or hasRole('OWNER')")
     @GetMapping("/reservations/{reservationId}/data")
-    public Map<String, Object> createNotificationData(@PathVariable Long reservationId,
-                                                      @RequestParam NotificationType type) {
+    public Map<String, Object> getNotificationDataForMessage(@AuthenticationPrincipal MemberDetails memberDetails,
+                                                             @PathVariable Long reservationId,
+                                                             @RequestParam NotificationType type) {
         Reservation reservation = reservationService.findReservationById(reservationId);
-        return notificationSearchService.createNotificationData(reservation, type);
+        return notificationSearchService.createNotificationData(memberDetails.getMemberId(), reservation, type);
     }
 
 }

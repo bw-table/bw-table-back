@@ -67,9 +67,9 @@ public class NotificationScheduleService {
 
     // 가게 주인과 고객에게 알림 전송
     public void sendNotification(Notification notification) {
-        Long customerId = notification.getReservation().getMember().getId();
+        Long guestId = notification.getReservation().getMember().getId();
         Long ownerId = notification.getReservation().getRestaurant().getMember().getId();
-        notificationEmitterService.sendNotificationToCustomerAndOwner(customerId, ownerId, notification);
+        notificationEmitterService.sendNotificationToGuestAndOwner(guestId, ownerId, notification);
         markAsSent(notification);
     }
 
