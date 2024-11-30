@@ -39,7 +39,6 @@ public class Notification {
     private String message;
 
     @Setter
-    @Column(updatable = false)
     private LocalDateTime sentTime;
 
     @Setter
