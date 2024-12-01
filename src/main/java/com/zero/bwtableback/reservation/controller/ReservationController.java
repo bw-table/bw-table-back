@@ -85,10 +85,13 @@ public class ReservationController {
     @PostMapping("/complete")
     public ResponseEntity<?> completeReservation(@RequestBody PaymentReqDto paymentReqDto,
                                                  @AuthenticationPrincipal MemberDetails memberDetails) {
+        System.out.println(paymentReqDto.getImpUid());
+        System.out.println(paymentReqDto.getReservationToken());
         ReservationCreateReqDto reservationInfo = reservationService.getReservationInfo(paymentReqDto.getReservationToken());
-        Payment payment = paymentService.verifyPayment(paymentReqDto);
+//        Payment payment = paymentService.verifyPayment(paymentReqDto);
 
-        if ("paid".equals(payment.getStatus())) {
+//  FIXME      if ("paid".equals(payment.getStatus())) {
+        if (true) {
             String lockKey = "lock:reservation:" + reservationInfo.restaurantId() + ":" + reservationInfo.reservationDate() + ":" + reservationInfo.reservationTime();
             RLock lock = redissonClient.getLock(lockKey);
 
@@ -100,11 +103,6 @@ public class ReservationController {
                         reservationService.reduceReservedCount(reservationInfo, memberDetails.getUsername());
                         // 예약 정보 저장
                         response = reservationService.saveReservation(reservationInfo, memberDetails.getMemberId());
-                        // Redis에서 임시 예약 정보 삭제
-                        redisTemplate.delete("reservation:token:" + paymentReqDto.getReservationToken());
-                    } finally {
-                        lock.unlock(); // 락 해제
-                    }
                     if (response != null) {
                         // 채팅방 생성
                         chatService.createChatRoom(response.getReservation());
@@ -113,7 +111,10 @@ public class ReservationController {
                         reservationService.emitNotification(response.getReservation().reservationId());
 
                         // 결제 정보 저장
-                        paymentService.verifiedPaymentSave(payment, response);
+//                        paymentService.verifiedPaymentSave(payment, response);
+                    }
+                    } finally {
+                        lock.unlock(); // 락 해제
                     }
                     return ResponseEntity.ok(response);
                 } else {

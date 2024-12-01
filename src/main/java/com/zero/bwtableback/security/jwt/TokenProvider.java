@@ -39,7 +39,8 @@ public class TokenProvider {
 
     public String createAccessToken(String email, Role role) {
         Date now = new Date();
-        Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds);
+//     FIXME 테스트용 만료시간 변경   Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds);
+        Date validity = new Date(now.getTime() + 86400000);
 
         return Jwts.builder()
                 .setSubject(email)

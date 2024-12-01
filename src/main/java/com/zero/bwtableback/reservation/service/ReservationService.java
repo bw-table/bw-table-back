@@ -110,12 +110,15 @@ public class ReservationService {
     }
 
     /**
-     * 레디스에 임시 저장 예약 정보 반환
+     * 레디스에 임시 저장 예약 정보 반환 및 삭제
      */
     public ReservationCreateReqDto getReservationInfo(String reservationToken
     ) {
         String reservationKey = "reservation:token:" + reservationToken;
         Object redisValue = redisTemplate.opsForValue().get(reservationKey);
+
+        // FIXME NGRINDER 테스트 중 Redis에서 임시 예약 정보 삭제
+//        redisTemplate.delete("reservation:token:" + reservationToken);
 
         if (redisValue == null) {
             throw new RuntimeException("예약 토큰이 존재하지 않습니다.");
