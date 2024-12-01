@@ -93,31 +93,27 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody EmailLoginReqDto loginReqDto,
                                    HttpServletRequest request,
                                    HttpServletResponse response) {
-        MemberDto memberDto = authService.authenticateMember(loginReqDto);
         try {
-            String accessToken = getJwtFromRequest(request);
+            MemberDto authenticatedMember = authService.authenticateMember(loginReqDto);
+            String accessToken = tokenProvider.extractToken(request);
 
-            // 액세스 토큰이 유효한 경우
-            if (StringUtils.hasText(accessToken) && tokenProvider.validateAccessToken(accessToken)) {
-                // 기존의 액세스 토큰과 사용자 정보를 반환
-                return ResponseEntity.ok(authService.handleExistingToken(accessToken));
+            if (StringUtils.hasText(accessToken)) {
+                if (tokenProvider.validateAccessToken(accessToken)) {
+                    // 유효한 토큰이 있는 경우, 기존 토큰 정보 반환
+                    return ResponseEntity.ok(authService.handleExistingToken(accessToken));
+                } else {
+                    // 토큰이 만료된 경우, 401 에러 반환
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("토큰이 만료되었습니다.");
+                }
+            } else {
+                // 토큰이 없는 경우, 새로운 로그인 프로세스 진행
+                return ResponseEntity.ok(authService.login(authenticatedMember, request, response));
             }
-            // 액세스 토큰이 없거나 유효하지 않은 경우, 새로운 로그인 처리
-            LoginResDto loginResDto = authService.login(memberDto, request, response);
-            return ResponseEntity.ok(loginResDto);
-
         } catch (CustomException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Unauthorized: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Forbidden: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 정보가 유효하지 않습니다.");
         }
-    }
-
-    private String getJwtFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7); // "Bearer " 부분을 제거하고 토큰 반환
-        }
-        return null; // 토큰이 없으면 null 반환
     }
 
     /**

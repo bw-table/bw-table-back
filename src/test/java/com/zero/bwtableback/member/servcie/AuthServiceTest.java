@@ -364,7 +364,7 @@ class AuthServiceTest {
         when(memberRepository.findByEmail(email)).thenReturn(Optional.of(member));
 
         // when
-        authService.logout(email, request, response);
+        authService.logout(email, response);
 
         // then
         ArgumentCaptor<Cookie> cookieCaptor = ArgumentCaptor.forClass(Cookie.class); // HttpServletResponse에 추가된 쿠키 캡처

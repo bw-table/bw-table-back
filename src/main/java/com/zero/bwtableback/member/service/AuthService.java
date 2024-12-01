@@ -123,26 +123,27 @@ public class AuthService {
      * 로그인
      */
     public LoginResDto login(MemberDto memberDto, HttpServletRequest request, HttpServletResponse response) {
+        try {
+            String accessToken = tokenProvider.createAccessToken(memberDto.getEmail(), memberDto.getRole());
+            String refreshToken = tokenProvider.createRefreshToken(memberDto.getId().toString());
 
-        String accessToken = tokenProvider.createAccessToken(memberDto.getEmail(), memberDto.getRole());
-        String refreshToken = tokenProvider.createRefreshToken(memberDto.getId().toString());
+            // HttpOnly 쿠키에 리프레시 토큰 저장
+            saveRefreshTokenToCookie(refreshToken, response);
 
-        // 회원 상태 조회
+            // Redis에 리프레시 토큰 저장
+            saveRefreshTokenToRedis(memberDto.getId(), refreshToken);
 
-        // HttpOnly 쿠키에 리프레시 토큰 저장
-        saveRefreshTokenToCookie(refreshToken, response);
+            // 레스토랑 ID 조회 (사장님일 경우)
+            Long restaurantId = getRestaurantIdIfOwner(memberDto);
 
-        // Redis에 리프레시 토큰 저장
-        saveRefreshTokenToRedis(memberDto.getId(), refreshToken);
-
-        // 레스토랑 ID 조회 (사장님일 경우)
-        Long restaurantId = getRestaurantIdIfOwner(memberDto);
-
-
-        return new LoginResDto(accessToken, memberDto, restaurantId);
+            return new LoginResDto(accessToken, memberDto, restaurantId);
+        } catch (Exception e) {
+            log.error("로그인 실패: {}", memberDto.getEmail(), e);
+            throw new IllegalArgumentException("로그인 실패", e);
+        }
     }
 
-    // 회원 인증
+    // 이메일과 비밀번호 검증
     public MemberDto authenticateMember(EmailLoginReqDto loginReqDto) {
         Member member = memberRepository.findByEmail(loginReqDto.getEmail())
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_CREDENTIALS));
