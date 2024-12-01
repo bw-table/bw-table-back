@@ -35,6 +35,9 @@ public class PaymentService {
     @Value("${IMP_API_SECRET}")
     private String secretKey;
 
+    @Value("${IMP_CODE}")
+    private String impUid;
+
     private IamportClient iamportClient;
 
     private final PaymentRepository paymentRepository;
@@ -117,7 +120,6 @@ public class PaymentService {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESERVATION_NOT_FOUND));
 
-        String impUid = reservation.getRestaurant().getImpCode();
         int deposit = reservation.getRestaurant().getDeposit();
 
         HttpsURLConnection conn = null;

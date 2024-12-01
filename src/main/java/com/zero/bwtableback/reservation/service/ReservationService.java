@@ -301,7 +301,7 @@ public class ReservationService {
         notificationScheduleService.scheduleImmediateNotification(reservation, NotificationType.CONFIRMATION);
         notificationScheduleService.schedule24HoursBeforeNotification(reservation);
 
-        RestaurantDetailDto restaurantDetailDto = restaurantService.getRestaurantById(restaurantId);
+        RestaurantDetailDto restaurantDetailDto = restaurantService.getRestaurantById(restaurant.getId());
         return PaymentCompleteResDto.fromEntities(restaurantDetailDto, reservation);
     }
 
