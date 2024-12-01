@@ -32,73 +32,46 @@ public class MemberService {
      */
     public Page<MemberDto> getMembers(Pageable pageable) {
         return memberRepository.findAll(pageable)
-                .map(this::convertToDto);
+                .map(MemberDto::from);
     }
 
     /**
-     * 단일 회원 정보 조회
+     * 회원 정보 조회
      */
-    public MemberDto getMemberById(Long memberId) {
+    public MemberDto getMember(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        return convertToDto(member);
+        return MemberDto.from(member);
     }
 
     /**
      * 본인 정보 조회
      */
     public MemberPrivateDto getMyInfo(Long memberId) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        return convertToPrivateDto(member);
+        Member member = getMemberById(memberId);
+        return MemberPrivateDto.from(member);
     }
 
-    private MemberDto convertToDto(Member member) {
-        return new MemberDto(
-                member.getId(),
-                member.getEmail(),
-                member.getName(),
-                member.getNickname(),
-                member.getPhone(),
-                member.getRole(),
-                member.getProfileImage(),
-                member.getBusinessNumber());
-    }
-
-    private MemberPrivateDto convertToPrivateDto(Member member) {
-        return new MemberPrivateDto(
-                member.getId(),
-                member.getEmail(),
-                member.getName(),
-                member.getNickname(),
-                member.getPhone(),
-                member.getRole(),
-                member.getProfileImage(),
-                member.getBusinessNumber(),
-                member.getLoginType());
-    }
-
-    public Page<ReservationResDto> getMyReservations(Pageable pageable, String email) {
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
+    public Page<ReservationResDto> getMyReservations(Pageable pageable, Long memberId) {
+        Member member = getMemberById(memberId);
         return reservationRepository.findByMemberId(member.getId(), pageable)
                 .map(ReservationResDto::fromEntity);
     }
 
-    public Page<ReviewDetailDto> getMyReviews(Pageable pageable, String email) {
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
+    public Page<ReviewDetailDto> getMyReviews(Pageable pageable, Long memberId) {
+        Member member = getMemberById(memberId);
         return reviewRepository.findByMemberIdOrderByRestaurantId(member.getId(), pageable)
                 .map(ReviewDetailDto::fromEntity);
     }
 
-    public Page<ChatRoomCreateResDto> getMyChatRooms(Pageable pageable, String email) {
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
+    public Page<ChatRoomCreateResDto> getMyChatRooms(Pageable pageable, Long memberId) {
+        Member member = getMemberById(memberId);
         return chatRoomRepository.findChatRoomsByMemberIdOrderByLastMessageTime(member.getId(), pageable)
                 .map(ChatRoomCreateResDto::fromEntity);
+    }
+
+    private Member getMemberById(Long memberId) {
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 }

@@ -235,9 +235,8 @@ public class AuthService {
     /**
      * 사용자 로그아웃 처리
      */
-    public void logout(String email, HttpServletResponse response) {
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    public void logout(Long memberId, HttpServletResponse response) {
+        Member member = getMemberById(memberId);
 
         String key = "refresh_token:" + member.getId();
         redisTemplate.delete(key);
@@ -256,8 +255,7 @@ public class AuthService {
      * 로그아웃 처리 후
      */
     public void withdraw(Long memberId, HttpServletResponse response) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        Member member = getMemberById(memberId);
 
         String key = "refresh_token:" + member.getId();
         redisTemplate.delete(key);
@@ -274,5 +272,10 @@ public class AuthService {
 
         member.setStatus(Status.INACTIVE);
         memberRepository.save(member);
+    }
+
+    public Member getMemberById(Long memberId) {
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 }

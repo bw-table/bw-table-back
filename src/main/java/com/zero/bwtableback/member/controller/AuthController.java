@@ -148,9 +148,8 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@AuthenticationPrincipal MemberDetails memberDetails,
                                     HttpServletResponse response) {
-        String email = memberDetails.getUsername();
 
-        authService.logout(email, response);
+        authService.logout(memberDetails.getMemberId(), response);
 
         return ResponseEntity.ok("로그아웃이 완료되었습니다.");
     }
@@ -164,7 +163,7 @@ public class AuthController {
                                             HttpServletResponse response) {
         authService.withdraw(memberDetails.getMemberId(), response);
 
-        return ResponseEntity.ok().body("회원탈퇴가 완료되었습니다.");
+        return ResponseEntity.ok("회원탈퇴가 완료되었습니다.");
     }
 
 }
