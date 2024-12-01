@@ -52,24 +52,33 @@ public class MemberService {
         return MemberPrivateDto.from(member);
     }
 
+    /**
+     * 나의 예약 목록 조회
+     */
     public Page<ReservationResDto> getMyReservations(Pageable pageable, Long memberId) {
         Member member = getMemberById(memberId);
         return reservationRepository.findByMemberId(member.getId(), pageable)
                 .map(ReservationResDto::fromEntity);
     }
 
+    /**
+     * 나의 리뷰 목록 조회
+     */
     public Page<ReviewDetailDto> getMyReviews(Pageable pageable, Long memberId) {
         Member member = getMemberById(memberId);
         return reviewRepository.findByMemberIdOrderByRestaurantId(member.getId(), pageable)
                 .map(ReviewDetailDto::fromEntity);
     }
 
+    /**
+     * 나의 채팅방 조회
+     */
     public Page<ChatRoomCreateResDto> getMyChatRooms(Pageable pageable, Long memberId) {
         Member member = getMemberById(memberId);
         return chatRoomRepository.findChatRoomsByMemberIdOrderByLastMessageTime(member.getId(), pageable)
                 .map(ChatRoomCreateResDto::fromEntity);
     }
-
+    
     private Member getMemberById(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));

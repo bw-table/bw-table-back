@@ -163,7 +163,6 @@ public class AuthService {
     // 리프레시 토큰으로 액세스 토큰 갱신
     public LoginResDto renewAccessTokenWithRefreshToken(String refreshToken) {
         String email = tokenProvider.getUsername(refreshToken);
-
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
@@ -179,7 +178,6 @@ public class AuthService {
     // 리프레시 토큰 검증
     public void validateRefreshToken(String refreshToken, Long memberId) {
         String key = "refresh_token:" + memberId;
-
         String storedRefreshToken = redisTemplate.opsForValue().get(key);
 
         if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
@@ -203,10 +201,9 @@ public class AuthService {
         try {
             redisTemplate.opsForValue().set(key, refreshToken);
         } catch (RedisConnectionFailureException e) {
-            System.err.println("Redis에 연결할 수 없습니다: " + e.getMessage());
+            throw new CustomException(ErrorCode.REDIS_CONNECTION_FAILURE);
         } catch (Exception e) {
-            // 다른 예외 처리
-            System.err.println("예기치 않은 오류 발생: " + e.getMessage());
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 
