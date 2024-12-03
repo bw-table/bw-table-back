@@ -78,7 +78,7 @@ public class MemberService {
         return chatRoomRepository.findChatRoomsByMemberIdOrderByLastMessageTime(member.getId(), pageable)
                 .map(ChatRoomCreateResDto::fromEntity);
     }
-    
+
     private Member getMemberById(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));

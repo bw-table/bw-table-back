@@ -26,9 +26,7 @@ import java.security.Principal;
 public class ChatController {
     private final ChatService chatService;
 
-    // 채팅방 생성 엔드포인트는 예약 확정 시 자동으로 생성
-
-    // FIXME 특정 채팅방 조회 (필요 여부 판단)
+    // 채팅방 조회
     @GetMapping("/{chatRoomId}")
     public ResponseEntity<ChatRoom> getChatRoomById(@PathVariable Long chatRoomId) {
         ChatRoom chatRoom = chatService.getChatRoomById(chatRoomId);
@@ -51,8 +49,6 @@ public class ChatController {
     /**
      * 메시지 전송
      *
-     * TODO Redis에 캐싱 및 배치 작업 고려
-     * TODO 첫 연결 시 메시지
      * 임시로 DB에 저장
      */
     @MessageMapping("/send/{chatRoomId}")

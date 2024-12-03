@@ -44,12 +44,10 @@ public class ChatService {
      * @return 예약 정보, 가게 정보
      */
     public PaymentCompleteResDto createChatRoom(ReservationResDto reservationResDto) {
-        // 식당 및 예약 정보 조회
         Restaurant restaurant = getRestaurant(reservationResDto.restaurantId());
         Reservation reservation = getReservation(reservationResDto.reservationId());
         Member member = getMember(reservationResDto.memberId());
 
-        // 채팅방 이름 생성
         String roomName = generateRoomName(restaurant.getName(), reservationResDto.reservationDate(), reservationResDto.reservationTime());
 
         ChatRoom chatRoom = new ChatRoom();
@@ -64,8 +62,6 @@ public class ChatService {
         RestaurantDetailDto restaurantDetailDto = restaurantService.getRestaurantById(restaurant.getId());
         return PaymentCompleteResDto.fromEntities(restaurantDetailDto, reservation);
     }
-
-
 
     // 식당 조회
     private Restaurant getRestaurant(Long restaurantId) {

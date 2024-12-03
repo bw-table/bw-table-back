@@ -271,7 +271,7 @@ public class AuthService {
         memberRepository.save(member);
     }
 
-    public Member getMemberById(Long memberId) {
+    private Member getMemberById(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
