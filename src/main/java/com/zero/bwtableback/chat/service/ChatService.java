@@ -19,13 +19,14 @@ import com.zero.bwtableback.restaurant.dto.RestaurantDetailDto;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 @Service
 @RequiredArgsConstructor
@@ -50,17 +51,22 @@ public class ChatService {
 
         String roomName = generateRoomName(restaurant.getName(), reservationResDto.reservationDate(), reservationResDto.reservationTime());
 
-        ChatRoom chatRoom = new ChatRoom();
-        chatRoom.setRoomName(roomName);
-        chatRoom.setStatus(ChatRoomStatus.ACTIVE);
-        chatRoom.setRestaurant(restaurant);
-        chatRoom.setReservation(reservation);
-        chatRoom.setMember(member);
-
+        ChatRoom chatRoom = createChatRoomEntity(roomName, restaurant, reservation, member);
         chatRoomRepository.save(chatRoom);
 
         RestaurantDetailDto restaurantDetailDto = restaurantService.getRestaurantById(restaurant.getId());
         return PaymentCompleteResDto.fromEntities(restaurantDetailDto, reservation);
+    }
+
+    // 채팅방 객체 생성
+    private ChatRoom createChatRoomEntity(String roomName, Restaurant restaurant, Reservation reservation, Member member) {
+        return ChatRoom.builder()
+                .roomName(roomName)
+                .status(ChatRoomStatus.ACTIVE)
+                .restaurant(restaurant)
+                .reservation(reservation)
+                .member(member)
+                .build();
     }
 
     // 식당 조회
@@ -92,7 +98,7 @@ public class ChatService {
      */
     public ChatRoom getChatRoomById(Long chatRoomId) {
         return chatRoomRepository.findById(chatRoomId)
-                .orElseThrow(() -> new RuntimeException("채팅방을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_NOT_FOUND));
     }
 
     /**
@@ -103,7 +109,6 @@ public class ChatService {
                 .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
         chatRoom.setStatus(ChatRoomStatus.INACTIVE);
-
         chatRoomRepository.save(chatRoom);
     }
 
@@ -111,9 +116,6 @@ public class ChatService {
      * 특정 채팅방 전체 메시지 조회
      */
     public Page<MessageResDto> getMessages(Long chatRoomId, Pageable pageable) {
-        chatRoomRepository.findById(chatRoomId)
-                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_NOT_FOUND));
-
         return messageRepository.findByChatRoomIdOrderByTimestampDesc(chatRoomId, pageable)
                 .map(MessageResDto::fromEntity);
     }
@@ -122,25 +124,31 @@ public class ChatService {
      * 특정 채팅방 메시지 전송
      */
     public MessageResDto saveMessage(Long chatRoomId, String email, MessageReqDto messageReqDto) {
-        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
-                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+        ChatRoom chatRoom = getChatRoomById(chatRoomId);
 
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        Message message = Message.builder()
+        Message message = createMessageEntity(chatRoom, member, messageReqDto);
+        messageRepository.save(message);
+
+        return new MessageResDto(member.getNickname(), messageReqDto.getContent(), messageReqDto.getTimestamp());
+    }
+
+    // 메시지 객체 생성
+    private Message createMessageEntity(ChatRoom chatRoom, Member member, MessageReqDto messageReqDto) {
+        return Message.builder()
                 .content(messageReqDto.getContent())
                 .sender(member)
                 .chatRoom(chatRoom)
                 .restaurant(chatRoom.getRestaurant())
                 .timestamp(messageReqDto.getTimestamp())
                 .build();
-
-        messageRepository.save(message);
-
-        return new MessageResDto(member.getNickname(), messageReqDto.getContent(), messageReqDto.getTimestamp());
     }
 
+    /**
+     * 채팅방 활성화 여부 확인
+     */
     public boolean isChatRoomActive(Long chatRoomId) {
         ChatRoom chatRoom = getChatRoomById(chatRoomId);
         return ChatRoomStatus.ACTIVE.equals(chatRoom.getStatus());
