@@ -2,8 +2,6 @@ package com.zero.bwtableback.reservation.dto;
 
 import com.zero.bwtableback.reservation.entity.Notification;
 import com.zero.bwtableback.reservation.entity.NotificationType;
-import com.zero.bwtableback.reservation.entity.NotificationStatus;
-import java.time.LocalDateTime;
 
 public record NotificationResDto(
         Long id,

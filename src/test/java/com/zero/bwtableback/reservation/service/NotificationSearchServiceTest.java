@@ -13,7 +13,6 @@ import com.zero.bwtableback.reservation.repository.NotificationRepository;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -42,8 +41,8 @@ class NotificationSearchServiceTest {
     @InjectMocks
     private NotificationSearchService notificationSearchService;
 
-    @Test
     @DisplayName("고객에게 전송된 알림 목록을 조회한다")
+    @Test
     void givenCustomerId_whenGetNotificationsSentToCustomer_thenReturnNotifications() {
         // given
         Long customerId = 1L;
@@ -64,12 +63,11 @@ class NotificationSearchServiceTest {
                 .reservation(reservation)
                 .notificationType(NotificationType.CONFIRMATION)
                 .message("예약이 확정되었습니다.")
-                .scheduledTime(LocalDate.now().atStartOfDay())
                 .status(NotificationStatus.SENT)
                 .build();
 
-        Page<Notification> notifications = new PageImpl<>(Arrays.asList(notification), pageable, 1);
-        when(notificationRepository.findByReservation_Member_IdAndStatusOrderByScheduledTimeDesc(
+        Page<Notification> notifications = new PageImpl<>(Collections.singletonList(notification), pageable, 1);
+        when(notificationRepository.findByReservation_Member_IdAndStatusOrderBySentTimeDesc(
                 customerId, NotificationStatus.SENT, pageable))
                 .thenReturn(notifications);
 
@@ -104,12 +102,11 @@ class NotificationSearchServiceTest {
                 .reservation(reservation)
                 .notificationType(NotificationType.CONFIRMATION)
                 .message("예약이 확정되었습니다.")
-                .scheduledTime(LocalDate.now().atStartOfDay())
                 .status(NotificationStatus.SENT)
                 .build();
 
         Page<Notification> notifications = new PageImpl<>(Collections.singletonList(notification), pageable, 1);
-        when(notificationRepository.findByReservation_Restaurant_Member_IdAndStatusOrderByScheduledTimeDesc(
+        when(notificationRepository.findByReservation_Restaurant_Member_IdAndStatusOrderBySentTimeDesc(
                 ownerId, NotificationStatus.SENT, pageable))
                 .thenReturn(notifications);
 

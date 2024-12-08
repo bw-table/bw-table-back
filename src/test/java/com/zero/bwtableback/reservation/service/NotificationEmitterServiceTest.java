@@ -1,6 +1,7 @@
 package com.zero.bwtableback.reservation.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyLong;
@@ -14,6 +15,7 @@ import static org.mockito.Mockito.verify;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.reservation.entity.Notification;
+import com.zero.bwtableback.reservation.entity.NotificationType;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.repository.EmitterRepository;
 import com.zero.bwtableback.reservation.repository.NotificationRepository;
@@ -53,9 +55,10 @@ public class NotificationEmitterServiceTest {
 
         Notification notification = createMockNotification(memberId, ownerId);
         mockObjectMapperForJson();
-        mockEmitterRepositoryForSubscription(memberId, "1_12345");
+        mockEmitterRepositoryForSubscription(memberId);
 
-        given(notificationRepository.findByReservation_Member_IdAndIdGreaterThan(eq(memberId), anyLong()))
+        given(notificationRepository.findByReservation_Member_IdAndIdGreaterThanAndNotificationTypeIn(
+                eq(memberId), eq(123L), eq(List.of(NotificationType.CONFIRMATION, NotificationType.CANCELLATION))))
                 .willReturn(List.of(notification));
 
         // when
@@ -66,7 +69,8 @@ public class NotificationEmitterServiceTest {
         verify(emitterRepository, times(1))
                 .saveEmitter(anyString(), any(SseEmitter.class));
         verify(notificationRepository, times(1))
-                .findByReservation_Member_IdAndIdGreaterThan(eq(memberId), anyLong());
+                .findByReservation_Member_IdAndIdGreaterThanAndNotificationTypeIn(
+                        eq(memberId), eq(123L), eq(List.of(NotificationType.CONFIRMATION, NotificationType.CANCELLATION)));
     }
 
     @DisplayName("연결된 emitter를 조회하고 메시지 생성 메서드를 호출한다")
@@ -134,9 +138,9 @@ public class NotificationEmitterServiceTest {
         }
     }
 
-    private void mockEmitterRepositoryForSubscription(Long memberId, String emitterId) {
+    private void mockEmitterRepositoryForSubscription(Long memberId) {
         doNothing().when(emitterRepository).saveEmitter(anyString(), any(SseEmitter.class));
-        given(emitterRepository.findAllEmitterIdsByMemberId(memberId)).willReturn(List.of(emitterId));
+        given(emitterRepository.findAllEmitterIdsByMemberId(memberId)).willReturn(List.of("1_12345"));
     }
 
 }

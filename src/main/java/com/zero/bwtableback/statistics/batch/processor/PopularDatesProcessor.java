@@ -59,4 +59,5 @@ public class PopularDatesProcessor implements ItemProcessor<Restaurant, List<Sta
                         .build()
                 ).toList();
     }
+
 }

@@ -38,9 +38,6 @@ public class Notification {
     @Column(nullable = false)
     private String message;
 
-    @Column(nullable = false)
-    private LocalDateTime scheduledTime;
-
     @Setter
     private LocalDateTime sentTime;
 

@@ -3,15 +3,14 @@ package com.zero.bwtableback.reservation.batch;
 import com.zero.bwtableback.reservation.entity.Notification;
 import com.zero.bwtableback.reservation.entity.NotificationType;
 import com.zero.bwtableback.reservation.entity.Reservation;
+import com.zero.bwtableback.reservation.entity.ReservationStatus;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
 import com.zero.bwtableback.reservation.service.NotificationScheduleService;
 import java.time.LocalDate;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
@@ -26,7 +25,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 @Slf4j
 @Configuration
-@EnableBatchProcessing
 @RequiredArgsConstructor
 public class DayOfVisitNotificationJobConfig {
 
@@ -54,27 +52,29 @@ public class DayOfVisitNotificationJobConfig {
     @Bean
     @StepScope
     public ItemReader<Reservation> todayReservationsReader(ReservationRepository reservationRepository) {
-        LocalDate today = LocalDate.now();
-        List<Reservation> reservations = reservationRepository.findReservationsByDate(today);
-        return new ListItemReader<>(reservations);
+        return new ListItemReader<>(
+                reservationRepository.findByReservationDateAndReservationStatus(
+                        LocalDate.now(),
+                        ReservationStatus.CONFIRMED
+                )
+        );
     }
-    // 예약 알림 생성 Processor
+
     @Bean
     public ItemProcessor<Reservation, Notification> dayOfVisitNotificationProcessor() {
         return reservation -> {
             Notification notification = notificationScheduleService.createAndSaveNotification(
                     reservation, NotificationType.DAY_OF_VISIT);
-            log.info("예약 알림 생성 완료: {}", reservation.getId());
+            log.info("알림 생성 완료: 예약 id {}", reservation.getId());
             return notification;
         };
     }
 
-    // 예약 알림 전송 Writer
     @Bean
     public ItemWriter<Notification> dayOfVisitNotificationWriter() {
         return notifications -> notifications.forEach(notification -> {
             notificationScheduleService.sendNotification(notification);
-            log.info("예약 알림 전송 완료: {}", notification.getId());
+            log.info("알림 전송 완료: 예약 알림 id {}", notification.getId());
         });
     }
 

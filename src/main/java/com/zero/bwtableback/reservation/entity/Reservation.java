@@ -24,7 +24,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -58,10 +57,6 @@ public class Reservation extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ReservationStatus reservationStatus;
-
-    // Payment, Notification 엔티티 미작성으로 주석 처리
-//    @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL)
-//    private List<Payment> payments;
 
     @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL)
     private List<Notification> notifications;

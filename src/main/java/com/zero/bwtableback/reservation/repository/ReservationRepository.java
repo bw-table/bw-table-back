@@ -4,11 +4,9 @@ import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.reservation.dto.ReservationResDto;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.entity.ReservationStatus;
-import com.zero.bwtableback.restaurant.entity.Restaurant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,8 +15,10 @@ import org.springframework.data.repository.query.Param;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
-    @Query("SELECT r FROM Reservation r WHERE r.reservationDate = :date")
-    List<Reservation> findReservationsByDate(@Param("date") LocalDate date);
+    List<Reservation> findByReservationDateAndReservationStatus(
+            LocalDate reservationDate,
+            ReservationStatus reservationStatus
+    );
 
     Page<Reservation> findByMemberId(Long memberId, Pageable pageable);
 
