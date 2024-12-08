@@ -2,8 +2,8 @@ spring:
   activate:
     on-profile: prod
   multipart:
-    max-file-size: 5MB // 파일의 용량 제한
-    max-request-size: 10MB // 전체 최대 크기 용량 제한
+    max-file-size: 5MB
+    max-request-size: 10MB
   iamport:
     api:
       key: ${IMP_API_KEY}
@@ -18,9 +18,6 @@ spring:
       defer-datasource-initialization: true
       ddl-auto: update
     show-sql: true
-  #  sql:  // data.sql 을 위한 설정
-  #    init: create
-  #      mode: always
   batch:
     jdbc:
       initialize-schema: always
