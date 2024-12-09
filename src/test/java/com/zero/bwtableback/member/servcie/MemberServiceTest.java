@@ -15,7 +15,7 @@ import com.zero.bwtableback.reservation.dto.ReservationResDto;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.entity.ReservationStatus;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
-import com.zero.bwtableback.restaurant.dto.ReviewInfoDto;
+import com.zero.bwtableback.restaurant.dto.ReviewDetailDto;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.entity.Review;
 import com.zero.bwtableback.restaurant.repository.ReviewRepository;
@@ -99,7 +99,7 @@ class MemberServiceTest {
         when(memberRepository.findById(1L)).thenReturn(Optional.of(member));
 
         // when
-        MemberDto result = memberService.getMemberById(1L);
+        MemberDto result = memberService.getMember(1L);
         System.out.println(result.getName());
 
         // then
@@ -115,7 +115,7 @@ class MemberServiceTest {
 
         // when & then
         CustomException exception = assertThrows(CustomException.class, () -> {
-            memberService.getMemberById(1L);
+            memberService.getMember(1L);
         });
         assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
     }
@@ -168,7 +168,7 @@ class MemberServiceTest {
         when(reservationRepository.findByMemberId(member.getId(), pageable)).thenReturn(pageReservations);
 
         // when
-        Page<ReservationResDto> result = memberService.getMyReservations(pageable, member.getEmail());
+        Page<ReservationResDto> result = memberService.getMyReservations(pageable, member.getId());
 
         // then
         assertNotNull(result);
@@ -187,7 +187,7 @@ class MemberServiceTest {
         when(reviewRepository.findByMemberIdOrderByRestaurantId(member.getId(), pageable)).thenReturn(new PageImpl<>(reviews));
 
         // when
-        Page<ReviewInfoDto> result = memberService.getMyReviews(pageable, member.getEmail());
+        Page<ReviewDetailDto> result = memberService.getMyReviews(pageable, member.getId());
 
         // then
         assertNotNull(result);
@@ -201,11 +201,11 @@ class MemberServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         List<ChatRoom> chatRooms = new ArrayList<>();
         // Mock ChatRoomCreateResDto 객체 추가
-        when(memberRepository.findByEmail(member.getEmail())).thenReturn(Optional.of(member));
+        when(memberRepository.findById(member.getId())).thenReturn(Optional.of(member));
         when(chatRoomRepository.findChatRoomsByMemberIdOrderByLastMessageTime(member.getId(), pageable)).thenReturn(new PageImpl<>(chatRooms));
 
         // when
-        Page<ChatRoomCreateResDto> result = memberService.getMyChatRooms(pageable, member.getEmail());
+        Page<ChatRoomCreateResDto> result = memberService.getMyChatRooms(pageable, member.getId());
 
         // then
         assertNotNull(result);
