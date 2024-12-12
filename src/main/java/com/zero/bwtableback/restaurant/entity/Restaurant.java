@@ -85,7 +85,7 @@ public class Restaurant extends BaseEntity {
     )
     private List<Hashtag> hashtags;
 
-    @Column(nullable = false) // TODO: 평점 null 허용?
+    @Column(nullable = false)
     private double averageRating; // 평균 평점
 
     @OneToOne
