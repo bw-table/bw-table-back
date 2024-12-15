@@ -122,8 +122,10 @@ public class MainController {
     @GetMapping
     public ResponseEntity<Map<String, List<RestaurantListDto>>> getMainPageData(
             Pageable pageable, @AuthenticationPrincipal MemberDetails memberDetails) {
+        Long memberId = (memberDetails != null) ? memberDetails.getMemberId() : null;
+
         Map<String, List<RestaurantListDto>> mainPageData =
-                mainService.getMainPageData(pageable, memberDetails.getMemberId());
+                mainService.getMainPageData(pageable, memberId);
         return ResponseEntity.ok(mainPageData);
     }
 }
