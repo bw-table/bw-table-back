@@ -88,17 +88,15 @@ public class ReservationService {
             restaurantRepository.findById(request.restaurantId())
                     .orElseThrow(() -> new CustomException(ErrorCode.RESTAURANT_NOT_FOUND));
 
-            // 예약 기간 설정 확인
             ReservationSetting reservationSetting = findReservationSetting(request);
-            // 요일 설정 확인
             WeekdaySetting weekdaySetting = findWeekdaySetting(reservationSetting, request.reservationDate());
-            // 시간대 설정 확인
             TimeslotSetting timeslotSetting = findTimeslotSetting(weekdaySetting, request.reservationTime());
 
             String currentCountKey = String.format("reservation:currentCount:%d:%s:%s",
                     request.restaurantId(),
                     request.reservationDate(),
                     request.reservationTime());
+
             if (integerRedisTemplate.opsForValue().get(currentCountKey) == null) {
                 integerRedisTemplate.opsForValue().set(currentCountKey, timeslotSetting.getMaxCapacity());
             }

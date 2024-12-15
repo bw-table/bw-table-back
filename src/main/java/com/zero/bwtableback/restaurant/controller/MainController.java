@@ -119,7 +119,7 @@ public class MainController {
     @GetMapping
     public ResponseEntity<Map<String, List<RestaurantListDto>>> getMainPageData(
                                                 Pageable pageable, Member member) {
-
+        System.out.println("TEST");
         Map<String, List<RestaurantListDto>> mainPageData =
                 mainService.getMainPageData(pageable, member);
 
