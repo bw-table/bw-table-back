@@ -23,7 +23,7 @@
 
 <script>
     function kakaoLogin() {
-        const clientId = "a55636a5224c30f8eec17b6320261cf9"; // REST API 키는 노출하지 않도록 합니다
+        const clientId = "a5"; // REST API 키는 노출하지 않도록 합니다
         const redirectUri = encodeURIComponent("http://localhost:8080/api/oauth2/kakao/callback");
         const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code`;
         window.location.href = kakaoAuthUrl;
