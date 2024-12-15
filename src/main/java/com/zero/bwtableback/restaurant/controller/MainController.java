@@ -8,10 +8,13 @@ import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.service.MainService;
 import com.zero.bwtableback.restaurant.service.RestaurantSearchService;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
+import com.zero.bwtableback.security.MemberDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -118,12 +121,9 @@ public class MainController {
     // [놓치면 안되는 혜택 가득, 방문자 리얼리뷰 pick, 고객님이 좋아할 매장, 새로 오픈했어요!] 리스트
     @GetMapping
     public ResponseEntity<Map<String, List<RestaurantListDto>>> getMainPageData(
-                                                Pageable pageable, Member member) {
-
+            Pageable pageable, @AuthenticationPrincipal MemberDetails memberDetails) {
         Map<String, List<RestaurantListDto>> mainPageData =
-                mainService.getMainPageData(pageable, member);
-
+                mainService.getMainPageData(pageable, memberDetails.getMemberId());
         return ResponseEntity.ok(mainPageData);
     }
-
 }

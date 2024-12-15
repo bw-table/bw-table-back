@@ -1,6 +1,9 @@
 package com.zero.bwtableback.restaurant.service;
 
+import com.zero.bwtableback.common.exception.CustomException;
+import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
 import com.zero.bwtableback.restaurant.dto.RestaurantListDto;
@@ -25,14 +28,13 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class MainService {
-
-    private final RestaurantService restaurantService;
-
     private final AnnouncementRepository announcementRepository;
     private final RestaurantRepository restaurantRepository;
     private final CategoryRepository categoryRepository;
     private final ReservationRepository reservationRepository;
     private final RestaurantSearchService restaurantSearchService;
+    private final MemberRepository memberRepository;
+
 
     // 아이콘
     // 이달의 맛집
@@ -183,8 +185,11 @@ public class MainService {
     }
 
     // 모든 정보를 한 데이터로 합치기
-    public Map<String, List<RestaurantListDto>> getMainPageData(Pageable pageable, Member member) {
+    public Map<String, List<RestaurantListDto>> getMainPageData(Pageable pageable, Long memberId) {
         Map<String, List<RestaurantListDto>> result = new HashMap<>();
+
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         result.put("eventRestaurants", getRestaurantsWithEvent(pageable));
         result.put("reviewRestaurants", getRestaurantsWithReviews(pageable));
