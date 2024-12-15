@@ -1,20 +1,13 @@
 package com.zero.bwtableback.restaurant.controller;
 
-import com.sun.tools.javac.Main;
-import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.restaurant.dto.RestaurantListDto;
-import com.zero.bwtableback.restaurant.entity.CategoryType;
-import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.service.MainService;
 import com.zero.bwtableback.restaurant.service.RestaurantSearchService;
-import com.zero.bwtableback.restaurant.service.RestaurantService;
 import com.zero.bwtableback.security.MemberDetails;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -122,8 +115,10 @@ public class MainController {
     @GetMapping
     public ResponseEntity<Map<String, List<RestaurantListDto>>> getMainPageData(
             Pageable pageable, @AuthenticationPrincipal MemberDetails memberDetails) {
+        Long memberId = (memberDetails != null) ? memberDetails.getMemberId() : null;
+
         Map<String, List<RestaurantListDto>> mainPageData =
-                mainService.getMainPageData(pageable, memberDetails.getMemberId());
+                mainService.getMainPageData(pageable, memberId);
         return ResponseEntity.ok(mainPageData);
     }
 }

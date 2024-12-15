@@ -156,7 +156,10 @@ public class MainService {
 
     // 로그인하지 않은 사용자 : 인기 카테고리(searchCount 기준)로 조회
     public List<RestaurantListDto> getPopularRestaurants(Pageable pageable) {
-        Category popularCategory = categoryRepository.findMostpopularCategory();
+        Category popularCategory = categoryRepository.findMostPopularCategory()
+                .stream()
+                .findFirst()
+                .orElse(null);
 
         List<Restaurant> restaurants = restaurantRepository.findByCategory(popularCategory, pageable);
 
@@ -188,8 +191,11 @@ public class MainService {
     public Map<String, List<RestaurantListDto>> getMainPageData(Pageable pageable, Long memberId) {
         Map<String, List<RestaurantListDto>> result = new HashMap<>();
 
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        Member member = null;
+        if (memberId != null) {
+            member = memberRepository.findById(memberId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        }
 
         result.put("eventRestaurants", getRestaurantsWithEvent(pageable));
         result.put("reviewRestaurants", getRestaurantsWithReviews(pageable));
