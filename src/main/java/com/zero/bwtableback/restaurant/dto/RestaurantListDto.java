@@ -1,7 +1,10 @@
 package com.zero.bwtableback.restaurant.dto;
 
+import com.zero.bwtableback.restaurant.entity.RestaurantImage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import java.util.Set;
 
 /**
  * 식당 조회 시 응답
@@ -15,4 +18,5 @@ public class RestaurantListDto {
     private String address;
     private String category;
     private double averageRating;
+    private String image;
 }

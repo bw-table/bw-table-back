@@ -101,12 +101,18 @@ public class RestaurantSearchService {
 
     // Restaurant -> dto로 변환하는 헬퍼 메서드
     private RestaurantListDto convertToDto(Restaurant restaurant) {
+        String firstImageUrl = restaurant.getImages().stream()
+                .findFirst()
+                .map(RestaurantImage::getImageUrl)
+                .orElse(null);
+
         return new RestaurantListDto(
                 restaurant.getId(),
                 restaurant.getName(),
                 restaurant.getAddress(),
                 restaurant.getCategory() != null ? restaurant.getCategory().getCategoryType().name() : null,
-                restaurant.getAverageRating()
+                restaurant.getAverageRating(),
+                firstImageUrl
         );
     }
 
