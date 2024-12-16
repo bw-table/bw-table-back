@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.reservation.dto.NotificationResDto;
 import com.zero.bwtableback.reservation.entity.Notification;
 import com.zero.bwtableback.reservation.entity.NotificationStatus;
 import com.zero.bwtableback.reservation.entity.NotificationType;
@@ -43,9 +44,9 @@ class NotificationSearchServiceTest {
 
     @DisplayName("고객에게 전송된 알림 목록을 조회한다")
     @Test
-    void givenCustomerId_whenGetNotificationsSentToCustomer_thenReturnNotifications() {
+    void givenGuestId_whenGetNotificationsSentToGuest_thenReturnNotifications() {
         // given
-        Long customerId = 1L;
+        Long guestId = 1L;
         Pageable pageable = PageRequest.of(0, 10);
 
         Reservation reservation = Reservation.builder()
@@ -68,16 +69,16 @@ class NotificationSearchServiceTest {
 
         Page<Notification> notifications = new PageImpl<>(Collections.singletonList(notification), pageable, 1);
         when(notificationRepository.findByReservation_Member_IdAndStatusOrderBySentTimeDesc(
-                customerId, NotificationStatus.SENT, pageable))
+                guestId, NotificationStatus.SENT, pageable))
                 .thenReturn(notifications);
 
         // when
-        Page<Notification> result = notificationSearchService.getNotificationsSentToCustomer(customerId, pageable);
+        Page<NotificationResDto> result = notificationSearchService.getNotificationsSentToGuest(guestId, pageable);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).getMessage()).isEqualTo("예약이 확정되었습니다.");
+        assertThat(result.getContent().get(0).message()).isEqualTo("예약이 확정되었습니다.");
     }
 
     @DisplayName("가게 주인에게 전송된 알림 목록을 조회한다")
@@ -111,19 +112,22 @@ class NotificationSearchServiceTest {
                 .thenReturn(notifications);
 
         // when
-        Page<Notification> result = notificationSearchService.getNotificationsSentToOwner(ownerId, pageable);
+        Page<NotificationResDto> result = notificationSearchService.getNotificationsSentToOwner(ownerId, pageable);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).getMessage()).isEqualTo("예약이 확정되었습니다.");
+        assertThat(result.getContent().get(0).message()).isEqualTo("예약이 확정되었습니다.");
     }
 
     @DisplayName("알림 내역 관련 데이터를 반환한다")
     @Test
-    void givenReservationAndNotificationType_whenCreateNotificationData_thenReturnNotificationData() {
+    void givenMemberIdReservationAndNotificationType_whenCreateNotificationData_thenReturnNotificationData() {
         // given
+        Long memberId = 1L;
+
         Reservation reservation = Reservation.builder()
+                .id(1L)
                 .reservationDate(LocalDate.of(2024, 11, 12))
                 .reservationTime(LocalTime.of(18, 0))
                 .restaurant(restaurant)
@@ -133,16 +137,17 @@ class NotificationSearchServiceTest {
         NotificationType type = NotificationType.REMINDER_24H;
 
         when(restaurant.getName()).thenReturn("Test Restaurant");
-        when(member.getName()).thenReturn("Test Customer");
+        when(member.getName()).thenReturn("Test Guest");
+        when(member.getId()).thenReturn(memberId);
 
         // when
-        Map<String, Object> notificationData = notificationSearchService.createNotificationData(reservation, type);
+        Map<String, Object> notificationData = notificationSearchService.createNotificationData(memberId, reservation, type);
 
         // then
         assertThat(notificationData).containsEntry("reservationDate", "2024-11-12");
         assertThat(notificationData).containsEntry("reservationTime", "18:00");
         assertThat(notificationData).containsEntry("restaurantName", "Test Restaurant");
-        assertThat(notificationData).containsEntry("customerName", "Test Customer");
+        assertThat(notificationData).containsEntry("guestName", "Test Guest");
         assertThat(notificationData).containsEntry("type", type);
     }
 

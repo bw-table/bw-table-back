@@ -3,6 +3,7 @@ package com.zero.bwtableback.statistics;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
+import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import com.zero.bwtableback.statistics.dto.StatisticsDto;
 import com.zero.bwtableback.statistics.entity.Statistics;
 import com.zero.bwtableback.statistics.entity.StatisticsType;
@@ -22,6 +23,9 @@ class StatisticsServiceTest {
     @Mock
     private StatisticsRepository statisticsRepository;
 
+    @Mock
+    private RestaurantRepository restaurantRepository;
+
     @InjectMocks
     private StatisticsService statisticsService;
 
@@ -30,15 +34,16 @@ class StatisticsServiceTest {
     void shouldReturnDailyReservationsLast30Days() {
         // given
         Long restaurantId = 1L;
+        Long memberId = 1L;
         List<Statistics> mockStatistics = List.of(
                 new Statistics(1L, null, StatisticsType.DAILY, "2024-11-01", 10),
                 new Statistics(2L, null, StatisticsType.DAILY, "2024-11-02", 8)
         );
-        given(statisticsRepository.findByRestaurantIdAndType(restaurantId, StatisticsType.DAILY))
-                .willReturn(mockStatistics);
+        given(restaurantRepository.findRestaurantIdByMemberId(memberId)).willReturn(restaurantId);
+        given(statisticsRepository.findByRestaurantIdAndType(restaurantId, StatisticsType.DAILY)).willReturn(mockStatistics);
 
         // when
-        List<StatisticsDto> result = statisticsService.getDailyReservationsLast30Days(restaurantId);
+        List<StatisticsDto> result = statisticsService.getDailyReservationsLast30Days(restaurantId, memberId);
 
         // then
         assertThat(result).hasSize(2);
@@ -53,15 +58,16 @@ class StatisticsServiceTest {
     void shouldReturnWeeklyReservationsLast12Weeks() {
         // given
         Long restaurantId = 1L;
+        Long memberId = 1L;
         List<Statistics> mockStatistics = List.of(
                 new Statistics(1L, null, StatisticsType.WEEKLY, "2024-W44", 50),
                 new Statistics(2L, null, StatisticsType.WEEKLY, "2024-W45", 65)
         );
-        given(statisticsRepository.findByRestaurantIdAndType(restaurantId, StatisticsType.WEEKLY))
-                .willReturn(mockStatistics);
+        given(restaurantRepository.findRestaurantIdByMemberId(memberId)).willReturn(restaurantId);
+        given(statisticsRepository.findByRestaurantIdAndType(restaurantId, StatisticsType.WEEKLY)).willReturn(mockStatistics);
 
         // when
-        List<StatisticsDto> result = statisticsService.getWeeklyReservationsLast12Weeks(restaurantId);
+        List<StatisticsDto> result = statisticsService.getWeeklyReservationsLast12Weeks(restaurantId, memberId);
 
         // then
         assertThat(result).hasSize(2);
@@ -76,15 +82,16 @@ class StatisticsServiceTest {
     void shouldReturnMonthlyReservationsLast6Months() {
         // given
         Long restaurantId = 1L;
+        Long memberId = 1L;
         List<Statistics> mockStatistics = List.of(
                 new Statistics(1L, null, StatisticsType.MONTHLY, "2024-06", 300),
                 new Statistics(2L, null, StatisticsType.MONTHLY, "2024-07", 320)
         );
-        given(statisticsRepository.findByRestaurantIdAndType(restaurantId, StatisticsType.MONTHLY))
-                .willReturn(mockStatistics);
+        given(restaurantRepository.findRestaurantIdByMemberId(memberId)).willReturn(restaurantId);
+        given(statisticsRepository.findByRestaurantIdAndType(restaurantId, StatisticsType.MONTHLY)).willReturn(mockStatistics);
 
         // when
-        List<StatisticsDto> result = statisticsService.getMonthlyReservationsLast6Months(restaurantId);
+        List<StatisticsDto> result = statisticsService.getMonthlyReservationsLast6Months(restaurantId, memberId);
 
         // then
         assertThat(result).hasSize(2);
@@ -99,15 +106,16 @@ class StatisticsServiceTest {
     void shouldReturnPopularTimesLast30Days() {
         // given
         Long restaurantId = 1L;
+        Long memberId = 1L;
         List<Statistics> mockStatistics = List.of(
                 new Statistics(1L, null, StatisticsType.TIME_SLOT, "18:00", 80),
                 new Statistics(2L, null, StatisticsType.TIME_SLOT, "19:00", 75)
         );
-        given(statisticsRepository.findByRestaurantIdAndType(restaurantId, StatisticsType.TIME_SLOT))
-                .willReturn(mockStatistics);
+        given(restaurantRepository.findRestaurantIdByMemberId(memberId)).willReturn(restaurantId);
+        given(statisticsRepository.findByRestaurantIdAndType(restaurantId, StatisticsType.TIME_SLOT)).willReturn(mockStatistics);
 
         // when
-        List<StatisticsDto> result = statisticsService.getPopularTimesLast30Days(restaurantId);
+        List<StatisticsDto> result = statisticsService.getPopularTimesLast30Days(restaurantId, memberId);
 
         // then
         assertThat(result).hasSize(2);
@@ -122,15 +130,16 @@ class StatisticsServiceTest {
     void shouldReturnTop5PopularDatesLast30Days() {
         // given
         Long restaurantId = 1L;
+        Long memberId = 1L;
         List<Statistics> mockStatistics = List.of(
                 new Statistics(1L, null, StatisticsType.POPULAR_DATE, "2024-11-11", 25),
                 new Statistics(2L, null, StatisticsType.POPULAR_DATE, "2024-11-15", 20)
         );
-        given(statisticsRepository.findByRestaurantIdAndType(restaurantId, StatisticsType.POPULAR_DATE))
-                .willReturn(mockStatistics);
+        given(restaurantRepository.findRestaurantIdByMemberId(memberId)).willReturn(restaurantId);
+        given(statisticsRepository.findByRestaurantIdAndType(restaurantId, StatisticsType.POPULAR_DATE)).willReturn(mockStatistics);
 
         // when
-        List<StatisticsDto> result = statisticsService.getTop5PopularDatesLast30Days(restaurantId);
+        List<StatisticsDto> result = statisticsService.getTop5PopularDatesLast30Days(restaurantId, memberId);
 
         // then
         assertThat(result).hasSize(2);

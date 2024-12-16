@@ -53,17 +53,17 @@ class NotificationScheduleServiceTest {
     void scheduleImmediateNotification_CreatesAndSendsNotification() {
         // given
         Reservation reservation = mock(Reservation.class);
-        Member customerMember = mock(Member.class);
+        Member guestMember = mock(Member.class);
         Member ownerMember = mock(Member.class);
         Restaurant restaurant = mock(Restaurant.class);
         Notification notification = mock(Notification.class);
 
         String message = "알림 메시지 예시";
 
-        given(reservation.getMember()).willReturn(customerMember);
+        given(reservation.getMember()).willReturn(guestMember);
         given(reservation.getRestaurant()).willReturn(restaurant);
         given(restaurant.getMember()).willReturn(ownerMember);
-        given(customerMember.getId()).willReturn(1L);
+        given(guestMember.getId()).willReturn(1L);
         given(ownerMember.getId()).willReturn(2L);
         given(notification.getReservation()).willReturn(reservation);
 
@@ -78,7 +78,7 @@ class NotificationScheduleServiceTest {
 
             // then
             verify(notificationRepository).save(any(Notification.class));
-            verify(notificationEmitterService).sendNotificationToCustomerAndOwner(1L, 2L, notification);
+            verify(notificationEmitterService).sendNotificationToGuestAndOwner(1L, 2L, notification);
         }
     }
 
@@ -120,11 +120,11 @@ class NotificationScheduleServiceTest {
     void scheduleImmediateNotification_ThrowsExceptionIfAlreadySent() {
         // given
         Reservation reservation = mock(Reservation.class);
-        Member customerMember = mock(Member.class);
+        Member guestMember = mock(Member.class);
         Member ownerMember = mock(Member.class);
         Restaurant restaurant = mock(Restaurant.class);
 
-        given(reservation.getMember()).willReturn(customerMember);
+        given(reservation.getMember()).willReturn(guestMember);
         given(reservation.getRestaurant()).willReturn(restaurant);
         given(restaurant.getMember()).willReturn(ownerMember);
 
