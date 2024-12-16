@@ -1,5 +1,8 @@
 package com.zero.bwtableback.statistics.service;
 
+import com.zero.bwtableback.common.exception.CustomException;
+import com.zero.bwtableback.common.exception.ErrorCode;
+import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
 import com.zero.bwtableback.statistics.dto.StatisticsDto;
 import com.zero.bwtableback.statistics.entity.Statistics;
 import com.zero.bwtableback.statistics.entity.StatisticsType;
@@ -13,9 +16,11 @@ import org.springframework.stereotype.Service;
 public class StatisticsService {
 
     private final StatisticsRepository statisticsRepository;
+    private final RestaurantRepository restaurantRepository;
 
     // 일별 예약 건수 조회
-    public List<StatisticsDto> getDailyReservationsLast30Days(Long restaurantId) {
+    public List<StatisticsDto> getDailyReservationsLast30Days(Long restaurantId, Long memberId) {
+        isOwnerOfRestaurant(restaurantId, memberId);
         List<Statistics> statistics = statisticsRepository.findByRestaurantIdAndType(
                 restaurantId,
                 StatisticsType.DAILY);
@@ -23,7 +28,8 @@ public class StatisticsService {
     }
 
     // 주별 예약 건수 조회
-    public List<StatisticsDto> getWeeklyReservationsLast12Weeks(Long restaurantId) {
+    public List<StatisticsDto> getWeeklyReservationsLast12Weeks(Long restaurantId, Long memberId) {
+        isOwnerOfRestaurant(restaurantId, memberId);
         List<Statistics> statistics = statisticsRepository.findByRestaurantIdAndType(
                 restaurantId,
                 StatisticsType.WEEKLY
@@ -32,7 +38,8 @@ public class StatisticsService {
     }
 
     // 월별 예약 건수 조회
-    public List<StatisticsDto> getMonthlyReservationsLast6Months(Long restaurantId) {
+    public List<StatisticsDto> getMonthlyReservationsLast6Months(Long restaurantId, Long memberId) {
+        isOwnerOfRestaurant(restaurantId, memberId);
         List<Statistics> statistics = statisticsRepository.findByRestaurantIdAndType(
                 restaurantId,
                 StatisticsType.MONTHLY
@@ -41,7 +48,8 @@ public class StatisticsService {
     }
 
     // 인기 시간대 조회
-    public List<StatisticsDto> getPopularTimesLast30Days(Long restaurantId) {
+    public List<StatisticsDto> getPopularTimesLast30Days(Long restaurantId, Long memberId) {
+        isOwnerOfRestaurant(restaurantId, memberId);
         List<Statistics> statistics = statisticsRepository.findByRestaurantIdAndType(
                 restaurantId,
                 StatisticsType.TIME_SLOT
@@ -50,12 +58,19 @@ public class StatisticsService {
     }
 
     // 인기 일자 조회
-    public List<StatisticsDto> getTop5PopularDatesLast30Days(Long restaurantId) {
+    public List<StatisticsDto> getTop5PopularDatesLast30Days(Long restaurantId, Long memberId) {
+        isOwnerOfRestaurant(restaurantId, memberId);
         List<Statistics> statistics = statisticsRepository.findByRestaurantIdAndType(
                 restaurantId,
                 StatisticsType.POPULAR_DATE
         );
         return StatisticsDto.fromEntities(statistics);
+    }
+
+    private void isOwnerOfRestaurant(Long restaurantId, Long memberId) {
+        if (!restaurantId.equals(restaurantRepository.findRestaurantIdByMemberId(memberId))) {
+            throw new CustomException(ErrorCode.RESTAURANT_OWNERSHIP_MISMATCH);
+        }
     }
 
 }

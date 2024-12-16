@@ -44,14 +44,12 @@ public class RestaurantController {
             @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
             @AuthenticationPrincipal MemberDetails memberDetails) {
 
-        Member member = memberDetails.getMember();
-
         try {
             reqDto.setImages(images);
             reqDto.setMenus(menus);
 
             RestaurantRegisterResDto savedRestaurant =
-                    restaurantService.registerRestaurant(reqDto, images, menus, menuImages, member);
+                    restaurantService.registerRestaurant(reqDto, images, menus, menuImages, memberDetails.getMemberId());
 
             return ResponseEntity.ok(savedRestaurant);
         } catch (RestaurantException e) {
@@ -64,7 +62,7 @@ public class RestaurantController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File upload failed");
         } catch (Exception e) {
             // 예상치 못한 예외
-            log.error("버킷 존재 X", e);
+            log.error("버킷 오류: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Unexpected error occurred");
         }
     }

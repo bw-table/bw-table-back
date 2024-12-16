@@ -179,12 +179,18 @@ public class MainService {
     }
 
     private RestaurantListDto convertToDto(Restaurant restaurant) {
+        String firstImageUrl = restaurant.getImages().stream()
+                .findFirst()
+                .map(RestaurantImage::getImageUrl)
+                .orElse(null);
+
         return new RestaurantListDto(
                 restaurant.getId(),
                 restaurant.getName(),
                 restaurant.getAddress(),
                 restaurant.getCategory().getCategoryType().name(),
-                restaurant.getAverageRating());
+                restaurant.getAverageRating(),
+                firstImageUrl);
     }
 
     // 모든 정보를 한 데이터로 합치기
