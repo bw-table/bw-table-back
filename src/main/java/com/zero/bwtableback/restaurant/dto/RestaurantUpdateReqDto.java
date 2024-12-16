@@ -18,7 +18,6 @@ public class RestaurantUpdateReqDto {
     private String link;
     private String info;
     private Integer deposit;
-    private String impCode;
     private String category;
     private List<OperatingHoursDto> operatingHours;
     private List<MenuUpdateDto> menus;
