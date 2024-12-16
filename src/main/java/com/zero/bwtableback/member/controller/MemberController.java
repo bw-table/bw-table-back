@@ -108,7 +108,6 @@ public class MemberController {
         if (memberDetails == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        String email = memberDetails.getUsername();
 
         try {
             String fileUrl = imageUploadService.uploadProfileImage(file, memberDetails.getMemberId());
