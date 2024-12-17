@@ -112,6 +112,7 @@ public class RestaurantSearchService {
                 restaurant.getAddress(),
                 restaurant.getCategory() != null ? restaurant.getCategory().getCategoryType().name() : null,
                 restaurant.getAverageRating(),
+                restaurant.getOperatingHours(),
                 firstImageUrl
         );
     }

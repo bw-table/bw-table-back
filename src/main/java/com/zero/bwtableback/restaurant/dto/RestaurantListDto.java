@@ -1,9 +1,11 @@
 package com.zero.bwtableback.restaurant.dto;
 
+import com.zero.bwtableback.restaurant.entity.OperatingHours;
 import com.zero.bwtableback.restaurant.entity.RestaurantImage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -18,5 +20,6 @@ public class RestaurantListDto {
     private String address;
     private String category;
     private double averageRating;
+    private List<OperatingHours> operatingHours;
     private String image;
 }

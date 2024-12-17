@@ -190,6 +190,7 @@ public class MainService {
                 restaurant.getAddress(),
                 restaurant.getCategory().getCategoryType().name(),
                 restaurant.getAverageRating(),
+                restaurant.getOperatingHours(),
                 firstImageUrl);
     }
 
