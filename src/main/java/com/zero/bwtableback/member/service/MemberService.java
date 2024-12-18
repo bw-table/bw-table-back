@@ -38,9 +38,8 @@ public class MemberService {
     /**
      * 회원 정보 조회
      */
-    public MemberDto getMember(Long memberId) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    public MemberDto getMemberInfo(Long memberId) {
+        Member member = getMemberById(memberId);
         return MemberDto.from(member);
     }
 

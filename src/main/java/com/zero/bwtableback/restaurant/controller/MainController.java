@@ -1,17 +1,13 @@
 package com.zero.bwtableback.restaurant.controller;
 
-import com.sun.tools.javac.Main;
-import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.restaurant.dto.RestaurantListDto;
-import com.zero.bwtableback.restaurant.entity.CategoryType;
-import com.zero.bwtableback.restaurant.entity.Restaurant;
 import com.zero.bwtableback.restaurant.service.MainService;
 import com.zero.bwtableback.restaurant.service.RestaurantSearchService;
-import com.zero.bwtableback.restaurant.service.RestaurantService;
+import com.zero.bwtableback.security.MemberDetails;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -101,7 +97,6 @@ public class MainController {
             @RequestParam double latitude,
             @RequestParam double longitude,
             @RequestParam double radius) {
-
         List<RestaurantListDto> restaurants = mainService.getRestaurantsNearby(latitude, longitude, radius);
 
         return ResponseEntity.ok(restaurants);
@@ -117,13 +112,13 @@ public class MainController {
 
     // [놓치면 안되는 혜택 가득, 방문자 리얼리뷰 pick, 고객님이 좋아할 매장, 새로 오픈했어요!] 리스트
     @GetMapping
-    public ResponseEntity<Map<String, List<RestaurantListDto>>> getMainPageData(
-                                                Pageable pageable, Member member) {
-        System.out.println("TEST");
+    public ResponseEntity<Map<String, List<RestaurantListDto>>> getMainPageData(Pageable pageable,
+                                                                                @AuthenticationPrincipal MemberDetails memberDetails) {
+        Long memberId = (memberDetails != null) ? memberDetails.getMemberId() : null;
+
         Map<String, List<RestaurantListDto>> mainPageData =
-                mainService.getMainPageData(pageable, member);
+                mainService.getMainPageData(pageable, memberId);
 
         return ResponseEntity.ok(mainPageData);
     }
-
 }

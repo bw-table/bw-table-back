@@ -42,7 +42,7 @@ public class MemberController {
      */
     @GetMapping("/{memberId}")
     public MemberDto getMemberById(@PathVariable Long memberId) {
-        return memberService.getMember(memberId);
+        return memberService.getMemberInfo(memberId);
     }
 
     /**
@@ -67,7 +67,6 @@ public class MemberController {
         if (memberDetails == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-
         return ResponseEntity.ok(memberService.getMyReservations(pageable, memberDetails.getMemberId()));
     }
 
@@ -76,7 +75,7 @@ public class MemberController {
      */
     @GetMapping("/me/reviews")
     public ResponseEntity<Page<ReviewDetailDto>> getMyReviews(Pageable pageable,
-                                                              @AuthenticationPrincipal MemberDetails memberDetails) {
+                                                              @AuthenticationPrincipal MemberDetails memberDetails) {;
         return ResponseEntity.ok(memberService.getMyReviews(pageable, memberDetails.getMemberId()));
     }
 
@@ -89,7 +88,6 @@ public class MemberController {
         if (memberDetails == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-
         Page<ChatRoomCreateResDto> rooms = memberService.getMyChatRooms(pageable, memberDetails.getMemberId());
 
         return ResponseEntity.ok(rooms);
@@ -126,7 +124,8 @@ public class MemberController {
      * 새로운 이미지 업로드 (S3)
      */
     @PutMapping("/me/profile-image")
-    public ResponseEntity<?> updateProfileImage(@AuthenticationPrincipal MemberDetails memberDetails, @RequestParam("file") MultipartFile file) throws IOException {
+    public ResponseEntity<?> updateProfileImage(@AuthenticationPrincipal MemberDetails memberDetails,
+                                                @RequestParam("file") MultipartFile file) throws IOException {
         return ResponseEntity.ok(imageUploadService.updateProfileImage(file, memberDetails.getMemberId()));
     }
 

@@ -73,4 +73,5 @@ public class WeeklyStatisticsProcessor implements ItemProcessor<Restaurant, List
                 )
                 .toList();
     }
+
 }

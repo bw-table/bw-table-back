@@ -2,19 +2,22 @@ package com.zero.bwtableback.restaurant.service;
 
 import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
 import com.zero.bwtableback.chat.repository.ChatRoomRepository;
+import com.zero.bwtableback.common.exception.CustomException;
+import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.common.service.ImageUploadService;
 import com.zero.bwtableback.member.entity.Member;
-import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.restaurant.dto.*;
 import com.zero.bwtableback.restaurant.entity.*;
 import com.zero.bwtableback.restaurant.exception.RestaurantException;
 import com.zero.bwtableback.restaurant.repository.*;
+import com.zero.bwtableback.security.MemberDetails;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -37,15 +40,12 @@ public class RestaurantService {
     private final ImageUploadService imageUploadService;
     private final MemberRepository memberRepository;
 
-    @Value("${IMP_CODE}")
-    private String impCode;
-
     // 등록
     public RestaurantRegisterResDto registerRestaurant(RestaurantReqDto reqDto,
-                                               MultipartFile[] images,
-                                               List<MenuRegisterDto> menus,
-                                               List<MultipartFile> menuImages,
-                                               Member member) throws IOException {
+                                                       MultipartFile[] images,
+                                                       List<MenuRegisterDto> menus,
+                                                       List<MultipartFile> menuImages,
+                                                       Long memberId) throws IOException {
 
         if (restaurantRepository.existsByAddress(reqDto.getAddress())) {
             throw new RestaurantException("Restaurant with this address already exists.");
@@ -56,6 +56,9 @@ public class RestaurantService {
         }
 
         Category category = assignCategory(reqDto.getCategory());
+
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 레스토랑 객체 생성
         Restaurant restaurant = Restaurant.builder()
@@ -102,7 +105,7 @@ public class RestaurantService {
 
             List<String> imageUrls = imageUploadService.uploadRestaurantImages(savedRestaurant.getId(), images);
 
-            for (String imageUrl: imageUrls) {
+            for (String imageUrl : imageUrls) {
                 RestaurantImage restaurantImage = new RestaurantImage(imageUrl, savedRestaurant);
                 restaurantImages.add(restaurantImage);
             }
@@ -128,10 +131,10 @@ public class RestaurantService {
 
     // 식당 정보 수정
     public RestaurantRegisterResDto updateRestaurant(Long id,
-                                             RestaurantUpdateReqDto reqDto,
-                                             MultipartFile[] newImages,
-                                             List<MultipartFile> newMenuImages,
-                                             Long memberId) throws IOException {
+                                                     RestaurantUpdateReqDto reqDto,
+                                                     MultipartFile[] newImages,
+                                                     List<MultipartFile> newMenuImages,
+                                                     Long memberId) throws IOException {
 
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
@@ -210,7 +213,7 @@ public class RestaurantService {
 
         // 삭제할 이미지 처리
         if (reqDto.getImageIdsToDelete() != null && !reqDto.getImageIdsToDelete().isEmpty()) {
-            for (Long imageId: reqDto.getImageIdsToDelete()) {
+            for (Long imageId : reqDto.getImageIdsToDelete()) {
                 imageUploadService.deleteRestaurantImage(imageId);
             }
         }
@@ -220,7 +223,7 @@ public class RestaurantService {
             Set<RestaurantImage> images = new HashSet<>();
 
             List<String> imageUrls = imageUploadService.uploadRestaurantImages(restaurant.getId(), newImages);
-            for (String imageUrl: imageUrls) {
+            for (String imageUrl : imageUrls) {
                 images.add(new RestaurantImage(imageUrl, restaurant));
             }
             restaurant.setImages(images);
@@ -323,7 +326,7 @@ public class RestaurantService {
         Set<DayOfWeek> allDaysOfWeek = EnumSet.allOf(DayOfWeek.class);
 
         Set<DayOfWeek> closedDaysSet = new HashSet<>(allDaysOfWeek);
-        for (OperatingHours operatingHour: operatingHours) {
+        for (OperatingHours operatingHour : operatingHours) {
             closedDaysSet.remove(operatingHour.getDayOfWeek());
         }
 

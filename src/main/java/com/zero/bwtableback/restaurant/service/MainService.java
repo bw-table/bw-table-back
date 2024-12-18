@@ -1,6 +1,9 @@
 package com.zero.bwtableback.restaurant.service;
 
+import com.zero.bwtableback.common.exception.CustomException;
+import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
 import com.zero.bwtableback.restaurant.dto.RestaurantListDto;
@@ -25,14 +28,13 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class MainService {
-
-    private final RestaurantService restaurantService;
-
     private final AnnouncementRepository announcementRepository;
     private final RestaurantRepository restaurantRepository;
     private final CategoryRepository categoryRepository;
     private final ReservationRepository reservationRepository;
     private final RestaurantSearchService restaurantSearchService;
+    private final MemberRepository memberRepository;
+
 
     // 아이콘
     // 이달의 맛집
@@ -154,7 +156,10 @@ public class MainService {
 
     // 로그인하지 않은 사용자 : 인기 카테고리(searchCount 기준)로 조회
     public List<RestaurantListDto> getPopularRestaurants(Pageable pageable) {
-        Category popularCategory = categoryRepository.findMostpopularCategory();
+        Category popularCategory = categoryRepository.findMostPopularCategory()
+                .stream()
+                .findFirst()
+                .orElse(null);
 
         List<Restaurant> restaurants = restaurantRepository.findByCategory(popularCategory, pageable);
 
@@ -174,17 +179,30 @@ public class MainService {
     }
 
     private RestaurantListDto convertToDto(Restaurant restaurant) {
+        String firstImageUrl = restaurant.getImages().stream()
+                .findFirst()
+                .map(RestaurantImage::getImageUrl)
+                .orElse(null);
+
         return new RestaurantListDto(
                 restaurant.getId(),
                 restaurant.getName(),
                 restaurant.getAddress(),
                 restaurant.getCategory().getCategoryType().name(),
-                restaurant.getAverageRating());
+                restaurant.getAverageRating(),
+                restaurant.getOperatingHours(),
+                firstImageUrl);
     }
 
     // 모든 정보를 한 데이터로 합치기
-    public Map<String, List<RestaurantListDto>> getMainPageData(Pageable pageable, Member member) {
+    public Map<String, List<RestaurantListDto>> getMainPageData(Pageable pageable, Long memberId) {
         Map<String, List<RestaurantListDto>> result = new HashMap<>();
+
+        Member member = null;
+        if (memberId != null) {
+            member = memberRepository.findById(memberId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        }
 
         result.put("eventRestaurants", getRestaurantsWithEvent(pageable));
         result.put("reviewRestaurants", getRestaurantsWithReviews(pageable));

@@ -39,4 +39,5 @@ public class PopularTimeSlotsProcessor implements ItemProcessor<Restaurant, List
                         .build())
                 .toList();
     }
+
 }

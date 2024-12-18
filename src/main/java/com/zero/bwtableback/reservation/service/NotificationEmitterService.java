@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.reservation.entity.Notification;
+import com.zero.bwtableback.reservation.entity.NotificationType;
 import com.zero.bwtableback.reservation.repository.EmitterRepository;
 import com.zero.bwtableback.reservation.repository.NotificationRepository;
 import java.io.IOException;
@@ -30,14 +31,7 @@ public class NotificationEmitterService {
         SseEmitter emitter = new SseEmitter(3_600_000L); // 기본 타임아웃 한 시간으로 설정
 
         emitterRepository.saveEmitter(emitterId, emitter);
-
-        // 마지막 알림 이후의 알림부터 전송
-        long lastEventIdLong = parseLastEventId(lastEventId);
-        if (lastEventIdLong > 0) {
-            List<Notification> missedNotifications = notificationRepository
-                    .findByReservation_Member_IdAndIdGreaterThan(memberId, lastEventIdLong);
-            missedNotifications.forEach(notification -> sendNotificationToConnectedUser(memberId, notification));
-        }
+        handleMissedNotifications(memberId, lastEventId);
 
         emitter.onCompletion(() -> emitterRepository.removeEmitter(emitterId));
         emitter.onTimeout(() -> emitterRepository.removeEmitter(emitterId));
@@ -46,35 +40,47 @@ public class NotificationEmitterService {
     }
 
     // 동일한 알림을 고객과 가게 주인에게 모두 전송
-    public void sendNotificationToCustomerAndOwner(Long customerId, Long ownerId, Notification notification) {
-        sendNotificationToConnectedUser(customerId, notification);
+    public void sendNotificationToGuestAndOwner(Long guestId, Long ownerId, Notification notification) {
+        sendNotificationToConnectedUser(guestId, notification);
         sendNotificationToConnectedUser(ownerId, notification);
     }
 
     // 회원의 활성화된 emitter에 알림 전송
     public void sendNotificationToConnectedUser(Long memberId, Notification notification) {
         List<String> emitterIds = emitterRepository.findAllEmitterIdsByMemberId(memberId);
-        String jsonMessage = createNotificationMessage(notification);
 
         emitterIds.forEach(emitterId -> {
             SseEmitter emitter = emitterRepository.findById(emitterId);
             if (emitter != null) {
-                sendMessageByEmitter(emitter, emitterId, jsonMessage);
+                sendMessageByEmitter(emitter, emitterId, notification);
             }
         });
     }
 
     // 해당 emitter로 메시지 전송
-    private void sendMessageByEmitter(SseEmitter emitter, String emitterId, String message) {
+    private void sendMessageByEmitter(SseEmitter emitter, String emitterId, Notification notification) {
         try {
+            String jsonMessage = createNotificationMessage(notification);
             emitter.send(SseEmitter.event()
                     .name("reservation-notification")
-                    .id(emitterId) // 이벤트 ID를 emitterId로 설정
-                    .data(message));
+                    .id(String.valueOf(notification.getId()))
+                    .data(jsonMessage));
         } catch (Exception e) {
             log.error("알림 전송이 실패했습니다. {}: {}", emitterId, e.getMessage());
-            emitter.completeWithError(e); // 연결 종료
-            emitterRepository.removeEmitter(emitterId); // emitter 제거
+            emitter.completeWithError(e);
+            emitterRepository.removeEmitter(emitterId);
+        }
+    }
+
+    private void handleMissedNotifications(Long memberId, String lastEventId) {
+        long lastEventIdLong = parseLastEventId(lastEventId);
+        if (lastEventIdLong > 0) {
+            List<Notification> missedNotifications = notificationRepository
+                    .findByReservation_Member_IdAndIdGreaterThanAndNotificationTypeIn(
+                            memberId,
+                            lastEventIdLong,
+                            List.of(NotificationType.CONFIRMATION, NotificationType.CANCELLATION));
+            missedNotifications.forEach(notification -> sendNotificationToConnectedUser(memberId, notification));
         }
     }
 
@@ -90,7 +96,7 @@ public class NotificationEmitterService {
     private String createNotificationMessage(Notification notification) {
         Map<String, Object> notificationData = new HashMap<>();
         notificationData.put("message", notification.getMessage());
-        notificationData.put("customerId", notification.getReservation().getMember().getId());
+        notificationData.put("guestId", notification.getReservation().getMember().getId());
         notificationData.put("ownerId", notification.getReservation().getRestaurant().getMember().getId());
         notificationData.put("reservationId", notification.getReservation().getId());
         notificationData.put("status", notification.getStatus());
@@ -101,4 +107,5 @@ public class NotificationEmitterService {
             throw new CustomException(ErrorCode.JSON_PARSING_FAILED);
         }
     }
+
 }
