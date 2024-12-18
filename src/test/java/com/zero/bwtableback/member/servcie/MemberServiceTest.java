@@ -99,7 +99,7 @@ class MemberServiceTest {
         when(memberRepository.findById(1L)).thenReturn(Optional.of(member));
 
         // when
-        MemberDto result = memberService.getMember(1L);
+        MemberDto result = memberService.getMemberInfo(1L);
         System.out.println(result.getName());
 
         // then
@@ -115,7 +115,7 @@ class MemberServiceTest {
 
         // when & then
         CustomException exception = assertThrows(CustomException.class, () -> {
-            memberService.getMember(1L);
+            memberService.getMemberInfo(1L);
         });
         assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
     }
