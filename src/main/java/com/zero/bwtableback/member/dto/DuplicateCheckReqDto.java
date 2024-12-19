@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class DuplicateCheckReqDto {
     private String email;
     private String nickname;

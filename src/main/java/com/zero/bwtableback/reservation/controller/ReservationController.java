@@ -61,8 +61,7 @@ public class ReservationController {
      * 4. 생성된 예약 토큰을 클라이언트에 반환합니다.
      */
     @PostMapping()
-    public ResponseEntity<?> requestReservation(@RequestBody ReservationCreateReqDto request,
-                                                @AuthenticationPrincipal MemberDetails memberDetails) {
+    public ResponseEntity<?> requestReservation(@RequestBody ReservationCreateReqDto request) {
         ReservationAvailabilityDto availability = reservationService.checkReservationAvailability(request);
         if (availability.isAvailable()) {
             String reservationToken = UUID.randomUUID().toString();
@@ -79,7 +78,7 @@ public class ReservationController {
      * 1. 결제 정보와 함께 요청이 들어오면, 해당 예약 정보를 조회
      * 2. 결제가 성공적으로 완료되면, 분산 락을 사용하여 동시성 제어
      * 3. 현재 예약된 인원 수를 확인하고, 최대 결제 인원을 초과하지 않는 경우에만 예약을 확정하고 DB에 저장
-     * 4. 채팅방을 생성하고 Redis에서 임시 예약 정보를 삭제
+     * 4. 채팅방을 생성하고 결제 정보를 저장
      *
      * @return 결제 완료 페이지에 보여질 정보 반환
      */
