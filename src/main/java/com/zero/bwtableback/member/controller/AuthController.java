@@ -33,6 +33,7 @@ public class AuthController {
      */
     @PostMapping("/check/email")
     public ResponseEntity<Map<String, Boolean>> checkEmailDuplicate(@RequestBody DuplicateCheckReqDto request) {
+        System.out.println(request.getEmail());
         boolean isDuplicate = authService.isEmailDuplicate(request);
         return ResponseEntity.ok(Collections.singletonMap("isDuplicate", isDuplicate));
     }
