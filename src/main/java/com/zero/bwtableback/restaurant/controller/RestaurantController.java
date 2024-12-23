@@ -46,17 +46,20 @@ public class RestaurantController {
             objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
             RestaurantReqDto reqDto = objectMapper.readValue(registrationDto.getRestaurant(), RestaurantReqDto.class);
+            System.out.println(reqDto.getAddress());
             List<MenuRegisterDto> menus = objectMapper.readValue(registrationDto.getMenus(), new TypeReference<List<MenuRegisterDto>>() {});
+            System.out.println(menus.get(0).getName());
             MultipartFile[] images = registrationDto.getImages();
             List<MultipartFile> menuImages = registrationDto.getMenuImages();
 
-            reqDto.setImages(reqDto.getImages());
-            reqDto.setMenus(menus);
+//            reqDto.setImages(reqDto.getImages());
+//            reqDto.setMenus(menus);
+//
+//            RestaurantRegisterResDto savedRestaurant =
+//                    restaurantService.registerRestaurant(reqDto, images, menus, menuImages, memberDetails.getMemberId());
 
-            RestaurantRegisterResDto savedRestaurant =
-                    restaurantService.registerRestaurant(reqDto, images, menus, menuImages, memberDetails.getMemberId());
-
-            return ResponseEntity.ok(savedRestaurant);
+            return null;
+//            return ResponseEntity.ok(savedRestaurant);
         } catch (RestaurantException e) {
             // 레스토랑 등록 실패
             log.error("Error registering restaurant", e);
