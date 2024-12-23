@@ -42,20 +42,20 @@ public class RestaurantController {
     ) {
         System.out.println("Restaurant" + registrationDto.getRestaurant());
         System.out.println("Images" + registrationDto.getImages());
-//        System.out.println("Menus" +registrationDto.getMenus());
+        System.out.println("Menus" +registrationDto.getMenus());
         System.out.println("MenuImages" +registrationDto.getMenuImages());
 
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.registerModule(new JavaTimeModule());
-            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
-            RestaurantReqDto reqDto = objectMapper.readValue(registrationDto.getRestaurant(), RestaurantReqDto.class);
-            System.out.println(reqDto.getAddress());
+//            ObjectMapper objectMapper = new ObjectMapper();
+//            objectMapper.registerModule(new JavaTimeModule());
+//            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+//
+//            RestaurantReqDto reqDto = objectMapper.readValue(registrationDto.getRestaurant(), RestaurantReqDto.class);
+//            System.out.println(reqDto.getAddress());
 //            List<MenuRegisterDto> menus = objectMapper.readValue(registrationDto.getMenus(), new TypeReference<List<MenuRegisterDto>>() {});
 //            System.out.println(menus.get(0).getName());
-            MultipartFile[] images = registrationDto.getImages();
-            List<MultipartFile> menuImages = registrationDto.getMenuImages();
+//            MultipartFile[] images = registrationDto.getImages();
+//            List<MultipartFile> menuImages = registrationDto.getMenuImages();
 
 //            reqDto.setImages(reqDto.getImages());
 //            reqDto.setMenus(menus);
@@ -69,10 +69,11 @@ public class RestaurantController {
             // 레스토랑 등록 실패
             log.error("Error registering restaurant", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (IOException e) {
-            // 파일 업로드 or IO 관련 오류
-            log.error("File upload error", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File upload failed");
+//        }
+//        catch (IOException e) {
+//            // 파일 업로드 or IO 관련 오류
+//            log.error("File upload error", e);
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File upload failed");
         } catch (Exception e) {
             // 예상치 못한 예외
             log.error("버킷 오류: ", e);
