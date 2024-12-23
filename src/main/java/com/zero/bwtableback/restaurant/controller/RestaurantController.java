@@ -1,11 +1,12 @@
 package com.zero.bwtableback.restaurant.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
-import com.zero.bwtableback.common.service.ImageUploadService;
-import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.restaurant.dto.*;
 import com.zero.bwtableback.restaurant.exception.RestaurantException;
-import com.zero.bwtableback.restaurant.service.AnnouncementService;
 import com.zero.bwtableback.restaurant.service.RestaurantSearchService;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
 import com.zero.bwtableback.security.MemberDetails;
@@ -30,22 +31,26 @@ import java.util.List;
 public class RestaurantController {
 
     private final RestaurantService restaurantService;
-    private final AnnouncementService announcementService;
     private final RestaurantSearchService restaurantSearchService;
-    private final ImageUploadService imageUploadService;
 
     // 식당 등록
     @PreAuthorize("hasrole('OWNER')")
     @PostMapping("/new")
     public ResponseEntity<?> registerRestaurant(
-            @RequestPart("restaurant") RestaurantReqDto reqDto,
-            @RequestPart("images") MultipartFile[] images,
-            @RequestPart("menus") List<MenuRegisterDto> menus,
-            @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
-            @AuthenticationPrincipal MemberDetails memberDetails) {
-
+            @ModelAttribute RestaurantRegistrationDto registrationDto,
+            @AuthenticationPrincipal MemberDetails memberDetails
+    ) {
         try {
-            reqDto.setImages(images);
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.registerModule(new JavaTimeModule());
+            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+            RestaurantReqDto reqDto = objectMapper.readValue(registrationDto.getRestaurant(), RestaurantReqDto.class);
+            List<MenuRegisterDto> menus = objectMapper.readValue(registrationDto.getMenus(), new TypeReference<List<MenuRegisterDto>>() {});
+            MultipartFile[] images = registrationDto.getImages();
+            List<MultipartFile> menuImages = registrationDto.getMenuImages();
+
+            reqDto.setImages(reqDto.getImages());
             reqDto.setMenus(menus);
 
             RestaurantRegisterResDto savedRestaurant =
