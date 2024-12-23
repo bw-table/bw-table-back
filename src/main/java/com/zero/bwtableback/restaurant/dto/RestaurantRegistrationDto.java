@@ -13,7 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RestaurantRegistrationDto {
-    private String restaurant;
+    private String restaurantData;
     private String name;
 //    private String menus;
     private MultipartFile[] images;

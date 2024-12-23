@@ -41,8 +41,8 @@
         const restaurantData = document.getElementById('restaurant').value;
 
         const formData = new FormData();
-        console.log(formData)
         formData.append('restaurant', restaurantData);
+        console.log(formData)
 
         fetch('http://localhost:8080/api/restaurants/new', {
             method: 'POST',
