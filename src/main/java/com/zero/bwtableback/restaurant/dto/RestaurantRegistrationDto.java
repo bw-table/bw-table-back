@@ -14,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 public class RestaurantRegistrationDto {
     private String restaurant;
-    private String menus;
+//    private String menus;
     private MultipartFile[] images;
     private List<MultipartFile> menuImages;
 }
