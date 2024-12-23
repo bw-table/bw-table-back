@@ -40,10 +40,11 @@ public class RestaurantController {
             @ModelAttribute RestaurantRegistrationDto registrationDto,
             @AuthenticationPrincipal MemberDetails memberDetails
     ) {
+        System.out.println("Name Test" + registrationDto.getName());
         System.out.println("Restaurant" + registrationDto.getRestaurant());
         System.out.println("Images" + registrationDto.getImages());
 //        System.out.println("Menus" +registrationDto.getMenus());
-        System.out.println("<enuImages" +registrationDto.getMenuImages());
+        System.out.println("MenuImages" +registrationDto.getMenuImages());
 
         try {
             ObjectMapper objectMapper = new ObjectMapper();

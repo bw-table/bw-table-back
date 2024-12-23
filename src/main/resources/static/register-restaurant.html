@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Registration Test</title>
+</head>
+<body>
+<h1>Restaurant Registration Test</h1>
+<form id="restaurantForm">
+    <!-- Restaurant JSON -->
+    <label for="restaurant">Restaurant JSON:</label><br>
+    <textarea id="restaurant" name="restaurant" rows="10" cols="50">
+{
+    "name": "네오 조림",
+    "description": "전통 생선 조림 전문점입니다.",
+    "address": "서울시 마포구 연남동 124",
+    "latitude": 37.5665,
+    "longitude": 126.978,
+    "contact": "0212345674",
+    "closedDay": "",
+    "category": "KOREAN",
+    "info": "신선한 생선으로 매일 아침 조리합니다.",
+    "link": "http://badahyang.com",
+    "deposit": 10000,
+    "operatingHours": [
+        {"dayOfWeek": "TUESDAY", "openingTime": "11:30", "closingTime": "21:00"},
+        {"dayOfWeek": "WEDNESDAY", "openingTime": "11:30", "closingTime": "21:00"}
+    ],
+    "facilities": ["PARKING", "WIFI"],
+    "hashtags": ["생선조림", "한식맛집"]
+}
+        </textarea><br><br>
+
+    <!-- Submit Button -->
+    <button type="button" onclick="submitRestaurant()">Submit</button>
+</form>
+
+<script>
+    function submitRestaurant() {
+        const restaurantData = document.getElementById('restaurant').value;
+
+        const formData = new FormData();
+        console.log(formData)
+        formData.append('restaurant', restaurantData);
+
+        fetch('http://localhost:8080/api/restaurants/new', {
+            method: 'POST',
+            body: formData,
+        })
+            .then(response => {
+                // 응답 상태 체크
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text(); // 먼저 텍스트로 변환
+            })
+            .then(text => {
+                // 텍스트가 비어있지 않은지 확인
+                if (text) {
+                    return JSON.parse(text); // JSON으로 파싱
+                } else {
+                    throw new Error('Received empty response');
+                }
+            })
+            .then(data => {
+                console.log('Success:', data);
+                alert('Restaurant registered successfully!');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error registering restaurant: ' + error.message);
+            });
+    }
+</script>
+</body>
+</html>
