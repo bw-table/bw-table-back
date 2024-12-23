@@ -39,7 +39,7 @@
 <script>
     function submitRestaurant() {
         const restaurantData = document.getElementById('restaurant').value;
-
+        console.log(restaurantData)
         const formData = new FormData();
         formData.append('restaurant', restaurantData);
         console.log(formData)

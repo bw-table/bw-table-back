@@ -41,7 +41,7 @@ public class RestaurantController {
             @AuthenticationPrincipal MemberDetails memberDetails
     ) {
         System.out.println("Name Test" + registrationDto.getName());
-        System.out.println("Restaurant" + registrationDto.getRestaurant());
+        System.out.println("Restaurant" + registrationDto.getRestaurantData());
         System.out.println("Images" + registrationDto.getImages());
 //        System.out.println("Menus" +registrationDto.getMenus());
         System.out.println("MenuImages" +registrationDto.getMenuImages());
@@ -51,7 +51,7 @@ public class RestaurantController {
             objectMapper.registerModule(new JavaTimeModule());
             objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-            RestaurantReqDto reqDto = objectMapper.readValue(registrationDto.getRestaurant(), RestaurantReqDto.class);
+            RestaurantReqDto reqDto = objectMapper.readValue(registrationDto.getRestaurantData(), RestaurantReqDto.class);
             System.out.println(reqDto.getAddress());
 //            List<MenuRegisterDto> menus = objectMapper.readValue(registrationDto.getMenus(), new TypeReference<List<MenuRegisterDto>>() {});
 //            System.out.println(menus.get(0).getName());
