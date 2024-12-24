@@ -37,7 +37,7 @@ public class RestaurantController {
     public ResponseEntity<?> registerRestaurant(
             HttpServletRequest request,
 //            @ModelAttribute RestaurantRegistrationDto registrationDto,
-            @RequestPart(value = "restaurant") RestaurantRegistrationDto reqDto,
+            @RequestPart("restaurant") RestaurantRegistrationDto reqDto,
             @RequestPart(value = "images", required = false) MultipartFile[] images,
             @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
             @AuthenticationPrincipal MemberDetails memberDetails
