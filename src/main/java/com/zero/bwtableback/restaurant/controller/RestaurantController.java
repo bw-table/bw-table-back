@@ -66,7 +66,7 @@ public class RestaurantController {
 //            RestaurantRegisterResDto savedRestaurant =
 //                    restaurantService.registerRestaurant(reqDto, images, menus, menuImages, memberDetails.getMemberId());
 
-            return null;
+            return ResponseEntity.ok("Restaurant registered successfully!");
 //            return ResponseEntity.ok(savedRestaurant);
         } catch (RestaurantException e) {
             // 레스토랑 등록 실패
