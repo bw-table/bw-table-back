@@ -10,6 +10,7 @@ import com.zero.bwtableback.restaurant.exception.RestaurantException;
 import com.zero.bwtableback.restaurant.service.RestaurantSearchService;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
 import com.zero.bwtableback.security.MemberDetails;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -38,9 +39,13 @@ public class RestaurantController {
     @PreAuthorize("hasrole('OWNER')")
     @PostMapping(value = "/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> registerRestaurant(
+            HttpServletRequest request,
             @ModelAttribute RestaurantRegistrationDto registrationDto,
             @AuthenticationPrincipal MemberDetails memberDetails
     ) {
+        String contentType = request.getContentType();
+        System.out.println("Content-Type: " + contentType);
+
         System.out.println("Restaurant" + registrationDto.getName());
         System.out.println("Description" + registrationDto.getDescription());
         System.out.println("Address" + registrationDto.getAddress());
