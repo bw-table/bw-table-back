@@ -36,19 +36,15 @@ public class RestaurantController {
     @PostMapping(value = "/new", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<?> registerRestaurant(
             HttpServletRequest request,
-//            @ModelAttribute RestaurantRegistrationDto registrationDto,
-            @RequestPart(value = "restaurant") RestaurantRegistrationDto reqDto,
-            @RequestPart(value = "images", required = false) MultipartFile[] images,
-            @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
+            @ModelAttribute RestaurantRegistrationDto registrationDto,
             @AuthenticationPrincipal MemberDetails memberDetails
     ) {
         String contentType = request.getContentType();
         System.out.println("Content-Type: " + contentType);
 
-        System.out.println("Restaurant" + reqDto);
-//        System.out.println("Description" + registrationDto.getDescription());
-//        System.out.println("Address" + registrationDto.getAddress());
-//        System.out.println("Images" + registrationDto.getImages());
+        System.out.println("Description" + registrationDto.getDescription());
+        System.out.println("Address" + registrationDto.getAddress());
+        System.out.println("Images" + registrationDto.getImages());
 //        System.out.println("MenuImages" +registrationDto.getMenuImages());
 
         try {
