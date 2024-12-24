@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,7 +36,7 @@ public class RestaurantController {
 
     // 식당 등록
     @PreAuthorize("hasrole('OWNER')")
-    @PostMapping("/new")
+    @PostMapping(value = "/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> registerRestaurant(
             @ModelAttribute RestaurantRegistrationDto registrationDto,
             @AuthenticationPrincipal MemberDetails memberDetails
