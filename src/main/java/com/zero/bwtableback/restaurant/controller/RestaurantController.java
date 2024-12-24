@@ -1,11 +1,10 @@
 package com.zero.bwtableback.restaurant.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
-import com.zero.bwtableback.restaurant.dto.*;
+import com.zero.bwtableback.restaurant.dto.RestaurantDetailDto;
+import com.zero.bwtableback.restaurant.dto.RestaurantListDto;
+import com.zero.bwtableback.restaurant.dto.RestaurantRegisterResDto;
+import com.zero.bwtableback.restaurant.dto.RestaurantUpdateReqDto;
 import com.zero.bwtableback.restaurant.exception.RestaurantException;
 import com.zero.bwtableback.restaurant.service.RestaurantSearchService;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
@@ -41,7 +40,7 @@ public class RestaurantController {
     public ResponseEntity<?> registerRestaurant(
             HttpServletRequest request,
 //            @ModelAttribute RestaurantRegistrationDto registrationDto,
-            @RequestPart("restaurant") RestaurantUpdateReqDto reqDto,
+            @RequestPart(value = "restaurant") RestaurantUpdateReqDto reqDto,
             @RequestPart(value = "images", required = false) MultipartFile[] images,
             @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
             @AuthenticationPrincipal MemberDetails memberDetails
