@@ -42,7 +42,7 @@ public class MemberController {
      */
     @GetMapping("/{memberId}")
     public MemberDto getMemberById(@PathVariable Long memberId) {
-        return memberService.getMemberById(memberId);
+        return memberService.getMemberInfo(memberId);
     }
 
     /**
@@ -55,8 +55,7 @@ public class MemberController {
         if (memberDetails == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        Long memberId = memberDetails.getMemberId();
-        return ResponseEntity.ok(memberService.getMyInfo(memberId));
+        return ResponseEntity.ok(memberService.getMyInfo(memberDetails.getMemberId()));
     }
 
     /**
@@ -68,9 +67,7 @@ public class MemberController {
         if (memberDetails == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        String email = memberDetails.getUsername();
-
-        return ResponseEntity.ok(memberService.getMyReservations(pageable, email));
+        return ResponseEntity.ok(memberService.getMyReservations(pageable, memberDetails.getMemberId()));
     }
 
     /**
@@ -78,9 +75,8 @@ public class MemberController {
      */
     @GetMapping("/me/reviews")
     public ResponseEntity<Page<ReviewDetailDto>> getMyReviews(Pageable pageable,
-                                                              @AuthenticationPrincipal MemberDetails memberDetails) {
-        String email = memberDetails.getUsername();
-        return ResponseEntity.ok(memberService.getMyReviews(pageable, email));
+                                                              @AuthenticationPrincipal MemberDetails memberDetails) {;
+        return ResponseEntity.ok(memberService.getMyReviews(pageable, memberDetails.getMemberId()));
     }
 
     /**
@@ -92,9 +88,7 @@ public class MemberController {
         if (memberDetails == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        String email = memberDetails.getUsername();
-
-        Page<ChatRoomCreateResDto> rooms = memberService.getMyChatRooms(pageable, email);
+        Page<ChatRoomCreateResDto> rooms = memberService.getMyChatRooms(pageable, memberDetails.getMemberId());
 
         return ResponseEntity.ok(rooms);
     }

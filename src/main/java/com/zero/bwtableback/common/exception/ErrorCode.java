@@ -79,6 +79,8 @@ public enum ErrorCode {
     FILE_UPLOAD_FAILED(HttpStatus.BAD_REQUEST, "파일 업로드에 실패했습니다."),
     FILE_DELETE_FAILED(HttpStatus.BAD_REQUEST, "파일 삭제에 실패하였습니다."),
 
+    // REDIS 오류
+    REDIS_CONNECTION_FAILURE(HttpStatus.INTERNAL_SERVER_ERROR,"Redis에 연결할 수 없습니다."),
     // 기타 오류
     UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");

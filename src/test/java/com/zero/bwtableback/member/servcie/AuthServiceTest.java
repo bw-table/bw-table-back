@@ -361,10 +361,10 @@ class AuthServiceTest {
         HttpServletRequest request = mock(HttpServletRequest.class);
         HttpServletResponse response = mock(HttpServletResponse.class);
 
-        when(memberRepository.findByEmail(email)).thenReturn(Optional.of(member));
+        when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
 
         // when
-        authService.logout(email, request, response);
+        authService.logout(memberId, response);
 
         // then
         ArgumentCaptor<Cookie> cookieCaptor = ArgumentCaptor.forClass(Cookie.class); // HttpServletResponse에 추가된 쿠키 캡처

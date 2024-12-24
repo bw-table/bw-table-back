@@ -139,6 +139,7 @@ public class KakaoOAuth2Service {
                 .nickname(userInfo.getNickName())
                 .phone(userInfo.getPhone())
                 .role(Role.GUEST)
+                .status(Status.ACTIVE)
                 .provider(userInfo.getProvider())
                 .providerId(userInfo.getProviderId())
                 .profileImage(userInfo.getProfileImage())

@@ -41,9 +41,6 @@ public class KakaoOAuth2Controller {
     public ResponseEntity<?> kakaoLogin(@RequestParam(required = false) String code,
                                         HttpServletRequest request,
                                         HttpServletResponse response) throws JsonProcessingException {
-        // 요청 헤더에서 액세스 토큰 추출
-        String accessToken = getJwtFromRequest(request);
-
         // 첫 번째 로그인: 카카오에서 정보를 추출하여 서버에 회원가입
         if (code != null) {
             String kakaoToken = kakaoService.getAccessToken(code);
@@ -52,24 +49,23 @@ public class KakaoOAuth2Controller {
 
             return ResponseEntity.ok(loginResDto);
         } else {
-            // 액세스 토큰 존재하고 유효한 경우
-            if (StringUtils.hasText(accessToken) && tokenProvider.validateAccessToken(accessToken)) {
-                // 기존의 액세스 토큰과 사용자 정보를 반환
-                LoginResDto loginResDto = authService.handleExistingToken(accessToken);
-
-                return ResponseEntity.ok(loginResDto);
+            // 카카오 인가 코드가 없는 경우
+            String accessToken = tokenProvider.extractToken(request);
+            if (StringUtils.hasText(accessToken)) {
+                if (tokenProvider.validateAccessToken(accessToken)) {
+                    // 유효한 액세스 토큰이 있는 경우
+                    LoginResDto loginResDto = authService.handleExistingToken(accessToken);
+                    return ResponseEntity.ok(loginResDto);
+                } else {
+                    // 액세스 토큰이 만료된 경우
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body("토큰이 만료되었습니다.");
+                }
+            } else {
+                // 액세스 토큰이 없는 경우
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("토큰이 존재하지 않습니다.");
             }
-            // 토큰이 없거나 유효하지 않은 경우 401 응답을 던짐
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Unauthorized. 토큰이 유효하지 않습니다.");
         }
-    }
-
-    private String getJwtFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7); // "Bearer " 부분을 제거하고 토큰 반환
-        }
-        return null; // 토큰이 없으면 null 반환
     }
 }

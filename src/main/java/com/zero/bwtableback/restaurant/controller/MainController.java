@@ -97,7 +97,6 @@ public class MainController {
             @RequestParam double latitude,
             @RequestParam double longitude,
             @RequestParam double radius) {
-
         List<RestaurantListDto> restaurants = mainService.getRestaurantsNearby(latitude, longitude, radius);
 
         return ResponseEntity.ok(restaurants);
@@ -113,12 +112,13 @@ public class MainController {
 
     // [놓치면 안되는 혜택 가득, 방문자 리얼리뷰 pick, 고객님이 좋아할 매장, 새로 오픈했어요!] 리스트
     @GetMapping
-    public ResponseEntity<Map<String, List<RestaurantListDto>>> getMainPageData(
-            Pageable pageable, @AuthenticationPrincipal MemberDetails memberDetails) {
+    public ResponseEntity<Map<String, List<RestaurantListDto>>> getMainPageData(Pageable pageable,
+                                                                                @AuthenticationPrincipal MemberDetails memberDetails) {
         Long memberId = (memberDetails != null) ? memberDetails.getMemberId() : null;
 
         Map<String, List<RestaurantListDto>> mainPageData =
                 mainService.getMainPageData(pageable, memberId);
+
         return ResponseEntity.ok(mainPageData);
     }
 }

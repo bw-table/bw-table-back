@@ -123,26 +123,27 @@ public class AuthService {
      * 로그인
      */
     public LoginResDto login(MemberDto memberDto, HttpServletRequest request, HttpServletResponse response) {
+        try {
+            String accessToken = tokenProvider.createAccessToken(memberDto.getEmail(), memberDto.getRole());
+            String refreshToken = tokenProvider.createRefreshToken(memberDto.getId().toString());
 
-        String accessToken = tokenProvider.createAccessToken(memberDto.getEmail(), memberDto.getRole());
-        String refreshToken = tokenProvider.createRefreshToken(memberDto.getId().toString());
+            // HttpOnly 쿠키에 리프레시 토큰 저장
+            saveRefreshTokenToCookie(refreshToken, response);
 
-        // 회원 상태 조회
+            // Redis에 리프레시 토큰 저장
+            saveRefreshTokenToRedis(memberDto.getId(), refreshToken);
 
-        // HttpOnly 쿠키에 리프레시 토큰 저장
-        saveRefreshTokenToCookie(refreshToken, response);
+            // 레스토랑 ID 조회 (사장님일 경우)
+            Long restaurantId = getRestaurantIdIfOwner(memberDto);
 
-        // Redis에 리프레시 토큰 저장
-        saveRefreshTokenToRedis(memberDto.getId(), refreshToken);
-
-        // 레스토랑 ID 조회 (사장님일 경우)
-        Long restaurantId = getRestaurantIdIfOwner(memberDto);
-
-
-        return new LoginResDto(accessToken, memberDto, restaurantId);
+            return new LoginResDto(accessToken, memberDto, restaurantId);
+        } catch (Exception e) {
+            log.error("로그인 실패: {}", memberDto.getEmail(), e);
+            throw new IllegalArgumentException("로그인 실패", e);
+        }
     }
 
-    // 회원 인증
+    // 이메일과 비밀번호 검증
     public MemberDto authenticateMember(EmailLoginReqDto loginReqDto) {
         Member member = memberRepository.findByEmail(loginReqDto.getEmail())
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_CREDENTIALS));
@@ -162,7 +163,6 @@ public class AuthService {
     // 리프레시 토큰으로 액세스 토큰 갱신
     public LoginResDto renewAccessTokenWithRefreshToken(String refreshToken) {
         String email = tokenProvider.getUsername(refreshToken);
-
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
@@ -178,7 +178,6 @@ public class AuthService {
     // 리프레시 토큰 검증
     public void validateRefreshToken(String refreshToken, Long memberId) {
         String key = "refresh_token:" + memberId;
-
         String storedRefreshToken = redisTemplate.opsForValue().get(key);
 
         if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
@@ -202,10 +201,9 @@ public class AuthService {
         try {
             redisTemplate.opsForValue().set(key, refreshToken);
         } catch (RedisConnectionFailureException e) {
-            System.err.println("Redis에 연결할 수 없습니다: " + e.getMessage());
+            throw new CustomException(ErrorCode.REDIS_CONNECTION_FAILURE);
         } catch (Exception e) {
-            // 다른 예외 처리
-            System.err.println("예기치 않은 오류 발생: " + e.getMessage());
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -234,9 +232,8 @@ public class AuthService {
     /**
      * 사용자 로그아웃 처리
      */
-    public void logout(String email, HttpServletResponse response) {
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    public void logout(Long memberId, HttpServletResponse response) {
+        Member member = getMemberById(memberId);
 
         String key = "refresh_token:" + member.getId();
         redisTemplate.delete(key);
@@ -255,8 +252,7 @@ public class AuthService {
      * 로그아웃 처리 후
      */
     public void withdraw(Long memberId, HttpServletResponse response) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        Member member = getMemberById(memberId);
 
         String key = "refresh_token:" + member.getId();
         redisTemplate.delete(key);
@@ -273,5 +269,10 @@ public class AuthService {
 
         member.setStatus(Status.INACTIVE);
         memberRepository.save(member);
+    }
+
+    private Member getMemberById(Long memberId) {
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 }
