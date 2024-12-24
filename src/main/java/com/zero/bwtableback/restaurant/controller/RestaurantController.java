@@ -37,7 +37,7 @@ public class RestaurantController {
 
     // 식당 등록
     @PreAuthorize("hasrole('OWNER')")
-    @PostMapping(value = "/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/new", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<?> registerRestaurant(
             HttpServletRequest request,
             @ModelAttribute RestaurantRegistrationDto registrationDto,
