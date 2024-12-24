@@ -37,33 +37,12 @@ public class RestaurantController {
     @PreAuthorize("hasrole('OWNER')")
     @PostMapping("/new")
     public ResponseEntity<?> registerRestaurant(
-//            @ModelAttribute RestaurantRegistrationDto registrationDto,
-            @RequestPart("name") String name,
-            @RequestPart("description") String description,
-            @RequestPart("address") String address,
-            @RequestPart("latitude") Double latitude,
-            @RequestPart("longitude") Double longitude,
-            @RequestPart("contact") String contact,
-            @RequestPart("closedDay") String closedDay,
-            @RequestPart("category") String category,
-            @RequestPart("info") String info,
-            @RequestPart("link") String link,
-            @RequestPart("deposit") Integer deposit,
-            @RequestPart("menus") List<MenuRegisterDto> menus,
-            @RequestPart("operatingHours") List<OperatingHoursDto> operatingHours,
-            @RequestPart("facilities") List<String> facilities,
-            @RequestPart("hashtags") List<String> hashtags,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images,
-            @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
+            @ModelAttribute RestaurantRegistrationDto registrationDto,
             @AuthenticationPrincipal MemberDetails memberDetails
     ) {
-//        System.out.println("name " + registrationDto.getName());
-        System.out.println("name" + name);
-//        System.out.println("description" + registrationDto.getDescription());
-        System.out.println("description" + description);
-
-//        System.out.println("address" + registrationDto.getAddress());
-
+        System.out.println("Restaurant" + registrationDto.getName());
+        System.out.println("Description" + registrationDto.getDescription());
+        System.out.println("Address" + registrationDto.getAddress());
 //        System.out.println("Images" + registrationDto.getImages());
 //        System.out.println("Menus" +registrationDto.getMenus());
 //        System.out.println("MenuImages" +registrationDto.getMenuImages());
