@@ -37,12 +37,18 @@ public class RestaurantController {
     @PreAuthorize("hasrole('OWNER')")
     @PostMapping("/new")
     public ResponseEntity<?> registerRestaurant(
-            @ModelAttribute RestaurantRegistrationDto registrationDto,
+//            @ModelAttribute RestaurantRegistrationDto registrationDto,
+            @RequestPart("name") String name,
+            @RequestPart("description") String description,
             @AuthenticationPrincipal MemberDetails memberDetails
     ) {
-        System.out.println("Restaurant" + registrationDto.getName());
-        System.out.println("Description" + registrationDto.getDescription());
-        System.out.println("Address" + registrationDto.getAddress());
+//        System.out.println("name " + registrationDto.getName());
+        System.out.println("name" + name);
+//        System.out.println("description" + registrationDto.getDescription());
+        System.out.println("description" + description);
+
+//        System.out.println("address" + registrationDto.getAddress());
+
 //        System.out.println("Images" + registrationDto.getImages());
 //        System.out.println("Menus" +registrationDto.getMenus());
 //        System.out.println("MenuImages" +registrationDto.getMenuImages());
