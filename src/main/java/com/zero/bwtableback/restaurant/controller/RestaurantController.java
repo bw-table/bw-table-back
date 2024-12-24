@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "*", methods = {RequestMethod.GET, RequestMethod.POST})
 @RequestMapping("/api/restaurants")
 @RequiredArgsConstructor
 @Slf4j
