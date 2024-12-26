@@ -35,7 +35,7 @@
 
 <script>
     let reservationToken = '';
-    let jwtToken = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJndWVzdDNAZXhhbXBsZS5jb20iLCJyb2xlIjoiR1VFU1QiLCJpYXQiOjE3MzUxOTIxMDksImV4cCI6MTczNTE5MzkwOX0.t4RxB9zwzhVrG2WQmRQV43r_DzJjyQ3h0-_4WEEGZ8xyP5JuEup7ObMFVsRBQ8MEPKQ8NGtDtU2gGx7agwS0mQ';
+    let jwtToken = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJndWVzdDNAZXhhbXBsZS5jb20iLCJyb2xlIjoiR1VFU1QiLCJpYXQiOjE3MzUxOTkwNTgsImV4cCI6MTczNTIwMDg1OH0.jTSqdpqW2lVYE1OgYinCnY-yFR6WoQfk4gn2q3SwMCfdGt3cLRJtrUQuMfqfq0UVPnEXikfmA2QXP6bJ4Q25KA';
     let reservationData = {};
 
     document.getElementById('next-button').addEventListener('click', function () {
@@ -55,8 +55,6 @@
         `;
         document.getElementById('reservation-form').style.display = 'none';
         document.getElementById('reservation-details').style.display = 'block';
-
-        console.log(reservationData)
     });
 
     document.getElementById('confirm-button').addEventListener('click', function () {
@@ -74,13 +72,12 @@
                         throw new Error(text);
                     });
                 }
-                return response.text();
+                return response.json();
             })
             .then(data => {
-                console.log(data);
-                reservationToken = data.trim();
-
-                if (reservationToken && reservationToken.length === 36) {
+                reservationToken = data.reservationToken;
+                console.log(reservationToken)
+                if (reservationToken) {
                     // 결제 프로세스 시작
                     IMP.init('imp45115062');
                     IMP.request_pay({

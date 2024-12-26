@@ -87,10 +87,10 @@ public class ReservationController {
     @PostMapping("/complete")
     public ResponseEntity<?> completeReservation(@RequestBody PaymentReqDto paymentReqDto,
                                                  @AuthenticationPrincipal MemberDetails memberDetails) {
-        System.out.println("paymentReqDto" + paymentReqDto);
+        System.out.println("paymentReqDto" + paymentReqDto.getReservationToken());
+        System.out.println("paymentReqDto" + paymentReqDto.getImpUid());
         ReservationCreateReqDto reservationInfo = reservationService.getReservationInfo(paymentReqDto.getReservationToken());
         Payment payment = paymentService.verifyPayment(paymentReqDto);
-        System.out.println("paymentReqDto" + paymentReqDto);
         if ("paid".equals(payment.getStatus())) {
             String lockKey = "lock:reservation:" + reservationInfo.restaurantId() + ":" + reservationInfo.reservationDate() + ":" + reservationInfo.reservationTime();
             RLock lock = redissonClient.getLock(lockKey);

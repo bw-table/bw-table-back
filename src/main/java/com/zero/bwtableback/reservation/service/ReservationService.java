@@ -125,6 +125,9 @@ public class ReservationService {
         String reservationKey = "reservation:token:" + reservationToken;
         Object redisValue = redisTemplate.opsForValue().get(reservationKey);
 
+        System.out.println(reservationKey);
+        System.out.println(redisValue);
+
         if (redisValue == null) {
             throw new RuntimeException("예약 토큰이 존재하지 않습니다.");
         }
@@ -135,11 +138,11 @@ public class ReservationService {
             Restaurant restaurant = restaurantRepository.findById(restaurantId)
                     .orElseThrow(() -> new RuntimeException("Restaurant not found"));
 
-            List<Integer> dateList = (List<Integer>) map.get("reservationDate");
-            LocalDate reservationDate = LocalDate.of(dateList.get(0), dateList.get(1), dateList.get(2));
+            LocalDate reservationDate = LocalDate.parse((String) map.get("reservationDate"));
+//            LocalDate reservationDate = LocalDate.of(dateList.get(0), dateList.get(1), dateList.get(2));
 
-            List<Integer> timeList = (List<Integer>) map.get("reservationTime");
-            LocalTime reservationTime = LocalTime.of(timeList.get(0), timeList.get(1));
+            LocalTime reservationTime = LocalTime.parse((String) map.get("reservationTime"));
+//            LocalTime reservationTime = LocalTime.of(timeList.get(0), timeList.get(1));
 
             int numberOfPeople = (Integer) map.get("numberOfPeople");
             String specialRequest = (String) map.get("specialRequest");
