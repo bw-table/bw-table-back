@@ -4,11 +4,11 @@ import com.siot.IamportRestClient.response.Payment;
 import com.zero.bwtableback.chat.service.ChatService;
 import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
+import com.zero.bwtableback.member.dto.MemberDto;
+import com.zero.bwtableback.member.entity.Member;
+import com.zero.bwtableback.member.service.MemberService;
 import com.zero.bwtableback.payment.PaymentService;
-import com.zero.bwtableback.reservation.dto.PaymentReqDto;
-import com.zero.bwtableback.reservation.dto.ReservationCompleteResDto;
-import com.zero.bwtableback.reservation.dto.ReservationCreateReqDto;
-import com.zero.bwtableback.reservation.dto.ReservationResDto;
+import com.zero.bwtableback.reservation.dto.*;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.service.ReservationService;
 import com.zero.bwtableback.restaurant.dto.ReservationAvailabilityDto;
@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 public class ReservationController {
 
     private final ReservationService reservationService;
+    private final MemberService memberService;
     private final ChatService chatService;
     private final PaymentService paymentService;
 
@@ -65,9 +66,9 @@ public class ReservationController {
                                                 @AuthenticationPrincipal MemberDetails memberDetails) {
         ReservationAvailabilityDto availability = reservationService.checkReservationAvailability(request);
         if (availability.isAvailable()) {
-            String reservationToken = UUID.randomUUID().toString();
-            redisTemplate.opsForValue().set("reservation:token:" + reservationToken, request, 5, TimeUnit.MINUTES);
-            return ResponseEntity.ok(reservationToken);
+            ReservationCreateResDto reservationCreateResDto = reservationService.createReservation(memberDetails.getMemberId(), request.restaurantId());
+            redisTemplate.opsForValue().set("reservation:token:" + reservationCreateResDto.getReservationToken(), request, 5, TimeUnit.MINUTES);
+            return ResponseEntity.ok(reservationCreateResDto);
         } else {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(availability.getMessage());
         }

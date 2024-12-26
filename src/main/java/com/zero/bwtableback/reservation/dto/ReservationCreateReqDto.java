@@ -3,6 +3,8 @@ package com.zero.bwtableback.reservation.dto;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.restaurant.entity.Restaurant;
+import lombok.Getter;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 

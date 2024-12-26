@@ -7,6 +7,7 @@ import lombok.Setter;
 @Setter
 public class PaymentReqDto {
     private String reservationToken; // 예약 토큰
+    private String impUid;        // 결제 고유 ID
 //    private String applyNum;      // 신청 번호
 //    private String bankName;      // 은행 이름 (null 가능)
 //    private String buyerAddr;     // 구매자 주소 (빈 문자열 가능)
@@ -19,7 +20,6 @@ public class PaymentReqDto {
 //    private int cardQuota;        // 카드 할부 개월 수
 //    private String currency;       // 통화 (예: "KRW")
 //    private String customData;     // 커스텀 데이터 (null 가능)
-    private String impUid;        // 결제 고유 ID
 //    private String merchantUid;   // 가맹점 고유 ID
 //    private String name;          // 상품명
 //    private int paidAmount;       // 결제 금액
