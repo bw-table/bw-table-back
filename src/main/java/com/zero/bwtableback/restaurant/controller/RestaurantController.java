@@ -1,20 +1,18 @@
 package com.zero.bwtableback.restaurant.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.zero.bwtableback.chat.dto.ChatRoomCreateResDto;
 import com.zero.bwtableback.restaurant.dto.*;
 import com.zero.bwtableback.restaurant.exception.RestaurantException;
 import com.zero.bwtableback.restaurant.service.RestaurantSearchService;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
 import com.zero.bwtableback.security.MemberDetails;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,46 +33,30 @@ public class RestaurantController {
 
     // 식당 등록
     @PreAuthorize("hasrole('OWNER')")
-    @PostMapping("/new")
+    @PostMapping(value = "/new", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<?> registerRestaurant(
-            @ModelAttribute RestaurantRegistrationDto registrationDto,
+            @RequestPart("restaurant") RestaurantReqDto reqDto,
+            @RequestPart(value = "images", required = false) MultipartFile[] images,
+            @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
             @AuthenticationPrincipal MemberDetails memberDetails
     ) {
-        System.out.println("Restaurant" + registrationDto.getName());
-        System.out.println("Description" + registrationDto.getDescription());
-        System.out.println("Address" + registrationDto.getAddress());
-//        System.out.println("Images" + registrationDto.getImages());
-//        System.out.println("Menus" +registrationDto.getMenus());
-//        System.out.println("MenuImages" +registrationDto.getMenuImages());
-
+        System.out.println(reqDto);
         try {
-//            ObjectMapper objectMapper = new ObjectMapper();
-//            objectMapper.registerModule(new JavaTimeModule());
-//            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-//
-//            RestaurantReqDto reqDto = objectMapper.readValue(registrationDto.getRestaurant(), RestaurantReqDto.class);
-//            System.out.println(reqDto.getAddress());
-//            List<MenuRegisterDto> menus = objectMapper.readValue(registrationDto.getMenus(), new TypeReference<List<MenuRegisterDto>>() {});
-//            System.out.println(menus.get(0).getName());
-//            MultipartFile[] images = registrationDto.getImages();
-//            List<MultipartFile> menuImages = registrationDto.getMenuImages();
+            reqDto.setImages(reqDto.getImages());
+            reqDto.setMenus(reqDto.getMenus());
 
-//            reqDto.setImages(reqDto.getImages());
-//            reqDto.setMenus(menus);
-//
-//            RestaurantRegisterResDto savedRestaurant =
-//                    restaurantService.registerRestaurant(reqDto, images, menus, menuImages, memberDetails.getMemberId());
-
-            return null;
-//            return ResponseEntity.ok(savedRestaurant);
+            RestaurantRegisterResDto savedRestaurant =
+                    restaurantService.registerRestaurant(reqDto, images, reqDto.getMenus(), menuImages, memberDetails.getMemberId());
+            return ResponseEntity.ok(savedRestaurant);
         } catch (RestaurantException e) {
             // 레스토랑 등록 실패
             log.error("Error registering restaurant", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-//        } catch (IOException e) {
-//            // 파일 업로드 or IO 관련 오류
-//            log.error("File upload error", e);
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File upload failed");
+        }
+        catch (IOException e) {
+            // 파일 업로드 or IO 관련 오류
+            log.error("File upload error", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File upload failed");
         } catch (Exception e) {
             // 예상치 못한 예외
             log.error("버킷 오류: ", e);

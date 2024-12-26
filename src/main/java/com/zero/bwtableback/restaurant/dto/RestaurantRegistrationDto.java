@@ -30,7 +30,6 @@ public class RestaurantRegistrationDto {
 
     private List<MultipartFile> images;
     private List<MultipartFile> menuImages;
-//    private String menus;
 //    private MultipartFile[] images;
 //    private List<MultipartFile> menuImages;
 }
