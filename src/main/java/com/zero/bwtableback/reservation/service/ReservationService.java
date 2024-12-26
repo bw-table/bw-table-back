@@ -7,10 +7,7 @@ import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.repository.MemberRepository;
 import com.zero.bwtableback.payment.PaymentService;
-import com.zero.bwtableback.reservation.dto.PaymentCompleteResDto;
-import com.zero.bwtableback.reservation.dto.ReservationCompleteResDto;
-import com.zero.bwtableback.reservation.dto.ReservationCreateReqDto;
-import com.zero.bwtableback.reservation.dto.ReservationResDto;
+import com.zero.bwtableback.reservation.dto.*;
 import com.zero.bwtableback.reservation.entity.NotificationType;
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.entity.ReservationStatus;
@@ -27,6 +24,7 @@ import com.zero.bwtableback.restaurant.repository.TimeslotSettingRepository;
 import com.zero.bwtableback.restaurant.repository.WeekdaySettingRepository;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
 
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -156,6 +154,26 @@ public class ReservationService {
         } else {
             throw new RuntimeException("예약 정보 형식이 올바르지 않습니다.");
         }
+    }
+
+    /**
+     * 결제 요청을 위한 고객 정보 및 예약 정보에 대한 토큰 반환
+     */
+    public ReservationCreateResDto createReservation(Long memberId, Long restaurantId){
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(()->new CustomException(ErrorCode.USER_NOT_FOUND));
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(()->new CustomException(ErrorCode.RESTAURANT_NOT_FOUND));
+        String reservationToken = UUID.randomUUID().toString();
+
+        return ReservationCreateResDto.builder()
+                .reservationToken(reservationToken)
+                .name(restaurant.getName())
+                .amount(restaurant.getDeposit())
+                .buyerName(member.getName())
+                .buyerEmail(member.getEmail())
+                .buyerTel(member.getPhone())
+                .build();
     }
 
     @Transactional
