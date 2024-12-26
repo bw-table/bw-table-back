@@ -86,6 +86,7 @@ public class ReservationController {
     @PostMapping("/complete")
     public ResponseEntity<?> completeReservation(@RequestBody PaymentReqDto paymentReqDto,
                                                  @AuthenticationPrincipal MemberDetails memberDetails) {
+        System.out.println(paymentReqDto);
         ReservationCreateReqDto reservationInfo = reservationService.getReservationInfo(paymentReqDto.getReservationToken());
         Payment payment = paymentService.verifyPayment(paymentReqDto);
 

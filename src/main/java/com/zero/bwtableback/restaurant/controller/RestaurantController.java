@@ -35,7 +35,6 @@ public class RestaurantController {
     @PreAuthorize("hasrole('OWNER')")
     @PostMapping(value = "/new", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<?> registerRestaurant(
-            HttpServletRequest request,
             @RequestPart("restaurant") RestaurantReqDto reqDto,
             @RequestPart(value = "images", required = false) MultipartFile[] images,
             @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,

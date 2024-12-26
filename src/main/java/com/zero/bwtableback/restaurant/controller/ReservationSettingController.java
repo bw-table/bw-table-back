@@ -21,16 +21,14 @@ public class ReservationSettingController {
 
     private final ReservationSettingService reservationSettingService;
 
-    @PostMapping("/{restaurantId}/reservation-settings") // TODO 엔드포인트 수정
+    @PostMapping("/reservation-settings")
     public ResponseEntity<ReservationSettingResDto> createReservationSetting(
-            @PathVariable Long restaurantId,
             @RequestBody ReservationSettingReqDto reqDto,
             @AuthenticationPrincipal MemberDetails memberDetails) throws AccessDeniedException {
 
-        Member member = memberDetails.getMember();
-        reqDto.setRestaurantId(restaurantId);
+        reqDto.setRestaurantId(reqDto.getRestaurantId());
 
-        ReservationSettingResDto resDto = reservationSettingService.createReservationSetting(reqDto, member);
+        ReservationSettingResDto resDto = reservationSettingService.createReservationSetting(reqDto, memberDetails.getMemberId());
         return ResponseEntity.ok(resDto);
     }
 
@@ -42,7 +40,7 @@ public class ReservationSettingController {
 
         Member member = memberDetails.getMember();
         List<ReservationSettingDetailDto> reservationSettings =
-                reservationSettingService.getReservationSettingByRestaurantId(restaurantId, member);
+                reservationSettingService.getReservationSettingByRestaurantId(restaurantId, memberDetails.getMemberId());
 
         return ResponseEntity.ok(reservationSettings);
     }
@@ -54,9 +52,7 @@ public class ReservationSettingController {
                                                                 @PathVariable Long reservationSettingId,
                                                                 @AuthenticationPrincipal MemberDetails memberDetails) throws AccessDeniedException {
 
-        Member member = memberDetails.getMember();
-
-        ReservationSettingDetailDto resDto = reservationSettingService.getReservationSettingById(reservationSettingId, restaurantId, member);
+        ReservationSettingDetailDto resDto = reservationSettingService.getReservationSettingById(reservationSettingId, restaurantId, memberDetails.getMemberId());
         return ResponseEntity.ok(resDto);
     }
 
@@ -69,7 +65,7 @@ public class ReservationSettingController {
 
         Member member = memberDetails.getMember();
 
-        reservationSettingService.deleteReservationSetting(reservationSettingId, restaurantId, member);
+        reservationSettingService.deleteReservationSetting(reservationSettingId, restaurantId, memberDetails.getMemberId());
 
         ReservationSettingResDto resDto = ReservationSettingResDto.builder()
                 .id(reservationSettingId)
