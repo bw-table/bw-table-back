@@ -87,8 +87,6 @@ public class ReservationController {
     @PostMapping("/complete")
     public ResponseEntity<?> completeReservation(@RequestBody PaymentReqDto paymentReqDto,
                                                  @AuthenticationPrincipal MemberDetails memberDetails) {
-        System.out.println("paymentReqDto" + paymentReqDto.getReservationToken());
-        System.out.println("paymentReqDto" + paymentReqDto.getImpUid());
         ReservationCreateReqDto reservationInfo = reservationService.getReservationInfo(paymentReqDto.getReservationToken());
         Payment payment = paymentService.verifyPayment(paymentReqDto);
         if ("paid".equals(payment.getStatus())) {
@@ -110,7 +108,8 @@ public class ReservationController {
                     }
                     if (response != null) {
                         // 채팅방 생성
-                        chatService.createChatRoom(response.getReservation());
+                        Long chatRoomId =  chatService.createChatRoom(response.getReservation());
+                        response.setChatRoomId(chatRoomId);
 
                         // 예약 확정 알림 전송 및 스케줄링
                         reservationService.emitNotification(response.getReservation().reservationId());

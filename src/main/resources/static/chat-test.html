@@ -39,9 +39,9 @@
 
 <script>
     let stompClient = null;
-    const chatRoomId = '5'; // 이미 존재하는 채팅방 ID
+    const chatRoomId = '4'; // 이미 존재하는 채팅방 ID
     // 임시 토큰 나중에는 헤더의 개인의 토큰 반환
-    const jwtToken = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJndWVzdEBleGFtcGxlLmNvbSIsInJvbGUiOiJHVUVTVCIsImlhdCI6MTczMjE4NTIyNCwiZXhwIjoxNzMyMTg3MDI0fQ.dujJAliFhXzXT996jcpDlRvu5Ubd_zs85GalEWHCrdNB1i27lTH8m5z02hXR75sPnf36x6SlIAl6a-d7cf5skQ'; // JWT 토큰
+    const jwtToken = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJndWVzdDNAZXhhbXBsZS5jb20iLCJyb2xlIjoiR1VFU1QiLCJpYXQiOjE3MzUyMTc1MjEsImV4cCI6MTczNTIxOTMyMX0.E_6_XBSJzsr-bQhOdJtoaQEVszoZetcgtqnxPCoUR661Us8_dhihBXiH9ljrs8fAHCVDZpSMw6sTV-FmuIpemw'; // JWT 토큰
 
     function connect() {
         const socket = new SockJS('/ws');

@@ -35,7 +35,7 @@
 
 <script>
     let reservationToken = '';
-    let jwtToken = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJndWVzdDNAZXhhbXBsZS5jb20iLCJyb2xlIjoiR1VFU1QiLCJpYXQiOjE3MzUxOTkwNTgsImV4cCI6MTczNTIwMDg1OH0.jTSqdpqW2lVYE1OgYinCnY-yFR6WoQfk4gn2q3SwMCfdGt3cLRJtrUQuMfqfq0UVPnEXikfmA2QXP6bJ4Q25KA';
+    let jwtToken = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJndWVzdDNAZXhhbXBsZS5jb20iLCJyb2xlIjoiR1VFU1QiLCJpYXQiOjE3MzUyMTc1MjEsImV4cCI6MTczNTIxOTMyMX0.E_6_XBSJzsr-bQhOdJtoaQEVszoZetcgtqnxPCoUR661Us8_dhihBXiH9ljrs8fAHCVDZpSMw6sTV-FmuIpemw';
     let reservationData = {};
 
     document.getElementById('next-button').addEventListener('click', function () {
@@ -75,8 +75,14 @@
                 return response.json();
             })
             .then(data => {
+<<<<<<< HEAD
                 reservationToken = data.reservationToken;
                 console.log(reservationToken)
+=======
+                console.log(data.reservationToken)
+                reservationToken = data.reservationToken;
+
+>>>>>>> develop
                 if (reservationToken) {
                     // 결제 프로세스 시작
                     IMP.init('imp45115062');
