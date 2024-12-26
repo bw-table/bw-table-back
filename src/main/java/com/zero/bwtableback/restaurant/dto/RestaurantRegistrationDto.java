@@ -11,25 +11,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RestaurantRegistrationDto {
-//    private String name;
-//    private String description;
-//    private String address;
-//    private String latitude;
-//    private String  longitude;
-//    private String contact;
-//    private String closedDay;
-//    private String category;
-//    private String info;
-//    private String link;
-//    private String  deposit;
-//
-//    private List<MenuRegisterDto> menus;
-//    private List<OperatingHoursDto> operatingHours;
-//    private List<String> facilities;
-//    private List<String> hashtags;
-//
-//    private List<String> images;
-//    private List<String> menuImages;
     private String name;
     private String description;
     private String address;
@@ -49,7 +30,6 @@ public class RestaurantRegistrationDto {
 
     private List<MultipartFile> images;
     private List<MultipartFile> menuImages;
-//    private String menus;
 //    private MultipartFile[] images;
 //    private List<MultipartFile> menuImages;
 }

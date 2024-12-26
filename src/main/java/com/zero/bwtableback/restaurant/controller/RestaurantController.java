@@ -32,54 +32,32 @@ public class RestaurantController {
     private final RestaurantSearchService restaurantSearchService;
 
     // 식당 등록
-//    @PreAuthorize("hasrole('OWNER')")
+    @PreAuthorize("hasrole('OWNER')")
     @PostMapping(value = "/new", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<?> registerRestaurant(
             HttpServletRequest request,
-//            @ModelAttribute RestaurantRegistrationDto registrationDto,
-            @RequestPart("restaurant") RestaurantRegistrationDto reqDto,
+            @RequestPart("restaurant") RestaurantReqDto reqDto,
             @RequestPart(value = "images", required = false) MultipartFile[] images,
             @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
             @AuthenticationPrincipal MemberDetails memberDetails
     ) {
-        String contentType = request.getContentType();
-        System.out.println("Content-Type: " + contentType);
-        System.out.println("Name: " + reqDto.getName());
-        System.out.println("Description: " + reqDto.getDescription());
-        System.out.println("Address: " + reqDto.getAddress());
-        System.out.println("Images: " + images);
-        System.out.println("MenuImages: " + menuImages);
-//        System.out.println("MenuImages" +registrationDto.getMenuImages());
-
+        System.out.println(reqDto);
         try {
-//            ObjectMapper objectMapper = new ObjectMapper();
-//            objectMapper.registerModule(new JavaTimeModule());
-//            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-//
-//            RestaurantReqDto reqDto = objectMapper.readValue(registrationDto.getRestaurant(), RestaurantReqDto.class);
-//            System.out.println(reqDto.getAddress());
-//            List<MenuRegisterDto> menus = objectMapper.readValue(registrationDto.getMenus(), new TypeReference<List<MenuRegisterDto>>() {});
-//            System.out.println(menus.get(0).getName());
-//            MultipartFile[] images = registrationDto.getImages();
-//            List<MultipartFile> menuImages = registrationDto.getMenuImages();
+            reqDto.setImages(reqDto.getImages());
+            reqDto.setMenus(reqDto.getMenus());
 
-//            reqDto.setImages(reqDto.getImages());
-//            reqDto.setMenus(menus);
-//
-//            RestaurantRegisterResDto savedRestaurant =
-//                    restaurantService.registerRestaurant(reqDto, images, menus, menuImages, memberDetails.getMemberId());
-
-            return ResponseEntity.ok("Restaurant registered successfully!");
-//            return ResponseEntity.ok(savedRestaurant);
+            RestaurantRegisterResDto savedRestaurant =
+                    restaurantService.registerRestaurant(reqDto, images, reqDto.getMenus(), menuImages, memberDetails.getMemberId());
+            return ResponseEntity.ok(savedRestaurant);
         } catch (RestaurantException e) {
             // 레스토랑 등록 실패
             log.error("Error registering restaurant", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-//        }
-//        catch (IOException e) {
-//            // 파일 업로드 or IO 관련 오류
-//            log.error("File upload error", e);
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File upload failed");
+        }
+        catch (IOException e) {
+            // 파일 업로드 or IO 관련 오류
+            log.error("File upload error", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File upload failed");
         } catch (Exception e) {
             // 예상치 못한 예외
             log.error("버킷 오류: ", e);
