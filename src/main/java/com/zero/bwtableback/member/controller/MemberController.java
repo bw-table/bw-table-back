@@ -95,7 +95,7 @@ public class MemberController {
         String email = memberDetails.getUsername();
 
         Page<ChatRoomCreateResDto> rooms = memberService.getMyChatRooms(pageable, email);
-
+        System.out.println(rooms.getContent());
         return ResponseEntity.ok(rooms);
     }
 
