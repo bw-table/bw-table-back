@@ -2,6 +2,7 @@ package com.zero.bwtableback.reservation.dto;
 
 import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.restaurant.dto.RestaurantDetailDto;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -16,8 +17,7 @@ public record PaymentCompleteResDto(
                         reservation.getReservationTime(),
                         reservation.getNumberOfPeople(),
                         reservation.getSpecialRequest(),
-                        restaurantDetailDto
-                )
+                        restaurantDetailDto)
         );
     }
 

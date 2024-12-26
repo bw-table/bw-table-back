@@ -1,5 +1,7 @@
 package com.zero.bwtableback.reservation.service;
 
+import com.zero.bwtableback.chat.entity.ChatRoom;
+import com.zero.bwtableback.chat.repository.ChatRoomRepository;
 import com.zero.bwtableback.chat.service.ChatService;
 import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
@@ -13,26 +15,17 @@ import com.zero.bwtableback.reservation.entity.Reservation;
 import com.zero.bwtableback.reservation.entity.ReservationStatus;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
 import com.zero.bwtableback.restaurant.dto.ReservationAvailabilityDto;
+import com.zero.bwtableback.restaurant.dto.RestaurantDetailDto;
 import com.zero.bwtableback.restaurant.dto.RestaurantResDto;
 import com.zero.bwtableback.restaurant.entity.*;
 import com.zero.bwtableback.restaurant.repository.*;
-import com.zero.bwtableback.restaurant.repository.ReservationSettingRepository;
-import com.zero.bwtableback.restaurant.dto.RestaurantDetailDto;
-import com.zero.bwtableback.restaurant.entity.Restaurant;
-import com.zero.bwtableback.restaurant.repository.RestaurantRepository;
-import com.zero.bwtableback.restaurant.repository.TimeslotSettingRepository;
-import com.zero.bwtableback.restaurant.repository.WeekdaySettingRepository;
 import com.zero.bwtableback.restaurant.service.RestaurantService;
-
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +35,8 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -55,6 +50,7 @@ public class ReservationService {
     private final WeekdaySettingRepository weekdaySettingRepository;
     private final TimeslotSettingRepository timeslotSettingRepository;
     private final ReservationCapacityRepository reservationCapacityRepository;
+    private final ChatRoomRepository chatRoomRepository;
 
     private final NotificationScheduleService notificationScheduleService;
     private final RestaurantService restaurantService;
@@ -125,6 +121,9 @@ public class ReservationService {
         String reservationKey = "reservation:token:" + reservationToken;
         Object redisValue = redisTemplate.opsForValue().get(reservationKey);
 
+        System.out.println(reservationKey);
+        System.out.println(redisValue);
+
         if (redisValue == null) {
             throw new RuntimeException("예약 토큰이 존재하지 않습니다.");
         }
@@ -135,11 +134,11 @@ public class ReservationService {
             Restaurant restaurant = restaurantRepository.findById(restaurantId)
                     .orElseThrow(() -> new RuntimeException("Restaurant not found"));
 
-            List<Integer> dateList = (List<Integer>) map.get("reservationDate");
-            LocalDate reservationDate = LocalDate.of(dateList.get(0), dateList.get(1), dateList.get(2));
+            LocalDate reservationDate = LocalDate.parse((String) map.get("reservationDate"));
+//            LocalDate reservationDate = LocalDate.of(dateList.get(0), dateList.get(1), dateList.get(2));
 
-            List<Integer> timeList = (List<Integer>) map.get("reservationTime");
-            LocalTime reservationTime = LocalTime.of(timeList.get(0), timeList.get(1));
+            LocalTime reservationTime = LocalTime.parse((String) map.get("reservationTime"));
+//            LocalTime reservationTime = LocalTime.of(timeList.get(0), timeList.get(1));
 
             int numberOfPeople = (Integer) map.get("numberOfPeople");
             String specialRequest = (String) map.get("specialRequest");
@@ -159,11 +158,11 @@ public class ReservationService {
     /**
      * 결제 요청을 위한 고객 정보 및 예약 정보에 대한 토큰 반환
      */
-    public ReservationCreateResDto createReservation(Long memberId, Long restaurantId){
+    public ReservationCreateResDto createReservation(Long memberId, Long restaurantId) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(()->new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(()->new CustomException(ErrorCode.RESTAURANT_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.RESTAURANT_NOT_FOUND));
         String reservationToken = UUID.randomUUID().toString();
 
         return ReservationCreateResDto.builder()
@@ -252,7 +251,8 @@ public class ReservationService {
 
         return new ReservationCompleteResDto(
                 RestaurantResDto.fromEntity(restaurant),
-                ReservationResDto.fromEntity(reservation)
+                ReservationResDto.fromEntity(reservation),
+                null
         );
     }
 
@@ -301,6 +301,8 @@ public class ReservationService {
     public PaymentCompleteResDto confirmReservation(Long reservationId, Long memberId) {
         Reservation reservation = findReservationById(reservationId);
         Restaurant restaurant = findRestaurantById(reservation.getRestaurant().getId());
+        ChatRoom chatRoom = chatRoomRepository.findByReservationId(reservationId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_NOT_FOUND));
         findMemberById(memberId); // 사장님 객체
 
         // 사장님 가게 확인
