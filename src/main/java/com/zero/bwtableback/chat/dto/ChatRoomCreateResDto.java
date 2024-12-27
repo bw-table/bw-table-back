@@ -11,7 +11,7 @@ import lombok.Getter;
 @Getter
 @Builder
 public class ChatRoomCreateResDto {
-    private Long id;
+    private Long chatRoomId;
     private String roomName;
     private ChatRoomStatus status;
     private Long reservationId;
@@ -20,7 +20,7 @@ public class ChatRoomCreateResDto {
 
     public static ChatRoomCreateResDto fromEntity(ChatRoom chatRoom) {
         return ChatRoomCreateResDto.builder()
-                .id(chatRoom.getId())
+                .chatRoomId(chatRoom.getId())
                 .roomName(chatRoom.getRoomName())
                 .status(chatRoom.getStatus())
                 .reservationId(chatRoom.getReservation().getId())
