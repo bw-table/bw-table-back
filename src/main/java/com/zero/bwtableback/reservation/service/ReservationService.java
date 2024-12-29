@@ -501,8 +501,12 @@ public class ReservationService {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
 
-        Page<Reservation> reservations = reservationRepository.findByRestaurantIdAndReservationDate(
-                restaurantId, reservationDate, pageable);
+        Page<Reservation> reservations;
+        if (reservationDate != null) {
+            reservations = reservationRepository.findByRestaurantIdAndReservationDate(restaurantId, reservationDate, pageable);
+        } else {
+            reservations = reservationRepository.findByRestaurantId(restaurantId, pageable);
+        }
 
         return reservations.stream()
                 .map(ReservationResDto::fromEntity)

@@ -172,16 +172,6 @@ public class ReservationController {
         return ResponseEntity.ok(reservationService.handleNoShowStatus(reservationId, memberDetails.getMemberId()));
     }
 
-    // FIXME 사용 여부 확인 후 삭제
-//    @PutMapping("/{reservationId}/confirm")
-//    @Operation(summary = "예약 확정", description = "주어진 예약 ID로 예약을 확정합니다.")
-//    public PaymentCompleteResDto confirmReservation(
-//            @PathVariable Long reservationId,
-//            @RequestParam Long restaurantId,
-//            @AuthenticationPrincipal MemberDetails memberDetails) {
-//        return reservationService.confirmReservation(reservationId, restaurantId, memberDetails.getMemberId());
-//    }
-
     /**
      * 예약 대시보드
      * 특정 식당의 예약 내역 조회
@@ -190,9 +180,7 @@ public class ReservationController {
     public ResponseEntity<List<ReservationResDto>> getReservationsByRestaurantId(@PathVariable Long restaurantId,
                                                                                  @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
                                                                                  Pageable pageable) {
-
         List<ReservationResDto> reservations = reservationService.getReservationByRestaurant(restaurantId, date, pageable);
-
         return ResponseEntity.ok(reservations);
     }
 }
