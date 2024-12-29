@@ -36,13 +36,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             @Param("reservationDate") LocalDate reservationDate,
             @Param("reservationTime") LocalTime reservationTime
     );
-    // FIXME 사용하지 않는다면 삭제
-//    Optional<Reservation> findByMemberAndRestaurantAndReservationStatus(
-//            Member member, Restaurant restaurant, ReservationStatus reservationStatus);
-//    Optional<Reservation> findByMemberAndRestaurantAndReservationDateBetween(
-//            Member member, Restaurant restaurant, LocalDate startDate, LocalDate endDate);
 
-    List<Reservation> findByRestaurantId(Long restaurantId);
+    Page<Reservation> findByRestaurantId(Long restaurantId, Pageable pageable);
 
     Page<Reservation> findByRestaurantIdAndReservationDate(Long restaurantId, LocalDate reservationDate, Pageable pageable);
 
