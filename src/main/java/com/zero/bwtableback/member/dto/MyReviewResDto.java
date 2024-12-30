@@ -1,5 +1,7 @@
 package com.zero.bwtableback.member.dto;
 
+import com.zero.bwtableback.restaurant.entity.Category;
+import com.zero.bwtableback.restaurant.entity.CategoryType;
 import com.zero.bwtableback.restaurant.entity.Review;
 import com.zero.bwtableback.restaurant.entity.ReviewImage;
 import lombok.AllArgsConstructor;
@@ -23,6 +25,8 @@ public class MyReviewResDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Long restaurantId;
+    private String restaurantName;
+    private CategoryType restaurantCategory;
     private Long memberId;
     private String memberProfileImage;
     private String memberNickname;
@@ -38,6 +42,8 @@ public class MyReviewResDto {
                 .createdAt(review.getCreatedAt())
                 .updatedAt(review.getUpdatedAt())
                 .restaurantId(review.getRestaurant().getId())
+                .restaurantName(review.getRestaurant().getName())
+                .restaurantCategory(review.getRestaurant().getCategory().getCategoryType())
                 .memberId(review.getMember().getId())
                 .memberProfileImage(review.getMember().getProfileImage())
                 .memberNickname(review.getMember().getNickname())
