@@ -498,7 +498,7 @@ public class ReservationService {
      * 특정 식당의 예약 내역 조회
      */
     public List<ReservationResDto> getReservationByRestaurant(Long restaurantId, LocalDate reservationDate, Pageable pageable) {
-        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+        restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
 
         Page<Reservation> reservations;

@@ -40,7 +40,6 @@ public class RestaurantController {
             @RequestPart(value = "menuImages", required = false) List<MultipartFile> menuImages,
             @AuthenticationPrincipal MemberDetails memberDetails
     ) {
-        System.out.println(reqDto);
         try {
             reqDto.setImages(reqDto.getImages());
             reqDto.setMenus(reqDto.getMenus());
