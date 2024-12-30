@@ -6,8 +6,6 @@ import com.zero.bwtableback.member.dto.MemberDto;
 import com.zero.bwtableback.member.dto.MyReservationResDto;
 import com.zero.bwtableback.member.dto.MyReviewResDto;
 import com.zero.bwtableback.member.service.MemberService;
-import com.zero.bwtableback.reservation.dto.ReservationResDto;
-import com.zero.bwtableback.restaurant.dto.ReviewDetailDto;
 import com.zero.bwtableback.security.MemberDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
