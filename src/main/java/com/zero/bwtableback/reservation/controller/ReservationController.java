@@ -140,8 +140,8 @@ public class ReservationController {
      * - 예약 취소 알림
      * - 환불 규정에 따른 환불
      */
+//    @Operation(summary = "예약 취소", description = "주어진 예약 ID로 예약을 취소합니다.")
     @PutMapping("/{reservationId}/cancel")
-    @Operation(summary = "예약 취소", description = "주어진 예약 ID로 예약을 취소합니다.")
     public ResponseEntity<?> cancelReservation(@PathVariable Long reservationId,
                                                @AuthenticationPrincipal MemberDetails memberDetails) {
         try {
@@ -156,16 +156,16 @@ public class ReservationController {
         }
     }
 
+//    @Operation(summary = "사장님의 방문 처리", description = "주어진 예약 ID로 방문 처리를 합니다.")
     @PutMapping("/{reservationId}/visit")
-    @Operation(summary = "사장님의 방문 처리", description = "주어진 예약 ID로 방문 처리를 합니다.")
     public ResponseEntity<?> handleVisited(
             @PathVariable Long reservationId,
             @AuthenticationPrincipal MemberDetails memberDetails) {
         return ResponseEntity.ok(reservationService.handleVisitedStatus(reservationId, memberDetails.getMemberId()));
     }
 
+//    @Operation(summary = "사장님의 노쇼 처리", description = "주어진 예약 ID로 노쇼 처리를 합니다.")
     @PutMapping("/{reservationId}/noshow")
-    @Operation(summary = "사장님의 노쇼 처리", description = "주어진 예약 ID로 노쇼 처리를 합니다.")
     public ResponseEntity<?> handleNoShow(
             @PathVariable Long reservationId,
             @AuthenticationPrincipal MemberDetails memberDetails) {

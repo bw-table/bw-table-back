@@ -426,9 +426,7 @@ public class ReservationService {
             throw new CustomException(ErrorCode.RESTAURANT_OWNERSHIP_MISMATCH);
         }
 
-        if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED ||
-                reservation.getReservationStatus() == ReservationStatus.CUSTOMER_CANCELED ||
-                reservation.getReservationStatus() == ReservationStatus.OWNER_CANCELED) {
+        if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED){
             throw new CustomException(ErrorCode.INVALID_STATUS_VISITED);
         }
 

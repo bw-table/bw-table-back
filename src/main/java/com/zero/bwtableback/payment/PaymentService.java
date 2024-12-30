@@ -56,7 +56,6 @@ public class PaymentService {
             // 응답에서 결제 정보가 있는지 확인
             if (iamportResponse.getResponse() != null) {
                 Payment payment = iamportResponse.getResponse();
-                System.out.println(PaymentStatus.PAID + payment.getStatus());
                 // 결제 상태 체크
                 if (!"paid".equals(payment.getStatus())) {
                     throw new CustomException(ErrorCode.PAYMENT_NOT_COMPLETED);
