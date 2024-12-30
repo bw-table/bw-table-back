@@ -6,11 +6,11 @@ import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.dto.MemberDto;
 import com.zero.bwtableback.member.dto.MemberPrivateDto;
+import com.zero.bwtableback.member.dto.MyReservationResDto;
+import com.zero.bwtableback.member.dto.MyReviewResDto;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.repository.MemberRepository;
-import com.zero.bwtableback.reservation.dto.ReservationResDto;
 import com.zero.bwtableback.reservation.repository.ReservationRepository;
-import com.zero.bwtableback.restaurant.dto.ReviewDetailDto;
 import com.zero.bwtableback.restaurant.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -78,24 +78,24 @@ public class MemberService {
                 member.getLoginType());
     }
 
-    public Page<ReservationResDto> getMyReservations(Pageable pageable, String email) {
-        Member member = memberRepository.findByEmail(email)
+    public Page<MyReservationResDto> getMyReservations(Pageable pageable, Long memberId) {
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         return reservationRepository.findByMemberId(member.getId(), pageable)
-                .map(ReservationResDto::fromEntity);
+                .map(MyReservationResDto::fromEntity);
     }
 
-    public Page<ReviewDetailDto> getMyReviews(Pageable pageable, String email) {
-        Member member = memberRepository.findByEmail(email)
+    public Page<MyReviewResDto> getMyReviews(Pageable pageable, Long memberId) {
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         return reviewRepository.findByMemberIdOrderByRestaurantId(member.getId(), pageable)
-                .map(ReviewDetailDto::fromEntity);
+                .map(MyReviewResDto::fromEntity);
     }
 
-    public Page<ChatRoomCreateResDto> getMyChatRooms(Pageable pageable, String email) {
-        Member member = memberRepository.findByEmail(email)
+    public Page<ChatRoomCreateResDto> getMyChatRooms(Pageable pageable, Long memberId) {
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         return chatRoomRepository.findChatRoomsByMemberIdOrderByLastMessageTime(member.getId(), pageable)

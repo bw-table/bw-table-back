@@ -1,23 +1,21 @@
-package com.zero.bwtableback.restaurant.dto;
+package com.zero.bwtableback.member.dto;
 
 import com.zero.bwtableback.restaurant.entity.Review;
 import com.zero.bwtableback.restaurant.entity.ReviewImage;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * 리뷰 목록 조회 시 응답
- * 리뷰 상세 조회 시 응답
- */
-@Builder
 @Getter
+@Builder
 @AllArgsConstructor
-public class ReviewDetailDto {
+@NoArgsConstructor
+public class MyReviewResDto {
     private Long id;
     private String content;
     private int rating;
@@ -25,13 +23,12 @@ public class ReviewDetailDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Long restaurantId;
-
     private Long memberId;
     private String memberProfileImage;
     private String memberNickname;
 
-    public static ReviewDetailDto fromEntity(Review review) {
-        return ReviewDetailDto.builder()
+    public static MyReviewResDto fromEntity(Review review) {
+        return MyReviewResDto.builder()
                 .id(review.getId())
                 .content(review.getContent())
                 .rating(review.getRating())

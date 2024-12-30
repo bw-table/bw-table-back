@@ -7,6 +7,7 @@ import com.zero.bwtableback.common.exception.CustomException;
 import com.zero.bwtableback.common.exception.ErrorCode;
 import com.zero.bwtableback.member.dto.MemberDto;
 import com.zero.bwtableback.member.dto.MemberPrivateDto;
+import com.zero.bwtableback.member.dto.MyReservationResDto;
 import com.zero.bwtableback.member.entity.Member;
 import com.zero.bwtableback.member.entity.Role;
 import com.zero.bwtableback.member.repository.MemberRepository;
@@ -167,7 +168,7 @@ class MemberServiceTest {
         when(reservationRepository.findByMemberId(member.getId(), pageable)).thenReturn(pageReservations);
 
         // when
-        Page<ReservationResDto> result = memberService.getMyReservations(pageable, member.getEmail());
+        Page<MyReservationResDto> result = memberService.getMyReservations(pageable, member.getId());
 
         // then
         assertNotNull(result);
@@ -204,7 +205,7 @@ class MemberServiceTest {
         when(chatRoomRepository.findChatRoomsByMemberIdOrderByLastMessageTime(member.getId(), pageable)).thenReturn(new PageImpl<>(chatRooms));
 
         // when
-        Page<ChatRoomCreateResDto> result = memberService.getMyChatRooms(pageable, member.getEmail());
+        Page<ChatRoomCreateResDto> result = memberService.getMyChatRooms(pageable, member.getId());
 
         // then
         assertNotNull(result);
